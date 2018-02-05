@@ -1,0 +1,33 @@
+{
+  "name": "prebid-universal-creative",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo test",
+    "prepublish": "gulp build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prebid/prebid-universal-creative.git"
+  },
+  "keywords": [
+    "Prebid.js"
+  ],
+  "author": "Prebid.js Contributors",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/prebid/prebid-universal-creative/issues"
+  },
+  "homepage": "https://github.com/prebid/prebid-universal-creative#readme",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-clean": "^0.4.0",
+    "gulp-connect": "^5.2.0",
+    "gulp-eslint": "^4.0.2",
+    "gulp-header": "^2.0.1",
+    "gulp-uglify": "^3.0.0",
+    "yargs": "^11.0.0"
+  },
+  "dependencies": {}
+}
