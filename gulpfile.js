@@ -30,7 +30,6 @@ gulp.task('clean', () => {
 gulp.task('build-dev', () => {
   return gulp.src(['src/creative.js'])
     .pipe(webpackStream(webpackConfig))
-    .pipe(header(banner, { creative: creative }))
     .pipe(gulp.dest('build'));
 });
 

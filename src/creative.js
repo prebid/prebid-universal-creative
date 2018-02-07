@@ -9,7 +9,10 @@
  * - All safeFrame creatives
  */
 
-var pbjs = {};
+import * as utils from './utils';
+import * as environment from './environment';
+
+const pbjs = window.pbjs = (window.pbjs || {});
 
 /**
  * @param  {object} doc
@@ -17,9 +20,9 @@ var pbjs = {};
  * @param  {object} dataObject
  */
 pbjs.renderAd = function(doc, adId, dataObject) {
-  if (isAMP()) {
+  if (environment.isAmp(dataObject)) {
     renderAmpAd(dataObject.host, dataObject.uuid);
-  } else if (isCrossDomain()) {
+  } else if (environment.isCrossDomain()) {
     renderCrossDomain(adId, dataObject.pubUrl);
   } else {
     // assume legacy?
@@ -27,22 +30,8 @@ pbjs.renderAd = function(doc, adId, dataObject) {
   }
 };
 
-function getEmptyIframe(height, width) {
-  var frame = document.createElement('iframe');
-  frame.setAttribute('frameborder', 0);
-  frame.setAttribute('scrolling', 'no');
-  frame.setAttribute('marginheight', 0);
-  frame.setAttribute('marginwidth', 0);
-  frame.setAttribute('TOPMARGIN', 0);
-  frame.setAttribute('LEFTMARGIN', 0);
-  frame.setAttribute('allowtransparency', 'true');
-  frame.setAttribute('width', width);
-  frame.setAttribute('height', height);
-  return frame;
-}
-
 function renderLegacy(doc, adId) {
-  var w = window;
+  let w = window;
   for (i = 0; i < 10; i++) {
     w = w.parent;
     if (w.pbjs) {
@@ -57,37 +46,35 @@ function renderLegacy(doc, adId) {
 }
 
 function renderCrossDomain(adId, pubUrl) {
-  var urlParser = document.createElement('a');
+  let urlParser = document.createElement('a');
   urlParser.href = pubUrl;
-  var publisherDomain = urlParser.protocol + '//' + urlParser.host;
-  var adServerDomain = urlParser.protocol + '//tpc.googlesyndication.com';
+  let publisherDomain = urlParser.protocol + '//' + urlParser.host;
+  let adServerDomain = urlParser.protocol + '//tpc.googlesyndication.com';
 
   function renderAd(ev) {
-    var key = ev.message ? 'message' : 'data';
-    var adObject = {};
+    let key = ev.message ? 'message' : 'data';
+    let adObject = {};
     try {
       adObject = JSON.parse(ev[key]);
     } catch (e) {
       return;
     }
 
-    var origin = ev.origin || ev.originalEvent.origin;
+    let origin = ev.origin || ev.originalEvent.origin;
     if (adObject.message && adObject.message === 'Prebid Response' &&
         publisherDomain === origin &&
         adObject.adId === adId &&
         (adObject.ad || adObject.adUrl)) {
-      var body = window.document.body;
-      var ad = adObject.ad;
-      var url = adObject.adUrl;
-      var width = adObject.width;
-      var height = adObject.height;
+      let body = window.document.body;
+      let ad = adObject.ad;
+      let url = adObject.adUrl;
+      let width = adObject.width;
+      let height = adObject.height;
 
       if (adObject.mediaType === 'video') {
         console.log('Error trying to write ad.');
-      } else
-
-      if (ad) {
-        var frame = getEmptyIframe();
+      } else if (ad) {
+        let frame = utils.getEmptyIframe();
         body.appendChild(frame);
         frame.contentDocument.open();
         frame.contentDocument.write(ad);
@@ -101,7 +88,7 @@ function renderCrossDomain(adId, pubUrl) {
   }
 
   function requestAdFromPrebid() {
-    var message = JSON.stringify({
+    let message = JSON.stringify({
       message: 'Prebid Request',
       adId: adId,
       adServerDomain: adServerDomain
@@ -122,194 +109,36 @@ function renderAmpAd(cacheHost, uuid) {
     cacheHost = 'prebid.adnxs.com';
   }
   // TODO pass in /path from creative since it might change
-  var adUrl = 'https://' + cacheHost + '/pbc/v1/cache?uuid=' + uuid;
+  let adUrl = 'https://' + cacheHost + '/pbc/v1/cache?uuid=' + uuid;
   
   
-  var handler = function(response) {
-    var bidObject;
+  let handler = function(response) {
+    let bidObject;
     try {
       bidObject = JSON.parse(response);
     } catch (error) {
       // Invalid json
     }
     // Add seatbid
+    let ad;
     if (bidObject.adm && bidObject.nurl) {
-      var ad = bidObject.adm;
-      ad += createTrackPixelHtml(decodeURIComponent(bidObject.nurl));
-      writeAdHtml(ad);
+      ad = bidObject.adm;
+      ad += utils.createTrackPixelHtml(decodeURIComponent(bidObject.nurl));
+      utils.writeAdHtml(ad);
     } else if (bidObject.adm) {
-      var ad = bidObject.adm;
-      writeAdHtml(ad);
+      ad = bidObject.adm;
+      utils.writeAdHtml(ad);
     } else if (bidObject.nurl) {
-      var adUrl = bidObject.nurl;
+      let nurl = bidObject.nurl;
       // TODO test height and width. ortb spec represents width and height as w and h.
-      writeAdUrl(adUrl, bidObject.h, bidObject.w);
+      utils.writeAdUrl(nurl, bidObject.h, bidObject.w);
     }
   };
-  sendRequest(adUrl, handler);
+  utils.sendRequest(adUrl, handler);
 }
-
-function writeAdUrl(adUrl, height, width) {
-  var iframe = getEmptyIframe(height, width);
-  iframe.src = adUrl;
-  document.body.appendChild(iframe);
-}
-
-function writeAdHtml(markup) {
-  var parsed = parseHtml(markup);
-  var scripts = parsed.querySelectorAll('script');
-  for (var i = 0; i < scripts.length; i++) {
-    domEval(scripts[i].innerHTML);
-    scripts[i].parentNode.removeChild(scripts[i]);
-  }
-  var givenNodes = parsed.body.childNodes;
-  for (var j = 0; j < givenNodes.length; j++) {
-    document.body.appendChild(givenNodes[j]);
-  }
-}
-
-function domEval(code, doc) {
-  doc = doc || document;
-  var script = doc.createElement('script');
-  script.text = code;
-  doc.head.appendChild(script);
-}
-
-function parseHtml(payload) {
-  var parser = new DOMParser();
-  return parser.parseFromString(payload, 'text/html');
-}
-
-function sendRequest(url, callback) {
-  function reqListener() {
-    callback(oReq.responseText);
-  }
-
-  var oReq = new XMLHttpRequest();
-  oReq.addEventListener('load', reqListener);
-  oReq.open('GET', url);
-  oReq.send();
-}
-
-// TODO: Move this to new module when you add webpack
-/***************************************
- * Detect Environment Helper Functions
- ***************************************/
-
-/**
- * Functions to detect below environments:
- *  CodeOnPage: div directly on publisher's page
- *  Amp: google Accelerate Mobile Pages ampproject.org
- *  Dfp: google doubleclick for publishers https://www.doubleclickbygoogle.com/
- *  DfpInAmp: AMP page containing a DFP iframe
- *  SafeFrame: SafeFrame
- *  DfpSafeFrame: An iframe that can't get to the top window
- *  Sandboxed: An iframe that can't get to the top window
- *  SuperSandboxed: An iframe without allow-same-origin
- *  Unknown: A default sandboxed implementation delivered by EnvironmentDispatch when all positive environment checks fail
- */
-
-/**
- * @returns true if we are running on the top window at dispatch time
- */
-function isCodeOnPage() {
-  return window === window.parent;
-}
-
-/**
- * @returns true if the environment is both DFP and AMP
- */
-function isDfpInAmp() {
-  return isDfp() && isAmp();
-}
-
-/**
- * @returns true if the window is in an iframe whose id and parent element id match DFP
- */
-function isDfp() {
-  try {
-    const frameElement = window.frameElement;
-    const parentElement = window.frameElement.parentNode;
-    if (frameElement && parentElement) {
-      return frameElement.id.indexOf('google_ads_iframe') > -1 && parentElement.id.indexOf('google_ads_iframe') > -1;
-    }
-    return false;
-  } catch (e) {
-    return false;
-  }
-}
-
-/**
- * @returns true if there is an AMP context object
- */
-function isAmp() {
-  try {
-    const ampContext = window.context || window.parent.context;
-    if (ampContext && ampContext.pageViewId) {
-      return ampContext;
-    }
-    return false;
-  } catch (e) {
-    return false;
-  }
-}
-
-/**
- * @returns true if the environment is a SafeFrame.
- */
-function isSafeFrame() {
-  return window.$sf && window.$sf.ext;
-}
-
-/**
- * @returns true if the environment is a dfp safe frame.
- */
-function isDFPSafeFrame() {
-  if (window.location && window.location.href) {
-    const href = window.location.href;
-    return isSafeFrame() && href.indexOf('google') !== -1 && href.indexOf('safeframe') !== -1;
-  }
-  return false;
-}
-
-/**
- * Return true if we are in an iframe and can't access the top window.
- */
-function isCrossDomain() {
-  return window.top !== window && !window.frameElement;
-}
-  
-/**
- * Return true if we cannot document.write to a child iframe (this implies no allow-same-origin)
- */
-function isSuperSandboxedIframe() {
-  const sacrificialIframe = window.document.createElement('iframe');
-  try {
-    sacrificialIframe.setAttribute('style', 'display:none');
-    window.document.body.appendChild(sacrificialIframe);
-    sacrificialIframe.contentWindow._testVar = true;
-    window.document.body.removeChild(sacrificialIframe);
-    return false;
-  } catch (e) {
-    window.document.body.removeChild(sacrificialIframe);
-    return true;
-  }
-}
-
-function createTrackPixelHtml(url) {
-  if (!url) {
-    return '';
-  }
-
-  var escapedUrl = encodeURI(url);
-  var img = '<div style="position:absolute;left:0px;top:0px;visibility:hidden;">';
-  img += '<img src="' + escapedUrl + '"></div>';
-  return img;
-};
-
 
 // function render() {
-//   var { height, width, ad, mediaType, adUrl, renderer } = bid;
+//   let { height, width, ad, mediaType, adUrl, renderer } = bid;
 
 //   if (renderer && renderer.url) {
 //     renderer.render(bid);
@@ -320,7 +149,7 @@ function createTrackPixelHtml(url) {
 //     doc.close();
 //     setRenderSize(doc, width, height);
 //   } else if (adUrl) {
-//     var iframe = utils.createInvisibleIframe();
+//     let iframe = utils.createInvisibleIframe();
 //     iframe.height = height;
 //     iframe.width = width;
 //     iframe.style.display = 'inline';
