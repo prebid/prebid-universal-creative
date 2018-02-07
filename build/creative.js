@@ -1,3 +1,77 @@
+/* prebid-universal-creative v0.1.0
+Updated : 2018-02-07 */
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, {
+/******/ 				configurable: false,
+/******/ 				enumerable: true,
+/******/ 				get: getter
+/******/ 			});
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = 0);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 /**
  * creative.js
  *
@@ -16,7 +90,7 @@ var pbjs = {};
  * @param  {string} adId
  * @param  {object} dataObject
  */
-pbjs.renderAd = function(doc, adId, dataObject) {
+pbjs.renderAd = function (doc, adId, dataObject) {
   if (isAMP()) {
     renderAmpAd(dataObject.host, dataObject.uuid);
   } else if (isCrossDomain()) {
@@ -72,10 +146,7 @@ function renderCrossDomain(adId, pubUrl) {
     }
 
     var origin = ev.origin || ev.originalEvent.origin;
-    if (adObject.message && adObject.message === 'Prebid Response' &&
-        publisherDomain === origin &&
-        adObject.adId === adId &&
-        (adObject.ad || adObject.adUrl)) {
+    if (adObject.message && adObject.message === 'Prebid Response' && publisherDomain === origin && adObject.adId === adId && (adObject.ad || adObject.adUrl)) {
       var body = window.document.body;
       var ad = adObject.ad;
       var url = adObject.adUrl;
@@ -84,9 +155,7 @@ function renderCrossDomain(adId, pubUrl) {
 
       if (adObject.mediaType === 'video') {
         console.log('Error trying to write ad.');
-      } else
-
-      if (ad) {
+      } else if (ad) {
         var frame = getEmptyIframe();
         body.appendChild(frame);
         frame.contentDocument.open();
@@ -123,15 +192,14 @@ function renderAmpAd(cacheHost, uuid) {
   }
   // TODO pass in /path from creative since it might change
   var adUrl = 'https://' + cacheHost + '/pbc/v1/cache?uuid=' + uuid;
-  
-  
-  var handler = function(response) {
+
+  var handler = function handler(response) {
     var bidObject;
     try {
       bidObject = JSON.parse(response);
-    } catch (error) {
-      // Invalid json
-    }
+    } catch (error) {}
+    // Invalid json
+
     // Add seatbid
     if (bidObject.adm && bidObject.nurl) {
       var ad = bidObject.adm;
@@ -228,8 +296,8 @@ function isDfpInAmp() {
  */
 function isDfp() {
   try {
-    const frameElement = window.frameElement;
-    const parentElement = window.frameElement.parentNode;
+    var frameElement = window.frameElement;
+    var parentElement = window.frameElement.parentNode;
     if (frameElement && parentElement) {
       return frameElement.id.indexOf('google_ads_iframe') > -1 && parentElement.id.indexOf('google_ads_iframe') > -1;
     }
@@ -244,7 +312,7 @@ function isDfp() {
  */
 function isAmp() {
   try {
-    const ampContext = window.context || window.parent.context;
+    var ampContext = window.context || window.parent.context;
     if (ampContext && ampContext.pageViewId) {
       return ampContext;
     }
@@ -266,7 +334,7 @@ function isSafeFrame() {
  */
 function isDFPSafeFrame() {
   if (window.location && window.location.href) {
-    const href = window.location.href;
+    var href = window.location.href;
     return isSafeFrame() && href.indexOf('google') !== -1 && href.indexOf('safeframe') !== -1;
   }
   return false;
@@ -278,12 +346,12 @@ function isDFPSafeFrame() {
 function isCrossDomain() {
   return window.top !== window && !window.frameElement;
 }
-  
+
 /**
  * Return true if we cannot document.write to a child iframe (this implies no allow-same-origin)
  */
 function isSuperSandboxedIframe() {
-  const sacrificialIframe = window.document.createElement('iframe');
+  var sacrificialIframe = window.document.createElement('iframe');
   try {
     sacrificialIframe.setAttribute('style', 'display:none');
     window.document.body.appendChild(sacrificialIframe);
@@ -306,7 +374,6 @@ function createTrackPixelHtml(url) {
   img += '<img src="' + escapedUrl + '"></div>';
   return img;
 };
-
 
 // function render() {
 //   var { height, width, ad, mediaType, adUrl, renderer } = bid;
@@ -331,3 +398,7 @@ function createTrackPixelHtml(url) {
 //     setRenderSize(doc, width, height);
 //   }
 // }
+
+/***/ })
+/******/ ]);
+//# sourceMappingURL=creative.js.map
