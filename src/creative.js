@@ -13,11 +13,21 @@ import * as utils from './utils';
 import * as environment from './environment';
 
 const pbjs = window.pbjs = (window.pbjs || {});
+const GOOGLE_IFRAME_HOSTNAME = '//tpc.googlesyndication.com';
+
+/**
+ * DataObject passed to render the ad
+ * @typedef {Object} dataObject
+ * @property {string} host - Prebid cache host
+ * @property {string} uuid - ID to fetch the value from prebid cache
+ * @property {string} mediaType - Creative media type, It can be banner, native or video
+ * @property {string} pubUrl - Publisher url
+ */
 
 /**
  * @param  {object} doc
  * @param  {string} adId
- * @param  {object} dataObject
+ * @param  {dataObject} dataObject
  */
 pbjs.renderAd = function(doc, adId, dataObject) {
   if (environment.isAmp(dataObject)) {
@@ -25,7 +35,6 @@ pbjs.renderAd = function(doc, adId, dataObject) {
   } else if (environment.isCrossDomain()) {
     renderCrossDomain(adId, dataObject.pubUrl);
   } else {
-    // assume legacy?
     renderLegacy(doc, adId);
   }
 };
@@ -49,7 +58,7 @@ function renderCrossDomain(adId, pubUrl) {
   let urlParser = document.createElement('a');
   urlParser.href = pubUrl;
   let publisherDomain = urlParser.protocol + '//' + urlParser.host;
-  let adServerDomain = urlParser.protocol + '//tpc.googlesyndication.com';
+  let adServerDomain = urlParser.protocol + GOOGLE_IFRAME_HOSTNAME;
 
   function renderAd(ev) {
     let key = ev.message ? 'message' : 'data';
@@ -74,15 +83,20 @@ function renderCrossDomain(adId, pubUrl) {
       if (adObject.mediaType === 'video') {
         console.log('Error trying to write ad.');
       } else if (ad) {
-        let frame = utils.getEmptyIframe();
+        const iframe = utils.getEmptyIframe(adObject.height, adObject.width);
         body.appendChild(frame);
-        frame.contentDocument.open();
-        frame.contentDocument.write(ad);
-        frame.contentDocument.close();
+        iframe.contentDocument.open();
+        iframe.contentDocument.write(ad);
+        iframe.contentDocument.close();
       } else if (url) {
-        body.insertAdjacentHTML('beforeend', '<IFRAME SRC="' + url + '" FRAMEBORDER="0" SCROLLING="no" MARGINHEIGHT="0" MARGINWIDTH="0" TOPMARGIN="0" LEFTMARGIN="0" ALLOWTRANSPARENCY="true" WIDTH="' + width + '" HEIGHT="' + height + '"></IFRAME>');
+        const iframe = utils.getEmptyIframe(height, width);
+        iframe.style.display = 'inline';
+        iframe.style.overflow = 'hidden';
+        iframe.src = url;
+
+        utils.insertElement(iframe, doc, 'body');
       } else {
-        console.log('Error trying to write ad. No ad for bid response id: ' + id);
+        console.log(`Error trying to write ad. No ad for bid response id: ${id}`);
       }
     }
   }
@@ -110,14 +124,13 @@ function renderAmpAd(cacheHost, uuid) {
   }
   // TODO pass in /path from creative since it might change
   let adUrl = 'https://' + cacheHost + '/pbc/v1/cache?uuid=' + uuid;
-  
-  
+
   let handler = function(response) {
     let bidObject;
     try {
       bidObject = JSON.parse(response);
     } catch (error) {
-      // Invalid json
+      console.log(`Error parsing response from cache host: ${error}`);
     }
     // Add seatbid
     let ad;
@@ -130,33 +143,8 @@ function renderAmpAd(cacheHost, uuid) {
       utils.writeAdHtml(ad);
     } else if (bidObject.nurl) {
       let nurl = bidObject.nurl;
-      // TODO test height and width. ortb spec represents width and height as w and h.
       utils.writeAdUrl(nurl, bidObject.h, bidObject.w);
     }
   };
   utils.sendRequest(adUrl, handler);
 }
-
-// function render() {
-//   let { height, width, ad, mediaType, adUrl, renderer } = bid;
-
-//   if (renderer && renderer.url) {
-//     renderer.render(bid);
-//   } else if ((doc === document && !utils.inIframe()) || mediaType === 'video') {
-//     utils.logError(`Error trying to write ad. Ad render call ad id ${id} was prevented from writing to the main document.`);
-//   } else if (ad) {
-//     doc.write(ad);
-//     doc.close();
-//     setRenderSize(doc, width, height);
-//   } else if (adUrl) {
-//     let iframe = utils.createInvisibleIframe();
-//     iframe.height = height;
-//     iframe.width = width;
-//     iframe.style.display = 'inline';
-//     iframe.style.overflow = 'hidden';
-//     iframe.src = adUrl;
-
-//     utils.insertElement(iframe, doc, 'body');
-//     setRenderSize(doc, width, height);
-//   }
-// }

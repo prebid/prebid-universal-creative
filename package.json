@@ -2,7 +2,7 @@
   "name": "prebid-universal-creative",
   "version": "0.1.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/creative.js",
   "scripts": {
     "test": "echo test",
     "prepublish": "gulp build"
