@@ -78,20 +78,3 @@ function isDFPSafeFrame() {
 export function isCrossDomain() {
   return window.top !== window && !window.frameElement;
 }
-  
-/**
- * Return true if we cannot document.write to a child iframe (this implies no allow-same-origin)
- */
-function isSuperSandboxedIframe() {
-  const sacrificialIframe = window.document.createElement('iframe');
-  try {
-    sacrificialIframe.setAttribute('style', 'display:none');
-    window.document.body.appendChild(sacrificialIframe);
-    sacrificialIframe.contentWindow._testVar = true;
-    window.document.body.removeChild(sacrificialIframe);
-    return false;
-  } catch (e) {
-    window.document.body.removeChild(sacrificialIframe);
-    return true;
-  }
-}
