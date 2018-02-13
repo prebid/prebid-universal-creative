@@ -1,0 +1,43 @@
+{
+  "name": "prebid-universal-creative",
+  "version": "0.1.0",
+  "description": "",
+  "main": "dist/creative.js",
+  "scripts": {
+    "test": "echo test",
+    "prepublish": "gulp build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prebid/prebid-universal-creative.git"
+  },
+  "keywords": [
+    "Prebid.js"
+  ],
+  "author": "Prebid.js Contributors",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/prebid/prebid-universal-creative/issues"
+  },
+  "homepage": "https://github.com/prebid/prebid-universal-creative#readme",
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-plugin-transform-es3-member-expression-literals": "^6.22.0",
+    "babel-plugin-transform-es3-property-literals": "^6.22.0",
+    "babel-preset-env": "^1.6.1",
+    "gulp": "^3.9.1",
+    "gulp-clean": "^0.4.0",
+    "gulp-connect": "^5.2.0",
+    "gulp-eslint": "^4.0.2",
+    "gulp-header": "^2.0.1",
+    "gulp-uglify": "^3.0.0",
+    "lodash": "^4.17.5",
+    "webpack": "^3.0.0",
+    "webpack-stream": "^4.0.0",
+    "yargs": "^11.0.0"
+  },
+  "dependencies": {
+    "babel-plugin-transform-object-assign": "^6.22.0"
+  }
+}
