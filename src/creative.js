@@ -31,7 +31,7 @@ const GOOGLE_IFRAME_HOSTNAME = '//tpc.googlesyndication.com';
  */
 pbjs.renderAd = function(doc, adId, dataObject) {
   if (environment.isAmp(dataObject)) {
-    renderAmpAd(dataObject.host, dataObject.uuid);
+    renderAmpAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid);
   } else if (environment.isCrossDomain()) {
     renderCrossDomain(adId, dataObject.pubUrl);
   } else {
@@ -118,12 +118,8 @@ function renderCrossDomain(adId, pubUrl) {
   requestAdFromPrebid();
 }
 
-function renderAmpAd(cacheHost, uuid) {
-  if (cacheHost === '') {
-    cacheHost = 'prebid.adnxs.com';
-  }
-  // TODO pass in /path from creative since it might change
-  let adUrl = 'https://' + cacheHost + '/pbc/v1/cache?uuid=' + uuid;
+function renderAmpAd(cacheHost = 'prebid.adnxs.com', cachePath = '/pbc/v1/cache', uuid) {
+  let adUrl = `https://${cacheHost}${cachePath}?uuid=${uuid}`;
 
   let handler = function(response) {
     let bidObject;
