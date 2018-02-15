@@ -84,7 +84,7 @@ function renderCrossDomain(adId, pubUrl) {
         console.log('Error trying to write ad.');
       } else if (ad) {
         const iframe = utils.getEmptyIframe(adObject.height, adObject.width);
-        body.appendChild(frame);
+        body.appendChild(iframe);
         iframe.contentDocument.open();
         iframe.contentDocument.write(ad);
         iframe.contentDocument.close();
@@ -128,7 +128,7 @@ function renderAmpAd(cacheHost = 'prebid.adnxs.com', cachePath = '/pbc/v1/cache'
     } catch (error) {
       console.log(`Error parsing response from cache host: ${error}`);
     }
-    // Add seatbid
+    
     let ad;
     if (bidObject.adm && bidObject.nurl) {
       ad = bidObject.adm;
