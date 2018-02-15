@@ -1,3 +1,5 @@
+const postscribe = require('postscribe');
+
 export function createTrackPixelHtml(url) {
   if (!url) {
     return '';
@@ -15,28 +17,7 @@ export function writeAdUrl(adUrl, height, width) {
 }
 
 export function writeAdHtml(markup) {
-  let parsed = parseHtml(markup);
-  let scripts = parsed.querySelectorAll('script');
-  for (var i = 0; i < scripts.length; i++) {
-    domEval(scripts[i].innerHTML);
-    scripts[i].parentNode.removeChild(scripts[i]);
-  }
-  let givenNodes = parsed.body.childNodes;
-  for (var j = 0; j < givenNodes.length; j++) {
-    document.body.appendChild(givenNodes[j]);
-  }
-}
-
-export function domEval(code, doc) {
-  doc = doc || document;
-  let script = doc.createElement('script');
-  script.text = code;
-  doc.head.appendChild(script);
-}
-
-export function parseHtml(payload) {
-  let parser = new DOMParser();
-  return parser.parseFromString(payload, 'text/html');
+  postscribe(document.body, markup);
 }
 
 export function sendRequest(url, callback) {
