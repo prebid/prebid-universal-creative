@@ -11,6 +11,7 @@ var clean = require('gulp-clean');
 var webpackStream = require('webpack-stream');
 var webpack = require('webpack');
 var webpackConfig = require('./webpack.conf');
+var inject = require('gulp-inject');
 
 var dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
 var banner = '/* <%= creative.name %> v<%= creative.version %>\n' + dateString + ' */\n';
@@ -18,7 +19,7 @@ var port = 9999;
 
 gulp.task('serve', ['clean', 'build-dev', 'connect']);
 
-gulp.task('build', ['build-prod']);
+gulp.task('build', ['build-prod', 'build-cookie-sync']);
 
 gulp.task('clean', () => {
   return gulp.src(['dist/', 'build/'], {
@@ -41,6 +42,25 @@ gulp.task('build-prod', ['clean'], () => {
     .pipe(webpackStream(cloned))
     .pipe(uglify())
     .pipe(header(banner, { creative: creative }))
+    .pipe(gulp.dest('dist'));
+});
+
+gulp.task('build-cookie-sync', () => {
+  var cloned = _.cloneDeep(webpackConfig);
+  delete cloned.devtool;
+
+  var target = gulp.src('resources/load-cookie.html');
+  var sources = gulp.src(['src/cookieSync.js'])
+    .pipe(webpackStream(cloned))
+    .pipe(uglify());
+ 
+  return target.pipe(inject(sources, {
+    starttag: '// cookie-sync start',
+    endtag: '// end',
+    transform: function (filePath, file) {
+      return file.contents.toString('utf8')
+    }
+    }))
     .pipe(gulp.dest('dist'));
 });
 
