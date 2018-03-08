@@ -1,6 +1,6 @@
 {
   "name": "prebid-universal-creative",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "",
   "main": "dist/creative.js",
   "scripts": {
