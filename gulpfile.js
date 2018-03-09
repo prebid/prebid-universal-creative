@@ -12,6 +12,7 @@ var webpackStream = require('webpack-stream');
 var webpack = require('webpack');
 var webpackConfig = require('./webpack.conf');
 var inject = require('gulp-inject');
+var rename = require('gulp-rename');
 
 var dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
 var banner = '/* <%= creative.name %> v<%= creative.version %>\n' + dateString + ' */\n';
@@ -40,8 +41,14 @@ gulp.task('build-prod', ['clean'], () => {
 
   return gulp.src(['src/creative.js'])
     .pipe(webpackStream(cloned))
+    .pipe(rename({ extname: '.max.js' }))
+    .pipe(gulp.dest('dist'))
     .pipe(uglify())
     .pipe(header(banner, { creative: creative }))
+    .pipe(rename({
+      basename: 'creative',
+      extname: '.js'
+    }))
     .pipe(gulp.dest('dist'));
 });
 
