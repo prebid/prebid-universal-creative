@@ -14,6 +14,8 @@ import * as environment from './environment';
 
 const pbjs = window.pbjs = (window.pbjs || {});
 const GOOGLE_IFRAME_HOSTNAME = '//tpc.googlesyndication.com';
+const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
+const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
 
 /**
  * DataObject passed to render the ad
@@ -118,8 +120,14 @@ function renderCrossDomain(adId, pubUrl) {
   requestAdFromPrebid();
 }
 
-function renderAmpAd(cacheHost = 'prebid.adnxs.com', cachePath = '/pbc/v1/cache', uuid) {
-  let adUrl = `https://${cacheHost}${cachePath}?uuid=${uuid}`;
+function getCacheEndpoint(cacheHost, cachePath) {
+  let host = (typeof cacheHost === 'undefined' || cacheHost === "") ? DEFAULT_CACHE_HOST : cacheHost;
+  let path = (typeof cachePath === 'undefined' || cachePath === "") ? DEFAULT_CACHE_PATH : cachePath;
+  return `https://${host}${path}`;
+}
+
+function renderAmpAd(cacheHost, cachePath, uuid) {
+  let adUrl = `${getCacheEndpoint(cacheHost, cachePath)}?uuid=${uuid}`;
 
   let handler = function(response) {
     let bidObject;
