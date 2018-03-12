@@ -78,3 +78,7 @@ function isDFPSafeFrame() {
 export function isCrossDomain() {
   return window.top !== window && !window.frameElement;
 }
+
+export function isMobileApp() {
+  return true;
+}

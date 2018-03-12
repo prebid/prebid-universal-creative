@@ -10,7 +10,7 @@ export function createTrackPixelHtml(url) {
   return img;
 }
 
-export function writeAdUrl(adUrl, height, width) {
+export function writeAdUrl(adUrl, width, height) {
   let iframe = getEmptyIframe(height, width);
   iframe.src = adUrl;
   document.body.appendChild(iframe);
@@ -61,3 +61,75 @@ export function insertElement(elm, doc, target) {
     }
   } catch (e) {}
 };
+
+export function getUUID() {
+  let d = new Date().getTime();
+  let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    let r = (d + Math.random() * 16) % 16 | 0;
+    d = Math.floor(d / 16);
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+  return uuid;
+};
+
+export function loadScript(currentWindow, tagSrc, callback) {
+  let doc = currentWindow.document;
+  let scriptTag = doc.createElement('script');
+  scriptTag.type = 'text/javascript';
+
+  // Execute a callback if necessary
+  if (callback && typeof callback === 'function') {
+    if (scriptTag.readyState) {
+      scriptTag.onreadystatechange = function() {
+        if (scriptTag.readyState === 'loaded' || scriptTag.readyState === 'complete') {
+          scriptTag.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else {
+      scriptTag.onload = function() {
+        callback();
+      };
+    }
+  }
+
+  scriptTag.src = tagSrc;
+
+  //add the new script tag to the page
+  let elToAppend = doc.getElementsByTagName('head');
+  elToAppend = elToAppend.length ? elToAppend : doc.getElementsByTagName('body');
+  if (elToAppend.length) {
+    elToAppend = elToAppend[0];
+    elToAppend.insertBefore(scriptTag, elToAppend.firstChild);
+  }
+
+  return scriptTag;
+};
+
+// export function loadPixelUrl(win, src, uuid) {
+//   let img;
+//   let elToAppend = win.document.getElementsByTagName('head');
+
+//   if (doc && elToAppend && src) {
+//     img = new Image();
+//     img.id = uuid;
+//     img.src = src;
+//     img.height = 0;
+//     img.width = 0;
+//     img.style.display = 'none';
+//     img.onload = function() {
+//       try {
+//         this.parentNode.removeChild(this);
+//       } catch(e) {}
+//     };
+//     try {
+//       elToAppend = elToAppend.length ? elToAppend : doc.document.getElementsByTagName('body');
+//       if (elToAppend.length) {
+//         elToAppend = elToAppend[0];
+//         elToAppend.insertBefore(img, elToAppend.firstChild);
+//       }
+//     } catch(e) {
+//       console.log(`Error logging impression for tag: ${uuid} ${e.message}`);
+//     }
+//   }
+// };

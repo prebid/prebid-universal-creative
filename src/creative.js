@@ -32,8 +32,10 @@ const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
  * @param  {dataObject} dataObject
  */
 pbjs.renderAd = function(doc, adId, dataObject) {
-  if (environment.isAmp(dataObject)) {
-    renderAmpAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid);
+  if(environment.isMobileApp()) {
+    renderAmpOrMobileAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid, true);
+  } else if (environment.isAmp(dataObject)) {
+    renderAmpOrMobileAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid);
   } else if (environment.isCrossDomain()) {
     renderCrossDomain(adId, dataObject.pubUrl);
   } else {
@@ -126,29 +128,60 @@ function getCacheEndpoint(cacheHost, cachePath) {
   return `https://${host}${path}`;
 }
 
-function renderAmpAd(cacheHost, cachePath, uuid) {
-  let adUrl = `${getCacheEndpoint(cacheHost, cachePath)}?uuid=${uuid}`;
+function renderAmpOrMobileAd(cacheHost, cachePath, uuid, isMobileApp) {
+  // For MoPub, creative is stored in localStorage via SDK.
+  if(uuid.startsWith('Prebid_')) {
+    loadFromLocalCache(uuid)
+  } else {
+    let adUrl = `${getCacheEndpoint(cacheHost, cachePath)}?uuid=${uuid}`;
+    utils.sendRequest(adUrl, handler(isMobileApp));
+  }
+}
 
-  let handler = function(response) {
-    let bidObject;
-    try {
-      bidObject = JSON.parse(response);
-    } catch (error) {
-      console.log(`Error parsing response from cache host: ${error}`);
-    }
-    
+function handler(isMobileApp) {
+  return function(response) {
+    let bidObject = parseResponse(response);
     let ad;
-    if (bidObject.adm && bidObject.nurl) {
-      ad = bidObject.adm;
-      ad += utils.createTrackPixelHtml(decodeURIComponent(bidObject.nurl));
-      utils.writeAdHtml(ad);
-    } else if (bidObject.adm) {
-      ad = bidObject.adm;
+    let width = (bidObject.width) ? bidObject.width : bidObject.w;
+    let height = (bidObject.height) ? bidObject.height : bidObject.h;
+    if (bidObject.adm) {
+      ad = (!isMobileApp) ? bidObject.adm : constructMarkup(bidObject.adm, width, height);
+      if (bidObject.nurl) {
+        ad += utils.createTrackPixelHtml(decodeURIComponent(bidObject.nurl));
+      }
       utils.writeAdHtml(ad);
     } else if (bidObject.nurl) {
-      let nurl = bidObject.nurl;
-      utils.writeAdUrl(nurl, bidObject.h, bidObject.w);
+      if(!isMobileApp) {
+        let nurl = bidObject.nurl;
+        utils.writeAdUrl(nurl, width, height);
+      } else {
+        let adhtml = utils.loadScript(window, bidObject.nurl);
+        ad = constructMarkup(adhtml.outerHTML, width, height);
+        utils.writeAdHtml(ad);
+      }
     }
-  };
-  utils.sendRequest(adUrl, handler);
+  }
+};
+
+function loadFromLocalCache(cacheId) {
+  let bid = localStorage.getItem(cacheId);
+  let displayFn = handler(true);
+  displayFn(bidObj);
+}
+
+function parseResponse(response) {
+  let bidObject;
+  try {
+    bidObject = JSON.parse(response);
+  } catch (error) {
+    console.log(`Error parsing response from cache host: ${error}`);
+  }
+  return bidObject;
+}
+
+function constructMarkup(ad, width, height) {
+  var id = utils.getUUID();
+  return `<div id="${id}" style="border-style: none; position: absolute; width:100%; height:100%;">
+    <div id="${id}_inner" style="margin: 0 auto; width:${width}; height:${height}">${ad}</div>
+    </div>`;
 }
