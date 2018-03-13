@@ -27,12 +27,13 @@ const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
  */
 
 /**
+ * Public render ad function to be used in dfp creative setup
  * @param  {object} doc
  * @param  {string} adId
  * @param  {dataObject} dataObject
  */
 pbjs.renderAd = function(doc, adId, dataObject) {
-  if(environment.isMobileApp()) {
+  if(environment.isMobileApp(dataObject)) {
     renderAmpOrMobileAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid, true);
   } else if (environment.isAmp(dataObject)) {
     renderAmpOrMobileAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid);
@@ -43,6 +44,11 @@ pbjs.renderAd = function(doc, adId, dataObject) {
   }
 };
 
+/**
+ * Calls prebid.js renderAd function to render ad
+ * @param {Object} doc Document
+ * @param {string} adId Id of creative to render
+ */
 function renderLegacy(doc, adId) {
   let w = window;
   for (i = 0; i < 10; i++) {
@@ -58,6 +64,11 @@ function renderLegacy(doc, adId) {
   }
 }
 
+/**
+ * Render ad in safeframe using postmessage
+ * @param {string} adId Id of creative to render
+ * @param {string} pubUrl Url of publisher page
+ */
 function renderCrossDomain(adId, pubUrl) {
   let urlParser = document.createElement('a');
   urlParser.href = pubUrl;
@@ -122,12 +133,24 @@ function renderCrossDomain(adId, pubUrl) {
   requestAdFromPrebid();
 }
 
+/**
+ * Returns cache endpoint concatenated with cache path
+ * @param {string} cacheHost Cache Endpoint host
+ * @param {string} cachePath Cache Endpoint path
+ */
 function getCacheEndpoint(cacheHost, cachePath) {
   let host = (typeof cacheHost === 'undefined' || cacheHost === "") ? DEFAULT_CACHE_HOST : cacheHost;
   let path = (typeof cachePath === 'undefined' || cachePath === "") ? DEFAULT_CACHE_PATH : cachePath;
   return `https://${host}${path}`;
 }
 
+/**
+ * Render mobile or amp ad
+ * @param {string} cacheHost Cache host
+ * @param {string} cachePath Cache path
+ * @param {string} uuid id to render response from cache endpoint
+ * @param {Bool} isMobileApp flag to detect mobile app
+ */
 function renderAmpOrMobileAd(cacheHost, cachePath, uuid, isMobileApp) {
   // For MoPub, creative is stored in localStorage via SDK.
   if(uuid.startsWith('Prebid_')) {
@@ -138,6 +161,10 @@ function renderAmpOrMobileAd(cacheHost, cachePath, uuid, isMobileApp) {
   }
 }
 
+/**
+ * Cache request Callback to display creative
+ * @param {Bool} isMobileApp 
+ */
 function handler(isMobileApp) {
   return function(response) {
     let bidObject = parseResponse(response);
@@ -163,12 +190,20 @@ function handler(isMobileApp) {
   }
 };
 
+/**
+ * Load response from localStorage. In case of MoPub, sdk caches response
+ * @param {string} cacheId 
+ */
 function loadFromLocalCache(cacheId) {
   let bid = localStorage.getItem(cacheId);
   let displayFn = handler(true);
   displayFn(bidObj);
 }
 
+/**
+ * Parse response
+ * @param {string} response 
+ */
 function parseResponse(response) {
   let bidObject;
   try {
@@ -179,6 +214,12 @@ function parseResponse(response) {
   return bidObject;
 }
 
+/**
+ * Wrap mobile app creative in div
+ * @param {string} ad 
+ * @param {Number} width 
+ * @param {Number} height 
+ */
 function constructMarkup(ad, width, height) {
   var id = utils.getUUID();
   return `<div id="${id}" style="border-style: none; position: absolute; width:100%; height:100%;">
