@@ -22,6 +22,19 @@ Starts a web server at `http://localhost:9999` serving from the project root and
 + `./build/creative.js` - Full source code for dev and debug
 + `./build/creative.js.map` - Source map for dev and debug
 
+## Build for production
+
+We publish `prebid-universal-creative` as npm package on npmjs.com
+
+When we run `npm publish`, prepublish script of package.json is executed. Scripts given in prepublish Run BEFORE the package is packed and published. See https://docs.npmjs.com/misc/scripts
+
+`gulp build` is executed before publish. It creates two files in dist directory
+
++ `./dist/creative.js` - Minified creative.js source code
++ `./dist/creative.max.js` - Unminified source code to help in debugging.
+
+[jsDelivr](https://www.jsdelivr.com/) – Open Source CDN is used to serve creative.js file.
+
 ## Contributing
 
 Found a bug? Great!
