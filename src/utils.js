@@ -106,30 +106,3 @@ export function loadScript(currentWindow, tagSrc, callback) {
   return scriptTag;
 };
 
-// export function loadPixelUrl(win, src, uuid) {
-//   let img;
-//   let elToAppend = win.document.getElementsByTagName('head');
-
-//   if (doc && elToAppend && src) {
-//     img = new Image();
-//     img.id = uuid;
-//     img.src = src;
-//     img.height = 0;
-//     img.width = 0;
-//     img.style.display = 'none';
-//     img.onload = function() {
-//       try {
-//         this.parentNode.removeChild(this);
-//       } catch(e) {}
-//     };
-//     try {
-//       elToAppend = elToAppend.length ? elToAppend : doc.document.getElementsByTagName('body');
-//       if (elToAppend.length) {
-//         elToAppend = elToAppend[0];
-//         elToAppend.insertBefore(img, elToAppend.firstChild);
-//       }
-//     } catch(e) {
-//       console.log(`Error logging impression for tag: ${uuid} ${e.message}`);
-//     }
-//   }
-// };
