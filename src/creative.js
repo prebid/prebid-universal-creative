@@ -197,7 +197,7 @@ function handler(isMobileApp) {
 function loadFromLocalCache(cacheId) {
   let bid = localStorage.getItem(cacheId);
   let displayFn = handler(true);
-  displayFn(bidObj);
+  displayFn(bid);
 }
 
 /**
