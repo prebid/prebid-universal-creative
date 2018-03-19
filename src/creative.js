@@ -149,6 +149,27 @@ function renderAmpAd(cacheHost, cachePath, uuid) {
       let nurl = bidObject.nurl;
       utils.writeAdUrl(nurl, bidObject.h, bidObject.w);
     }
+    resizeIframe(bidObject);
   };
   utils.sendRequest(adUrl, handler);
+}
+
+function resizeIframe(response) {
+  if (environment.isSafeFrame()) {
+    const iframeWidth = window.innerWidth;
+    const iframeHeight = window.innerHeight;
+
+    function resize(status) {
+      let newWidth = response.w - iframeWidth;
+      let newHeight = response.h - iframeHeight;
+      $sf.ext.expand({r:newWidth, b:newHeight, push: true});
+    }
+
+    if (iframeWidth !== response.w || iframeHeight !== response.h) {
+      $sf.ext.register(iframeWidth, iframeHeight, resize);
+      // Shouldn't be calling this function to resize, but it's a bug in doubleclick
+      // remove this call when its fixed
+      resize();
+    }
+  }
 }

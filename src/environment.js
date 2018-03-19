@@ -57,7 +57,7 @@ export function isAmp(dataObject) {
 /**
  * @returns true if the environment is a SafeFrame.
  */
-function isSafeFrame() {
+export function isSafeFrame() {
   return window.$sf && window.$sf.ext;
 }
 
