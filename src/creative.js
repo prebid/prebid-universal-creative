@@ -149,27 +149,34 @@ function renderAmpAd(cacheHost, cachePath, uuid) {
       let nurl = bidObject.nurl;
       utils.writeAdUrl(nurl, bidObject.h, bidObject.w);
     }
-    resizeIframe(bidObject);
+    
   };
+  //register creative right away to not miss initial geom-update
+  // TODO: get width, height from creative template "hb_size" param.
+  resizeIframe(300, 250);
   utils.sendRequest(adUrl, handler);
 }
 
-function resizeIframe(response) {
-  if (environment.isSafeFrame()) {
+function resizeIframe(width, height) {
+   if (environment.isSafeFrame()) {
     const iframeWidth = window.innerWidth;
     const iframeHeight = window.innerHeight;
 
     function resize(status) {
-      let newWidth = response.w - iframeWidth;
-      let newHeight = response.h - iframeHeight;
+      let newWidth = width - iframeWidth;
+      let newHeight = height - iframeHeight;
       $sf.ext.expand({r:newWidth, b:newHeight, push: true});
     }
 
-    if (iframeWidth !== response.w || iframeHeight !== response.h) {
-      $sf.ext.register(iframeWidth, iframeHeight, resize);
-      // Shouldn't be calling this function to resize, but it's a bug in doubleclick
-      // remove this call when its fixed
-      resize();
+    if (iframeWidth !== width || iframeHeight !== height) {
+      $sf.ext.register(width, height, resize);
+      // we need to resize the DFP container as well
+      window.parent.postMessage({
+        sentinel: 'amp',
+        type: 'embed-size',
+        width: width,
+        height: height
+      }, '*');
     }
   }
 }
