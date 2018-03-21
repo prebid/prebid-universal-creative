@@ -33,7 +33,7 @@ const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
  */
 pbjs.renderAd = function(doc, adId, dataObject) {
   if (environment.isAmp(dataObject)) {
-    renderAmpAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid);
+    renderAmpAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid, dataObject.size);
   } else if (environment.isCrossDomain()) {
     renderCrossDomain(adId, dataObject.pubUrl);
   } else {
@@ -126,7 +126,7 @@ function getCacheEndpoint(cacheHost, cachePath) {
   return `https://${host}${path}`;
 }
 
-function renderAmpAd(cacheHost, cachePath, uuid) {
+function renderAmpAd(cacheHost, cachePath, uuid, size) {
   let adUrl = `${getCacheEndpoint(cacheHost, cachePath)}?uuid=${uuid}`;
 
   let handler = function(response) {
@@ -152,8 +152,13 @@ function renderAmpAd(cacheHost, cachePath, uuid) {
     
   };
   //register creative right away to not miss initial geom-update
-  // TODO: get width, height from creative template "hb_size" param.
-  resizeIframe(300, 250);
+  if (typeof size !== 'undefined' && size !== "") {
+    let sizeArr = size.split('x');
+    resizeIframe(sizeArr[0], sizeArr[1]);
+  } else {
+    console.log('Targeting key hb_size not found to resize creative');
+  }
+  
   utils.sendRequest(adUrl, handler);
 }
 
