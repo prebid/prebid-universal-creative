@@ -153,7 +153,7 @@ function renderAmpAd(cacheHost, cachePath, uuid, size) {
   };
   //register creative right away to not miss initial geom-update
   if (typeof size !== 'undefined' && size !== "") {
-    let sizeArr = size.split('x');
+    let sizeArr = size.split('x').map(Number);
     resizeIframe(sizeArr[0], sizeArr[1]);
   } else {
     console.log('Targeting key hb_size not found to resize creative');
