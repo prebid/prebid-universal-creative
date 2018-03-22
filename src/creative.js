@@ -33,7 +33,7 @@ const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
  */
 pbjs.renderAd = function(doc, adId, dataObject) {
   if (environment.isAmp(dataObject)) {
-    renderAmpAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid);
+    renderAmpAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid, dataObject.size);
   } else if (environment.isCrossDomain()) {
     renderCrossDomain(adId, dataObject.pubUrl);
   } else {
@@ -126,7 +126,7 @@ function getCacheEndpoint(cacheHost, cachePath) {
   return `https://${host}${path}`;
 }
 
-function renderAmpAd(cacheHost, cachePath, uuid) {
+function renderAmpAd(cacheHost, cachePath, uuid, size) {
   let adUrl = `${getCacheEndpoint(cacheHost, cachePath)}?uuid=${uuid}`;
 
   let handler = function(response) {
@@ -149,6 +149,39 @@ function renderAmpAd(cacheHost, cachePath, uuid) {
       let nurl = bidObject.nurl;
       utils.writeAdUrl(nurl, bidObject.h, bidObject.w);
     }
+    
   };
+  //register creative right away to not miss initial geom-update
+  if (typeof size !== 'undefined' && size !== "") {
+    let sizeArr = size.split('x').map(Number);
+    resizeIframe(sizeArr[0], sizeArr[1]);
+  } else {
+    console.log('Targeting key hb_size not found to resize creative');
+  }
+  
   utils.sendRequest(adUrl, handler);
+}
+
+function resizeIframe(width, height) {
+   if (environment.isSafeFrame()) {
+    const iframeWidth = window.innerWidth;
+    const iframeHeight = window.innerHeight;
+
+    function resize(status) {
+      let newWidth = width - iframeWidth;
+      let newHeight = height - iframeHeight;
+      $sf.ext.expand({r:newWidth, b:newHeight, push: true});
+    }
+
+    if (iframeWidth !== width || iframeHeight !== height) {
+      $sf.ext.register(width, height, resize);
+      // we need to resize the DFP container as well
+      window.parent.postMessage({
+        sentinel: 'amp',
+        type: 'embed-size',
+        width: width,
+        height: height
+      }, '*');
+    }
+  }
 }
