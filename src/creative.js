@@ -172,19 +172,19 @@ function handler(isMobileApp) {
     let width = (bidObject.width) ? bidObject.width : bidObject.w;
     let height = (bidObject.height) ? bidObject.height : bidObject.h;
     if (bidObject.adm) {
-      ad = (!isMobileApp) ? bidObject.adm : constructMarkup(bidObject.adm, width, height);
+      ad = (isMobileApp) ? constructMarkup(bidObject.adm, width, height) : bidObject.adm;
       if (bidObject.nurl) {
         ad += utils.createTrackPixelHtml(decodeURIComponent(bidObject.nurl));
       }
       utils.writeAdHtml(ad);
     } else if (bidObject.nurl) {
-      if(!isMobileApp) {
-        let nurl = bidObject.nurl;
-        utils.writeAdUrl(nurl, width, height);
-      } else {
+      if(isMobileApp) {
         let adhtml = utils.loadScript(window, bidObject.nurl);
         ad = constructMarkup(adhtml.outerHTML, width, height);
         utils.writeAdHtml(ad);
+      } else {
+        let nurl = bidObject.nurl;
+        utils.writeAdUrl(nurl, width, height);
       }
     }
   }
