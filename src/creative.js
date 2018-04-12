@@ -34,9 +34,9 @@ const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
  */
 pbjs.renderAd = function(doc, adId, dataObject) {
   if(environment.isMobileApp(dataObject)) {
-    renderAmpOrMobileAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid, true);
+    renderAmpOrMobileAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid, dataObject.size, true);
   } else if (environment.isAmp(dataObject)) {
-    renderAmpOrMobileAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid);
+    renderAmpOrMobileAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid, dataObject.size);
   } else if (environment.isCrossDomain()) {
     renderCrossDomain(adId, dataObject.pubUrl);
   } else {
@@ -151,12 +151,20 @@ function getCacheEndpoint(cacheHost, cachePath) {
  * @param {string} uuid id to render response from cache endpoint
  * @param {Bool} isMobileApp flag to detect mobile app
  */
-function renderAmpOrMobileAd(cacheHost, cachePath, uuid, isMobileApp) {
+function renderAmpOrMobileAd(cacheHost, cachePath, uuid, size, isMobileApp) {
   // For MoPub, creative is stored in localStorage via SDK.
   if(uuid.startsWith('Prebid_')) {
     loadFromLocalCache(uuid)
   } else {
     let adUrl = `${getCacheEndpoint(cacheHost, cachePath)}?uuid=${uuid}`;
+
+    //register creative right away to not miss initial geom-update
+    if (typeof size !== 'undefined' && size !== "") {
+      let sizeArr = size.split('x').map(Number);
+      resizeIframe(sizeArr[0], sizeArr[1]);
+    } else {
+      console.log('Targeting key hb_size not found to resize creative');
+    }
     utils.sendRequest(adUrl, responseCallback(isMobileApp));
   }
 }
@@ -225,4 +233,28 @@ function constructMarkup(ad, width, height) {
   return `<div id="${id}" style="border-style: none; position: absolute; width:100%; height:100%;">
     <div id="${id}_inner" style="margin: 0 auto; width:${width}; height:${height}">${ad}</div>
     </div>`;
+}
+
+function resizeIframe(width, height) {
+   if (environment.isSafeFrame()) {
+    const iframeWidth = window.innerWidth;
+    const iframeHeight = window.innerHeight;
+
+    function resize(status) {
+      let newWidth = width - iframeWidth;
+      let newHeight = height - iframeHeight;
+      $sf.ext.expand({r:newWidth, b:newHeight, push: true});
+    }
+
+    if (iframeWidth !== width || iframeHeight !== height) {
+      $sf.ext.register(width, height, resize);
+      // we need to resize the DFP container as well
+      window.parent.postMessage({
+        sentinel: 'amp',
+        type: 'embed-size',
+        width: width,
+        height: height
+      }, '*');
+    }
+  }
 }
