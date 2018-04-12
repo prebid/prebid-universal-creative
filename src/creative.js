@@ -157,7 +157,7 @@ function renderAmpOrMobileAd(cacheHost, cachePath, uuid, isMobileApp) {
     loadFromLocalCache(uuid)
   } else {
     let adUrl = `${getCacheEndpoint(cacheHost, cachePath)}?uuid=${uuid}`;
-    utils.sendRequest(adUrl, handler(isMobileApp));
+    utils.sendRequest(adUrl, responseCallback(isMobileApp));
   }
 }
 
@@ -165,7 +165,7 @@ function renderAmpOrMobileAd(cacheHost, cachePath, uuid, isMobileApp) {
  * Cache request Callback to display creative
  * @param {Bool} isMobileApp 
  */
-function handler(isMobileApp) {
+function responseCallback(isMobileApp) {
   return function(response) {
     let bidObject = parseResponse(response);
     let ad;
@@ -196,7 +196,7 @@ function handler(isMobileApp) {
  */
 function loadFromLocalCache(cacheId) {
   let bid = localStorage.getItem(cacheId);
-  let displayFn = handler(true);
+  let displayFn = responseCallback(true);
   displayFn(bid);
 }
 
