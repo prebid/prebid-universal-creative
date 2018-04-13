@@ -106,3 +106,45 @@ export function loadScript(currentWindow, tagSrc, callback) {
   return scriptTag;
 };
 
+/**
+ * Return comment element
+ * @param {*} bid 
+ */
+export function getCreativeComment(bid) {
+  return document.createComment(`Creative ${bid.crid} served by Prebid.js Header Bidding`);
+}
+
+/**
+ * Returns comment element markup
+ * @param {*} bid 
+ */
+export function getCreativeCommentMarkup(bid) {
+  let creativeComment = exports.getCreativeComment(bid);
+  let wrapper = document.createElement('div');
+  wrapper.appendChild(creativeComment);
+  return wrapper.innerHTML;
+}
+
+/**
+ * Insert element to passed target
+ * @param {object} elm
+ * @param {object} doc
+ * @param {string} target
+ */
+export function insertElement(elm, doc, target) {
+  doc = doc || document;
+  let elToAppend;
+  if (target) {
+    elToAppend = doc.getElementsByTagName(target);
+  } else {
+    elToAppend = doc.getElementsByTagName('head');
+  }
+  try {
+    elToAppend = elToAppend.length ? elToAppend : doc.getElementsByTagName('body');
+    if (elToAppend.length) {
+      elToAppend = elToAppend[0];
+      elToAppend.insertBefore(elm, elToAppend.firstChild);
+    }
+  } catch (e) {}
+}
+

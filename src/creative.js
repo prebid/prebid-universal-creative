@@ -176,11 +176,11 @@ function renderAmpOrMobileAd(cacheHost, cachePath, uuid, size, isMobileApp) {
 function responseCallback(isMobileApp) {
   return function(response) {
     let bidObject = parseResponse(response);
-    let ad;
+    let ad = utils.getCreativeCommentMarkup(bidObject);
     let width = (bidObject.width) ? bidObject.width : bidObject.w;
     let height = (bidObject.height) ? bidObject.height : bidObject.h;
     if (bidObject.adm) {
-      ad = (isMobileApp) ? constructMarkup(bidObject.adm, width, height) : bidObject.adm;
+      ad += (isMobileApp) ? constructMarkup(bidObject.adm, width, height) : bidObject.adm;
       if (bidObject.nurl) {
         ad += utils.createTrackPixelHtml(decodeURIComponent(bidObject.nurl));
       }
@@ -188,10 +188,12 @@ function responseCallback(isMobileApp) {
     } else if (bidObject.nurl) {
       if(isMobileApp) {
         let adhtml = utils.loadScript(window, bidObject.nurl);
-        ad = constructMarkup(adhtml.outerHTML, width, height);
+        ad += constructMarkup(adhtml.outerHTML, width, height);
         utils.writeAdHtml(ad);
       } else {
         let nurl = bidObject.nurl;
+        let commentElm = utils.getCreativeComment(bidObject);
+        utils.insertElement(commentElm, document, 'body');
         utils.writeAdUrl(nurl, width, height);
       }
     }
