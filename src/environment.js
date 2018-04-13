@@ -78,3 +78,11 @@ function isDFPSafeFrame() {
 export function isCrossDomain() {
   return window.top !== window && !window.frameElement;
 }
+
+/**
+ * Returns true if envrionment is mobile app
+ * @param {Object} dataObject 
+ */
+export function isMobileApp(dataObject) {
+  return dataObject.env && dataObject.env === 'mobile-app';
+}

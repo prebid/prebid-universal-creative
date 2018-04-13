@@ -6,10 +6,11 @@ var cachePath = "%%PATTERN:hb_cache_path%%";
 var uuid = "%%PATTERN:hb_cache_id%%";
 var mediaType = "%%PATTERN:hb_format%%";
 var pubUrl = "%%PATTERN:url%%";
+var env = "%%PATTERN:hb_env%%";
 var size = "%%PATTERN:hb_size%%";
 
 try {    
-    pbjs.renderAd(document, adId, {cacheHost: cacheHost, cachePath: cachePath, uuid: uuid, mediaType: mediaType, pubUrl: pubUrl, size: size});
+    pbjs.renderAd(document, adId, {cacheHost: cacheHost, cachePath: cachePath, uuid: uuid, mediaType: mediaType, pubUrl: pubUrl, env: env, size: size});
 } catch(e) {
     console.log(e);
 }

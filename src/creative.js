@@ -27,13 +27,16 @@ const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
  */
 
 /**
+ * Public render ad function to be used in dfp creative setup
  * @param  {object} doc
  * @param  {string} adId
  * @param  {dataObject} dataObject
  */
 pbjs.renderAd = function(doc, adId, dataObject) {
-  if (environment.isAmp(dataObject)) {
-    renderAmpAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid, dataObject.size);
+  if(environment.isMobileApp(dataObject)) {
+    renderAmpOrMobileAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid, dataObject.size, true);
+  } else if (environment.isAmp(dataObject)) {
+    renderAmpOrMobileAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid, dataObject.size);
   } else if (environment.isCrossDomain()) {
     renderCrossDomain(adId, dataObject.pubUrl);
   } else {
@@ -41,6 +44,11 @@ pbjs.renderAd = function(doc, adId, dataObject) {
   }
 };
 
+/**
+ * Calls prebid.js renderAd function to render ad
+ * @param {Object} doc Document
+ * @param {string} adId Id of creative to render
+ */
 function renderLegacy(doc, adId) {
   let w = window;
   for (i = 0; i < 10; i++) {
@@ -56,6 +64,11 @@ function renderLegacy(doc, adId) {
   }
 }
 
+/**
+ * Render ad in safeframe using postmessage
+ * @param {string} adId Id of creative to render
+ * @param {string} pubUrl Url of publisher page
+ */
 function renderCrossDomain(adId, pubUrl) {
   let urlParser = document.createElement('a');
   urlParser.href = pubUrl;
@@ -120,46 +133,106 @@ function renderCrossDomain(adId, pubUrl) {
   requestAdFromPrebid();
 }
 
+/**
+ * Returns cache endpoint concatenated with cache path
+ * @param {string} cacheHost Cache Endpoint host
+ * @param {string} cachePath Cache Endpoint path
+ */
 function getCacheEndpoint(cacheHost, cachePath) {
   let host = (typeof cacheHost === 'undefined' || cacheHost === "") ? DEFAULT_CACHE_HOST : cacheHost;
   let path = (typeof cachePath === 'undefined' || cachePath === "") ? DEFAULT_CACHE_PATH : cachePath;
   return `https://${host}${path}`;
 }
 
-function renderAmpAd(cacheHost, cachePath, uuid, size) {
-  let adUrl = `${getCacheEndpoint(cacheHost, cachePath)}?uuid=${uuid}`;
+/**
+ * Render mobile or amp ad
+ * @param {string} cacheHost Cache host
+ * @param {string} cachePath Cache path
+ * @param {string} uuid id to render response from cache endpoint
+ * @param {Bool} isMobileApp flag to detect mobile app
+ */
+function renderAmpOrMobileAd(cacheHost, cachePath, uuid, size, isMobileApp) {
+  // For MoPub, creative is stored in localStorage via SDK.
+  if(uuid.startsWith('Prebid_')) {
+    loadFromLocalCache(uuid)
+  } else {
+    let adUrl = `${getCacheEndpoint(cacheHost, cachePath)}?uuid=${uuid}`;
 
-  let handler = function(response) {
-    let bidObject;
-    try {
-      bidObject = JSON.parse(response);
-    } catch (error) {
-      console.log(`Error parsing response from cache host: ${error}`);
+    //register creative right away to not miss initial geom-update
+    if (typeof size !== 'undefined' && size !== "") {
+      let sizeArr = size.split('x').map(Number);
+      resizeIframe(sizeArr[0], sizeArr[1]);
+    } else {
+      console.log('Targeting key hb_size not found to resize creative');
     }
-    
+    utils.sendRequest(adUrl, responseCallback(isMobileApp));
+  }
+}
+
+/**
+ * Cache request Callback to display creative
+ * @param {Bool} isMobileApp 
+ */
+function responseCallback(isMobileApp) {
+  return function(response) {
+    let bidObject = parseResponse(response);
     let ad;
-    if (bidObject.adm && bidObject.nurl) {
-      ad = bidObject.adm;
-      ad += utils.createTrackPixelHtml(decodeURIComponent(bidObject.nurl));
-      utils.writeAdHtml(ad);
-    } else if (bidObject.adm) {
-      ad = bidObject.adm;
+    let width = (bidObject.width) ? bidObject.width : bidObject.w;
+    let height = (bidObject.height) ? bidObject.height : bidObject.h;
+    if (bidObject.adm) {
+      ad = (isMobileApp) ? constructMarkup(bidObject.adm, width, height) : bidObject.adm;
+      if (bidObject.nurl) {
+        ad += utils.createTrackPixelHtml(decodeURIComponent(bidObject.nurl));
+      }
       utils.writeAdHtml(ad);
     } else if (bidObject.nurl) {
-      let nurl = bidObject.nurl;
-      utils.writeAdUrl(nurl, bidObject.h, bidObject.w);
+      if(isMobileApp) {
+        let adhtml = utils.loadScript(window, bidObject.nurl);
+        ad = constructMarkup(adhtml.outerHTML, width, height);
+        utils.writeAdHtml(ad);
+      } else {
+        let nurl = bidObject.nurl;
+        utils.writeAdUrl(nurl, width, height);
+      }
     }
-    
-  };
-  //register creative right away to not miss initial geom-update
-  if (typeof size !== 'undefined' && size !== "") {
-    let sizeArr = size.split('x').map(Number);
-    resizeIframe(sizeArr[0], sizeArr[1]);
-  } else {
-    console.log('Targeting key hb_size not found to resize creative');
   }
-  
-  utils.sendRequest(adUrl, handler);
+};
+
+/**
+ * Load response from localStorage. In case of MoPub, sdk caches response
+ * @param {string} cacheId 
+ */
+function loadFromLocalCache(cacheId) {
+  let bid = localStorage.getItem(cacheId);
+  let displayFn = responseCallback(true);
+  displayFn(bid);
+}
+
+/**
+ * Parse response
+ * @param {string} response 
+ */
+function parseResponse(response) {
+  let bidObject;
+  try {
+    bidObject = JSON.parse(response);
+  } catch (error) {
+    console.log(`Error parsing response from cache host: ${error}`);
+  }
+  return bidObject;
+}
+
+/**
+ * Wrap mobile app creative in div
+ * @param {string} ad 
+ * @param {Number} width 
+ * @param {Number} height 
+ */
+function constructMarkup(ad, width, height) {
+  var id = utils.getUUID();
+  return `<div id="${id}" style="border-style: none; position: absolute; width:100%; height:100%;">
+    <div id="${id}_inner" style="margin: 0 auto; width:${width}; height:${height}">${ad}</div>
+    </div>`;
 }
 
 function resizeIframe(width, height) {
