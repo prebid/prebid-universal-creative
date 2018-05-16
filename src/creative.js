@@ -197,6 +197,9 @@ function responseCallback(isMobileApp) {
         utils.writeAdUrl(nurl, width, height);
       }
     }
+    if (bidObject.burl) {
+      utils.triggerBurl(bidObject.burl);
+    }
   }
 };
 
