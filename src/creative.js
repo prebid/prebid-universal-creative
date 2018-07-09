@@ -51,7 +51,7 @@ pbjs.renderAd = function(doc, adId, dataObject) {
  */
 function renderLegacy(doc, adId) {
   let w = window;
-  for (i = 0; i < 10; i++) {
+  for (let i = 0; i < 10; i++) {
     w = w.parent;
     if (w.pbjs) {
       try {
