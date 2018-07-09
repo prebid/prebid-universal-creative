@@ -148,3 +148,8 @@ export function insertElement(elm, doc, target) {
   } catch (e) {}
 }
 
+export function triggerBurl(url) {
+  const img = new Image();
+  img.src = url;
+};
+
