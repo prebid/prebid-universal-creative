@@ -45,23 +45,6 @@ export function getEmptyIframe(height, width) {
   return frame;
 }
 
-export function insertElement(elm, doc, target) {
-  doc = doc || document;
-  let elToAppend;
-  if (target) {
-    elToAppend = doc.getElementsByTagName(target);
-  } else {
-    elToAppend = doc.getElementsByTagName('head');
-  }
-  try {
-    elToAppend = elToAppend.length ? elToAppend : doc.getElementsByTagName('body');
-    if (elToAppend.length) {
-      elToAppend = elToAppend[0];
-      elToAppend.insertBefore(elm, elToAppend.firstChild);
-    }
-  } catch (e) {}
-};
-
 export function getUUID() {
   let d = new Date().getTime();
   let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
