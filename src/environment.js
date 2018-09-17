@@ -48,10 +48,10 @@ function isDfp() {
 /**
  * @returns true if there is an AMP context object
  */
-export function isAmp(dataObject) {
+export function isAmp(uuid) {
   // TODO Use amp context once it is available in cross domain
   // https://github.com/ampproject/amphtml/issues/6829
-  return typeof dataObject.uuid === 'string' && dataObject.uuid != "" && isCrossDomain();
+  return typeof uuid === 'string' && uuid !== "" && isCrossDomain();
 }
 
 /**
@@ -81,8 +81,8 @@ export function isCrossDomain() {
 
 /**
  * Returns true if envrionment is mobile app
- * @param {Object} dataObject 
+ * @param {String} env 
  */
-export function isMobileApp(dataObject) {
-  return dataObject.env && dataObject.env === 'mobile-app';
+export function isMobileApp(env) {
+  return env && env === 'mobile-app';
 }

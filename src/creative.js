@@ -12,7 +12,8 @@
 import * as utils from './utils';
 import * as environment from './environment';
 
-const pbjs = window.pbjs = (window.pbjs || {});
+// const pbjs = window.pbjs = (window.pbjs || {});
+const ucTag = window.ucTag = {};
 const GOOGLE_IFRAME_HOSTNAME = '//tpc.googlesyndication.com';
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
@@ -29,18 +30,19 @@ const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
 /**
  * Public render ad function to be used in dfp creative setup
  * @param  {object} doc
- * @param  {string} adId
  * @param  {dataObject} dataObject
  */
-pbjs.renderAd = function(doc, adId, dataObject) {
-  if(environment.isMobileApp(dataObject)) {
-    renderAmpOrMobileAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid, dataObject.size, true);
-  } else if (environment.isAmp(dataObject)) {
-    renderAmpOrMobileAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid, dataObject.size);
+ucTag.renderAd = function(doc, dataObject) {
+  const auctionData = utils.transformAuctionTargetingData(dataObject);
+
+  if(environment.isMobileApp(auctionData.env)) {
+    renderAmpOrMobileAd(auctionData.cacheHost, auctionData.cachePath, auctionData.uuid, auctionData.size, true);
+  } else if (environment.isAmp(auctionData.uuid)) {
+    renderAmpOrMobileAd(auctionData.cacheHost, auctionData.cachePath, auctionData.uuid, auctionData.size);
   } else if (environment.isCrossDomain()) {
-    renderCrossDomain(adId, dataObject.pubUrl);
+    renderCrossDomain(auctionData.adId, auctionData.adServerDomain, auctionData.pubUrl);
   } else {
-    renderLegacy(doc, adId);
+    renderLegacy(doc, auctionData.adId);
   }
 };
 
@@ -69,11 +71,11 @@ function renderLegacy(doc, adId) {
  * @param {string} adId Id of creative to render
  * @param {string} pubUrl Url of publisher page
  */
-function renderCrossDomain(adId, pubUrl) {
+function renderCrossDomain(adId, pubAdServerDomain, pubUrl) {
   let urlParser = document.createElement('a');
   urlParser.href = pubUrl;
   let publisherDomain = urlParser.protocol + '//' + urlParser.host;
-  let adServerDomain = urlParser.protocol + GOOGLE_IFRAME_HOSTNAME;
+  let adServerDomain = (pubAdServerDomain) ? urlParser.protocol + '//' + pubAdServerDomain : urlParser.protocol + GOOGLE_IFRAME_HOSTNAME;
 
   function renderAd(ev) {
     let key = ev.message ? 'message' : 'data';
@@ -141,6 +143,8 @@ function renderCrossDomain(adId, pubUrl) {
 function getCacheEndpoint(cacheHost, cachePath) {
   let host = (typeof cacheHost === 'undefined' || cacheHost === "") ? DEFAULT_CACHE_HOST : cacheHost;
   let path = (typeof cachePath === 'undefined' || cachePath === "") ? DEFAULT_CACHE_PATH : cachePath;
+
+  // QUESTION - DOES THIS HAVE TO BE SECURE 100%?
   return `https://${host}${path}`;
 }
 
