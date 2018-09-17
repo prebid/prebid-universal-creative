@@ -1,0 +1,28 @@
+<html>
+
+<head></head>
+
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/prebid-universal-creative@0.4.0/dist/creative.js"></script>
+  <script>
+    var ucTagData = {};
+    ucTagData.adServerDomain = "";
+    ucTagData.pubUrl = window.location.href;
+
+    ucTagData.adId = "114897193";
+    ucTagData.cacheHost = window.location.host;
+    ucTagData.cachePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + '/cached_mobile_bid.json';
+    ucTagData.uuid = "650675b9-6a3f-4f7f-8bde-e497dd4c7eee";
+    ucTagData.mediaType = "banner";
+    ucTagData.env = "mobile-app";
+    ucTagData.size = "300x250";
+
+    try {
+      ucTag.renderAd(document, ucTagData);
+    } catch (e) {
+      console.log(e);
+    }
+  </script>
+</body>
+
+</html>
