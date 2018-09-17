@@ -147,7 +147,7 @@ export function transformAuctionTargetingData(dataObject) {
     hb_size: 'size'
   };
 
-  let cleanedDataObject = {};
+  let auctionData = {};
 
   // set keys defined in targetingMap object (if it's defined)
   const tarMap = dataObject.targetingMap || {};
@@ -156,7 +156,7 @@ export function transformAuctionTargetingData(dataObject) {
     tarMapKeys.forEach(function(key) {
       if (Array.isArray(tarMap[key]) && tarMap[key].length > 0) {
         let internalKey = auctionKeyMap[key];
-        cleanedDataObject[internalKey] = tarMap[key][0];
+        auctionData[internalKey] = tarMap[key][0];
       }
     });
   }
@@ -164,9 +164,9 @@ export function transformAuctionTargetingData(dataObject) {
   // set keys not in targetingMap and/or the keys setup within a non-DFP adserver
   Object.keys(dataObject).forEach(function (key) {
     if (key !== 'targetingMap' && typeof dataObject[key] === 'string') {
-      cleanedDataObject[key] = dataObject[key];
+      auctionData[key] = dataObject[key];
     }
   });
 
-  return cleanedDataObject;
+  return auctionData;
 }
