@@ -155,7 +155,7 @@ export function transformAuctionTargetingData(dataObject) {
   if (tarMapKeys.length > 0) {
     tarMapKeys.forEach(function(key) {
       if (Array.isArray(tarMap[key]) && tarMap[key].length > 0) {
-        let internalKey = auctionKeyMap[key];
+        let internalKey = auctionKeyMap[key] || key;
         auctionData[internalKey] = tarMap[key][0];
       }
     });
