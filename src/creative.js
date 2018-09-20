@@ -10,9 +10,12 @@
  */
 
 import { newRenderingManager } from './renderingManager';
+import { newEnvironment } from './environment';
 
 window.ucTag = (window.ucTag || {});
 
-const renderCreative = newRenderingManager(window);
+const environment = newEnvironment(window);
+const renderCreative = newRenderingManager(window, environment);
+
 
 window.ucTag.renderAd = renderCreative.renderAd;

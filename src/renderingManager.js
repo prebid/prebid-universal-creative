@@ -1,11 +1,16 @@
 import * as utils from './utils';
-import * as environment from './environment';
 
 const GOOGLE_IFRAME_HOSTNAME = '//tpc.googlesyndication.com';
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
 
-export function newRenderingManager(win) {
+/**
+ * 
+ * @param {Object} win Window object
+ * @param {Object} environment Environment object
+ * @returns {Object} 
+ */
+export function newRenderingManager(win, environment) {
   /**
    * DataObject passed to render the ad
    * @typedef {Object} dataObject
