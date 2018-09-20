@@ -4,6 +4,9 @@
   ucTagData.adServerDomain = "";
   ucTagData.pubUrl = "%%PATTERN:url%%";
 
+  // if DFP, use this param
+  ucTagData.targetingMap = %%PATTERN:TARGETINGMAP%%;
+
   // if not DFP, use these params
   ucTagData.adId = "%%PATTERN:hb_adid%%";
   ucTagData.cacheHost = "%%PATTERN:hb_cache_host%%";
@@ -12,9 +15,6 @@
   ucTagData.mediaType = "%%PATTERN:hb_format%%";
   ucTagData.env = "%%PATTERN:hb_env%%";
   ucTagData.size = "%%PATTERN:hb_size%%";
-
-  // if DFP, use this param
-  ucTagData.targetingMap = %%PATTERN:TARGETINGMAP%%;
 
   try {
     ucTag.renderAd(document, ucTagData);

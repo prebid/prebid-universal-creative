@@ -46,6 +46,7 @@ function isDfp() {
 }
 
 /**
+ * @param {String} uuid key value from auction, contains the cache id of the winning bid stored in prebid cache
  * @returns true if there is an AMP context object
  */
 export function isAmp(uuid) {
@@ -80,8 +81,8 @@ export function isCrossDomain() {
 }
 
 /**
- * Returns true if envrionment is mobile app
- * @param {String} env 
+ * @param {String} env key value from auction, indicates the environment where tag is served
+ * @returns true if env exists and is equal to the string 'mobile-app'
  */
 export function isMobileApp(env) {
   return env && env === 'mobile-app';

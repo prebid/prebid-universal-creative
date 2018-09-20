@@ -32,16 +32,16 @@ const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
  * @param  {dataObject} dataObject
  */
 ucTag.renderAd = function(doc, dataObject) {
-  const auctionData = utils.transformAuctionTargetingData(dataObject);
+  const targetingData = utils.transformAuctionTargetingData(dataObject);
 
-  if(environment.isMobileApp(auctionData.env)) {
-    renderAmpOrMobileAd(auctionData.cacheHost, auctionData.cachePath, auctionData.uuid, auctionData.size, true);
-  } else if (environment.isAmp(auctionData.uuid)) {
-    renderAmpOrMobileAd(auctionData.cacheHost, auctionData.cachePath, auctionData.uuid, auctionData.size);
+  if(environment.isMobileApp(targetingData.env)) {
+    renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, true);
+  } else if (environment.isAmp(targetingData.uuid)) {
+    renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size);
   } else if (environment.isCrossDomain()) {
-    renderCrossDomain(auctionData.adId, auctionData.adServerDomain, auctionData.pubUrl);
+    renderCrossDomain(targetingData.adId, targetingData.adServerDomain, targetingData.pubUrl);
   } else {
-    renderLegacy(doc, auctionData.adId);
+    renderLegacy(doc, targetingData.adId);
   }
 };
 
