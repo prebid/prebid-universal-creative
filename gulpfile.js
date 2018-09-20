@@ -13,6 +13,8 @@ var webpack = require('webpack');
 var webpackConfig = require('./webpack.conf');
 var inject = require('gulp-inject');
 var rename = require('gulp-rename');
+var KarmaServer = require('karma').Server;
+var karmaConf = require('./karma.conf.js');
 
 var dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
 var banner = '/* <%= creative.name %> v<%= creative.version %>\n' + dateString + ' */\n';
@@ -79,4 +81,20 @@ gulp.task('connect', () => {
     livereload: true
   });
 });
+
+gulp.task('test', (done) => {
+  new KarmaServer({
+    configFile: __dirname + '/karma.conf.js',
+  }, newKarmaCallback(done)).start();
+});
+
+function newKarmaCallback(done) {
+  return function (exitCode) {
+    if (exitCode) {
+      done(new Error('Karma tests failed with exit code ' + exitCode));
+    } else {
+      done();
+    }
+  }
+}
 
