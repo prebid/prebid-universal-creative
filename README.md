@@ -33,7 +33,7 @@ When we run `npm publish`, prepublish script of package.json is executed. Script
 + `./dist/creative.js` - Minified creative.js source code
 + `./dist/creative.max.js` - Unminified source code to help in debugging.
 
-[jsDelivr](https://www.jsdelivr.com/) – Open Source CDN is used to serve creative.js file.
+The latest version of the creative.js file is hosted on the AppNexus CDN (https://acdn.adnxs.com).
 
 ## Contributing
 

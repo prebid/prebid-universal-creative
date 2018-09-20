@@ -136,3 +136,37 @@ export function triggerBurl(url) {
   img.src = url;
 };
 
+export function transformAuctionTargetingData(dataObject) {
+  const auctionKeyMap = {
+    hb_adid: 'adId',
+    hb_cache_host: 'cacheHost',
+    hb_cache_path: 'cachePath',
+    hb_cache_id: 'uuid',
+    hb_format: 'mediaType',
+    hb_env: 'env',
+    hb_size: 'size'
+  };
+
+  let auctionData = {};
+
+  // set keys defined in targetingMap object (if it's defined)
+  const tarMap = dataObject.targetingMap || {};
+  const tarMapKeys = Object.keys(tarMap);
+  if (tarMapKeys.length > 0) {
+    tarMapKeys.forEach(function(key) {
+      if (Array.isArray(tarMap[key]) && tarMap[key].length > 0) {
+        let internalKey = auctionKeyMap[key] || key;
+        auctionData[internalKey] = tarMap[key][0];
+      }
+    });
+  }
+
+  // set keys not in targetingMap and/or the keys setup within a non-DFP adserver
+  Object.keys(dataObject).forEach(function (key) {
+    if (key !== 'targetingMap' && typeof dataObject[key] === 'string') {
+      auctionData[key] = dataObject[key];
+    }
+  });
+
+  return auctionData;
+}
