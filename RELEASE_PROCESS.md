@@ -56,7 +56,7 @@ _Note: If `github.com/prebid/prebid-universal-creative` is not configured as the
 
 5. Distribute the code 
 
-   _Note: do not go to step 7 until step 6 has been verified completed._
+   _Note: do not go to step 6 until step 5 has been verified completed._
 
    Reach out to any of the Appnexus folks to trigger the jenkins job.
 
