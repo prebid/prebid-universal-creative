@@ -27,7 +27,7 @@ export function newRenderingManager(win, environment) {
    */
   let renderAd = function(doc, dataObject) {
     const targetingData = utils.transformAuctionTargetingData(dataObject);
-
+    console.log(targetingData);
     if(environment.isMobileApp(targetingData.env)) {
       renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, true);
     } else if (environment.isAmp(targetingData.uuid)) {
@@ -50,7 +50,7 @@ export function newRenderingManager(win, environment) {
       w = w.parent;
       if (w.pbjs) {
         try {
-          w.pbjs.renderAd(document, adId);
+          w.pbjs.renderAd(w.document, adId);
           break;
         } catch (e) {
           continue;
@@ -65,10 +65,9 @@ export function newRenderingManager(win, environment) {
    * @param {string} pubUrl Url of publisher page
    */
   function renderCrossDomain(adId, pubAdServerDomain, pubUrl) {
-    let urlParser = document.createElement('a');
-    urlParser.href = pubUrl;
-    let publisherDomain = urlParser.protocol + '//' + urlParser.host;
-    let adServerDomain = (pubAdServerDomain) ? urlParser.protocol + '//' + pubAdServerDomain : urlParser.protocol + GOOGLE_IFRAME_HOSTNAME;
+    let parsedUrl = utils.parse(pubUrl);
+    let publisherDomain = parsedUrl.protocol + '//' + parsedUrl.host;
+    let adServerDomain = (pubAdServerDomain) ? parsedUrl.protocol + '//' + pubAdServerDomain : parsedUrl.protocol + GOOGLE_IFRAME_HOSTNAME;
 
     function renderAd(ev) {
       let key = ev.message ? 'message' : 'data';
