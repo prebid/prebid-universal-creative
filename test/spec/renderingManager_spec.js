@@ -1,19 +1,18 @@
 import { newRenderingManager } from 'src/renderingManager';
 import * as utils from 'src/utils';
 import { expect } from 'chai';
+import { mocks } from 'test/helpers/mocks';
+import { merge } from 'lodash';
 
-const mocks = {
-  createFakeWindow: function (href) {
-    this.messages = [];
+const renderingMocks = {
+  messages: [],
+  getWindowObject: function() {
     return {
       document: {
         body: {
           appendChild: sinon.spy()
         },
         createComment: () => true,
-      },
-      location: {
-        href: href,
       },
       parent: {
         postMessage: sinon.spy(),
@@ -36,9 +35,10 @@ const mocks = {
       },
       innerWidth: 300,
       innerHeight: 250
-    };
+    }
   }
-}
+  
+} 
 
 let mockIframe = {
   contentDocument: {
@@ -73,7 +73,7 @@ describe('renderingManager', function() {
     before(function() {
       writeHtmlSpy = sinon.spy(utils, 'writeAdHtml');
       sendRequestSpy = sinon.spy(utils, 'sendRequest');
-      mockWin = mocks.createFakeWindow('http://example.com');
+      mockWin = merge(mocks.createFakeWindow('http://example.com'), renderingMocks.getWindowObject());
     });
     
     afterEach(function() {
@@ -142,7 +142,7 @@ describe('renderingManager', function() {
     before(function() {
       writeHtmlSpy = sinon.spy(utils, 'writeAdHtml');
       sendRequestSpy = sinon.spy(utils, 'sendRequest');
-      mockWin = mocks.createFakeWindow('http://example.com');
+      mockWin = merge(mocks.createFakeWindow('http://example.com'), renderingMocks.getWindowObject());
     });
     
     afterEach(function() {
@@ -201,13 +201,14 @@ describe('renderingManager', function() {
     });
 
     it('should render cross domain creative', function() {
+      debugger;
       parseStub.returns({
         protocol: 'http:',
         host: 'example.com'
       });
       iframeStub.returns(mockIframe);
 
-      const mockWin = mocks.createFakeWindow('http://example.com');
+      const mockWin = merge(mocks.createFakeWindow('http://example.com'), renderingMocks.getWindowObject());
       const env = {
         isMobileApp: () => false,
         isAmp: () => false,
@@ -242,7 +243,7 @@ describe('renderingManager', function() {
 
   describe('legacy creative', function() {
     it('should render legacy creative', function() {
-      const mockWin = mocks.createFakeWindow('http://example.com');
+      const mockWin = merge(mocks.createFakeWindow('http://example.com'), renderingMocks.getWindowObject());
       const env = {
         isMobileApp: () => false,
         isAmp: () => false,

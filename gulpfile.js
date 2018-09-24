@@ -14,7 +14,8 @@ var webpackConfig = require('./webpack.conf');
 var inject = require('gulp-inject');
 var rename = require('gulp-rename');
 var KarmaServer = require('karma').Server;
-var karmaConf = require('./karma.conf.js');
+var opens = require('open');
+var karmaConfMaker = require('./karma.conf.maker');
 
 var dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
 var banner = '/* <%= creative.name %> v<%= creative.version %>\n' + dateString + ' */\n';
@@ -83,9 +84,8 @@ gulp.task('connect', () => {
 });
 
 gulp.task('test', (done) => {
-  new KarmaServer({
-    configFile: __dirname + '/karma.conf.js',
-  }, newKarmaCallback(done)).start();
+  var karmaConf = karmaConfMaker(false, argv.browserstack, argv.watch);
+  new KarmaServer(karmaConf, newKarmaCallback(done)).start();
 });
 
 function newKarmaCallback(done) {
@@ -97,4 +97,23 @@ function newKarmaCallback(done) {
     }
   }
 }
+
+gulp.task('set-test-node-env', () => {
+  return process.env.NODE_ENV = 'test';
+});
+
+gulp.task('test-coverage', ['set-test-node-env'], (done) => {
+  new KarmaServer(karmaConfMaker(true, false, false), newKarmaCallback(done)).start();
+})
+
+gulp.task('view-coverage', () => {
+  var coveragePort = 1999;
+
+  connect.server({
+    port: coveragePort,
+    root: 'coverage/',
+    livereload: false
+  });
+  opens('http://localhost:' + coveragePort);
+});
 

@@ -1,9 +1,47 @@
-// Karma configuration
-var webpackConfig = require('./webpack.conf');
+var _ = require('lodash');
+var webpackConf = require('./webpack.conf');
+var karmaConstants = require('karma').constants;
 
-module.exports = function(config) {
-  config.set({
+function setBrowsers(karmaConf, browserstack, watchMode) {
+  if (browserstack) {
+    karmaConf.browserStack = {
+      username: process.env.BROWSERSTACK_USERNAME,
+      accessKey: process.env.BROWSERSTACK_ACCESS_KEY
+    }
+    karmaConf.customLaunchers = require('./browsers.json')
+    karmaConf.browsers = Object.keys(karmaConf.customLaunchers);
+  } else if (watchMode) {
+    karmaConf.browsers = ['Chrome'];
+  }
+}
 
+function setCodeCoverage(karmaConf, codeCoverage) {
+  if (codeCoverage) {
+    karmaConf.coverageReporter = {
+      reporters:[
+        {
+          type : 'html',
+          dir : 'coverage/',
+          subdir: '.'
+        }, 
+        {
+          type: 'text-summary'
+        }
+      ]
+    }
+  }
+}
+
+module.exports = function(codeCoverage, browserstack, watchMode) {
+  let webpackConfig = _.cloneDeep(webpackConf);
+  webpackConfig.devtool = 'inline-source-map';
+
+  let files = ['test/test_index.js'];
+  if (watchMode) {
+    files.push('test/helpers/karma-init.js');
+  }
+
+  let config = {
     // base path that will be used to resolve all patterns (eg. files, exclude)
     basePath: './',
 
@@ -15,7 +53,8 @@ module.exports = function(config) {
       // 'karma-requirejs',
       'karma-sourcemap-loader',
       'karma-sinon',
-      'karma-coverage'
+      'karma-coverage',
+      'karma-browserstack-launcher'
     ],
     webpack: webpackConfig,
     webpackMiddleware: {
@@ -27,9 +66,7 @@ module.exports = function(config) {
     frameworks: ['mocha', 'chai', 'sinon'],
 
     // list of files / patterns to load in the browser
-    files: [
-      'test/test_index.js'
-    ],
+    files: files,
 
     // list of files / patterns to exclude
     exclude: [
@@ -41,7 +78,6 @@ module.exports = function(config) {
       'test/test_index.js': [ 'webpack', 'sourcemap' ]
     },
 
-
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
@@ -49,37 +85,24 @@ module.exports = function(config) {
 
     // web server port
     port: 9876,
-    coverageReporter: {
-      reporters:[
-        {
-          type : 'html',
-          dir : 'coverage/',
-          subdir: '.'
-        }, 
-        {
-          type: 'text-summary'
-        }
-      ]
-    },
 
     // enable / disable colors in the output (reporters and logs)
     colors: true,
 
-
     // level of logging
     // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
-    logLevel: config.LOG_INFO,
+    logLevel: karmaConstants.LOG_INFO,
 
     // enable / disable watching file and executing tests whenever any file changes
     autoWatch: true,
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['Chrome'],
+    browsers: ['ChromeHeadless'],
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
-    singleRun: true,
+    singleRun: !watchMode,
 
     // Concurrency level
     // how many browser should be started simultaneous
@@ -88,5 +111,8 @@ module.exports = function(config) {
     browserDisconnectTolerance: 1, // default 0
     browserNoActivityTimeout: 4 * 60 * 1000, // default 10000
     captureTimeout: 4 * 60 * 1000, // default 60000
-  })
+  }
+  setCodeCoverage(config, codeCoverage);
+  setBrowsers(config, browserstack, watchMode);
+  return config;
 }
