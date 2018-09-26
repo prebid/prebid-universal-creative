@@ -1,3 +1,4 @@
 # Built files
 node_modules/
 build
+coverage

@@ -11,7 +11,7 @@ module.exports = {
     ],
   },
   output: {
-    filename: "creative.js"
+    filename: 'creative.js',
   },
   module: {
     rules: [
