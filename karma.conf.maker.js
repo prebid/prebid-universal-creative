@@ -50,7 +50,6 @@ module.exports = function(codeCoverage, browserstack, watchMode) {
       'karma-chrome-launcher',
       'karma-webpack',
       'karma-chai',
-      // 'karma-requirejs',
       'karma-sourcemap-loader',
       'karma-sinon',
       'karma-coverage',
@@ -58,7 +57,7 @@ module.exports = function(codeCoverage, browserstack, watchMode) {
     ],
     webpack: webpackConfig,
     webpackMiddleware: {
-      noInfo: true
+      logLevel: 'error'
     },
 
     // frameworks to use

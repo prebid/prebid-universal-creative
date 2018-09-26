@@ -171,7 +171,7 @@ export function transformAuctionTargetingData(dataObject) {
   return auctionData;
 }
 
-export function parse(url) {
+export function parseUrl(url) {
   let parsed = document.createElement('a');
   parsed.href = url;
   

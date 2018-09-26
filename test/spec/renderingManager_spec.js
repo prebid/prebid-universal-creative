@@ -37,7 +37,6 @@ const renderingMocks = {
       innerHeight: 250
     }
   }
-  
 } 
 
 let mockIframe = {
@@ -183,15 +182,13 @@ describe('renderingManager', function() {
       expect(writeHtmlSpy.args[0][0]).to.equal('<!--Creative 123 served by Prebid.js Header Bidding-->ad-markup');
       expect(sendRequestSpy.args[0][0]).to.equal('https://example.com/path?uuid=123');
     });
-
-    
   });
   
   describe('cross domain creative', function() {
     let parseStub;
     let iframeStub;
     beforeEach(function(){
-      parseStub = sinon.stub(utils, 'parse');
+      parseStub = sinon.stub(utils, 'parseUrl');
       iframeStub = sinon.stub(utils, 'getEmptyIframe');
     });
 

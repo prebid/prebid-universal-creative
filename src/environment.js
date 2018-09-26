@@ -4,15 +4,10 @@
 
 /**
  * Functions to detect below environments:
- *  CodeOnPage: div directly on publisher's page
  *  Amp: google Accelerate Mobile Pages ampproject.org
- *  Dfp: google doubleclick for publishers https://www.doubleclickbygoogle.com/
- *  DfpInAmp: AMP page containing a DFP iframe
  *  SafeFrame: SafeFrame
- *  DfpSafeFrame: An iframe that can't get to the top window
- *  Sandboxed: An iframe that can't get to the top window
- *  SuperSandboxed: An iframe without allow-same-origin
- *  Unknown: A default sandboxed implementation delivered by EnvironmentDispatch when all positive environment checks fail
+ *  CrossDomain: An iframe that can't get to the top window
+ *  Mobile App: function to detect mobile app environment
  */
 
 

@@ -21,7 +21,7 @@ var dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
 var banner = '/* <%= creative.name %> v<%= creative.version %>\n' + dateString + ' */\n';
 var port = 9999;
 
-gulp.task('serve', ['clean', 'build-dev', 'connect']);
+gulp.task('serve', ['clean', 'test', 'build-dev', 'connect']);
 
 gulp.task('build', ['build-prod', 'build-cookie-sync']);
 
@@ -83,6 +83,12 @@ gulp.task('connect', () => {
   });
 });
 
+// Run the unit tests.
+//
+// By default, this runs in headless chrome.
+//
+// If --watch is given, the task will open the karma debug window 
+// If --browserstack is given, it will run the full suite of currently supported browsers.
 gulp.task('test', (done) => {
   var karmaConf = karmaConfMaker(false, argv.browserstack, argv.watch);
   new KarmaServer(karmaConf, newKarmaCallback(done)).start();

@@ -49,7 +49,7 @@ export function newRenderingManager(win, environment) {
       w = w.parent;
       if (w.pbjs) {
         try {
-          w.pbjs.renderAd(w.document, adId);
+          w.pbjs.renderAd(doc, adId);
           break;
         } catch (e) {
           continue;
@@ -61,10 +61,11 @@ export function newRenderingManager(win, environment) {
   /**
    * Render ad in safeframe using postmessage
    * @param {string} adId Id of creative to render
+   * @param {string} pubAdServerDomain publisher adserver domain name
    * @param {string} pubUrl Url of publisher page
    */
   function renderCrossDomain(adId, pubAdServerDomain, pubUrl) {
-    let parsedUrl = utils.parse(pubUrl);
+    let parsedUrl = utils.parseUrl(pubUrl);
     let publisherDomain = parsedUrl.protocol + '//' + parsedUrl.host;
     let adServerDomain = (pubAdServerDomain) ? parsedUrl.protocol + '//' + pubAdServerDomain : parsedUrl.protocol + GOOGLE_IFRAME_HOSTNAME;
 
@@ -143,11 +144,13 @@ export function newRenderingManager(win, environment) {
    * @param {string} cacheHost Cache host
    * @param {string} cachePath Cache path
    * @param {string} uuid id to render response from cache endpoint
+   * @param {string} size size of the creative
    * @param {Bool} isMobileApp flag to detect mobile app
    */
   function renderAmpOrMobileAd(cacheHost, cachePath, uuid, size, isMobileApp) {
     // For MoPub, creative is stored in localStorage via SDK.
-    if(uuid.startsWith('Prebid_')) {
+    let search = 'Prebid_';
+    if(uuid.substr(0, search.length) === search) {
       loadFromLocalCache(uuid)
     } else {
       let adUrl = `${getCacheEndpoint(cacheHost, cachePath)}?uuid=${uuid}`;
@@ -166,6 +169,7 @@ export function newRenderingManager(win, environment) {
   /**
    * Cache request Callback to display creative
    * @param {Bool} isMobileApp 
+   * @returns {function} a callback function that parses response
    */
   function responseCallback(isMobileApp) {
     return function(response) {
@@ -210,6 +214,7 @@ export function newRenderingManager(win, environment) {
   /**
    * Parse response
    * @param {string} response 
+   * @returns {Object} bidObject parsed response
    */
   function parseResponse(response) {
     let bidObject;
@@ -223,9 +228,10 @@ export function newRenderingManager(win, environment) {
 
   /**
    * Wrap mobile app creative in div
-   * @param {string} ad 
-   * @param {Number} width 
-   * @param {Number} height 
+   * @param {string} ad html for creative
+   * @param {Number} width width of creative
+   * @param {Number} height height of creative
+   * @returns {string} creative markup
    */
   function constructMarkup(ad, width, height) {
     var id = utils.getUUID();
@@ -234,6 +240,11 @@ export function newRenderingManager(win, environment) {
       </div>`;
   }
 
+  /**
+   * Resize container iframe
+   * @param {Number} width width of creative
+   * @param {Number} height height of creative
+   */
   function resizeIframe(width, height) {
     if (environment.isSafeFrame()) {
       const iframeWidth = win.innerWidth;
