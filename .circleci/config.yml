@@ -42,6 +42,8 @@ jobs:
             wget "https://www.browserstack.com/browserstack-local/BrowserStackLocal-linux-x64.zip"
             # Unzip it
             unzip BrowserStackLocal-linux-x64.zip
+            echo ${BROWSERSTACK_ACCESS_KEY}
+            ls
             # Run the file with user's access key
             ./BrowserStackLocal ${BROWSERSTACK_ACCESS_KEY} &
       # run tests!
