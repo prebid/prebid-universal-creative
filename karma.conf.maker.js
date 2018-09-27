@@ -15,7 +15,18 @@ function setBrowsers(karmaConf, browserstack, watchMode) {
   }
 }
 
-function setCodeCoverage(karmaConf, codeCoverage) {
+function setReporters(karmaConf, codeCoverage, browserstack) {
+  // In browserstack, the default 'progress' reporter floods the logs.
+  // The karma-spec-reporter reports failures more concisely
+  if (browserstack) {
+    karmaConf.reporters = ['spec'];
+    karmaConf.specReporter = {
+      maxLogLines: 100,
+      suppressErrorSummary: false,
+      suppressSkipped: false,
+      suppressPassed: true
+    };
+  }
   if (codeCoverage) {
     karmaConf.coverageReporter = {
       reporters:[
@@ -53,7 +64,9 @@ module.exports = function(codeCoverage, browserstack, watchMode) {
       'karma-sourcemap-loader',
       'karma-sinon',
       'karma-coverage',
-      'karma-browserstack-launcher'
+      'karma-browserstack-launcher',
+      'karma-spec-reporter',
+      'karma-mocha-reporter'
     ],
     webpack: webpackConfig,
     webpackMiddleware: {
@@ -111,7 +124,7 @@ module.exports = function(codeCoverage, browserstack, watchMode) {
     browserNoActivityTimeout: 4 * 60 * 1000, // default 10000
     captureTimeout: 4 * 60 * 1000, // default 60000
   }
-  setCodeCoverage(config, codeCoverage);
+  setReporters(config, codeCoverage, browserstack);
   setBrowsers(config, browserstack, watchMode);
   return config;
 }
