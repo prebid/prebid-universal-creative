@@ -48,3 +48,4 @@ jobs:
       - run: 
           name: BrowserStack testing
           command: gulp test --browserstack
+          
