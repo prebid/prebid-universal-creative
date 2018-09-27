@@ -43,9 +43,8 @@ jobs:
             # Unzip it
             unzip BrowserStackLocal-linux-x64.zip
             # Run the file with user's access key
-            #./BrowserStackLocal ${BROWSERSTACK_ACCESS_KEY} &
+            ./BrowserStackLocal ${BROWSERSTACK_ACCESS_KEY} &
       # run tests!
       - run: 
           name: BrowserStack testing
-          #command: gulp test --browserstack
-          command: gulp test
+          command: gulp test --browserstack
