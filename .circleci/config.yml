@@ -46,6 +46,8 @@ jobs:
             ls
             # Run the file with user's access key
             ./BrowserStackLocal ${BROWSERSTACK_ACCESS_KEY} &
+            echo "print process to see if browserstack started"
+            ps -ef | grep browserstack
       # run tests!
       - run: 
           name: BrowserStack testing
