@@ -3,7 +3,6 @@ import * as utils from 'src/utils';
 import { expect } from 'chai';
 import { mocks } from 'test/helpers/mocks';
 import { merge } from 'lodash';
-import { debug } from 'util';
 
 const renderingMocks = {
   messages: [],
