@@ -1,6 +1,6 @@
 import * as utils from './utils';
 
-const GOOGLE_IFRAME_HOSTNAME = '//tpc.googlesyndication.com';
+const GOOGLE_IFRAME_HOSTNAME = 'tpc.googlesyndication.com';
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
 
@@ -64,10 +64,11 @@ export function newRenderingManager(win, environment) {
    * @param {string} pubAdServerDomain publisher adserver domain name
    * @param {string} pubUrl Url of publisher page
    */
-  function renderCrossDomain(adId, pubAdServerDomain, pubUrl) {
+  function renderCrossDomain(adId, pubAdServerDomain = '', pubUrl) {
     let parsedUrl = utils.parseUrl(pubUrl);
-    let publisherDomain = parsedUrl.protocol + '//' + parsedUrl.host;
-    let adServerDomain = (pubAdServerDomain) ? parsedUrl.protocol + '//' + pubAdServerDomain : parsedUrl.protocol + GOOGLE_IFRAME_HOSTNAME;
+    let publisherDomain = parsedUrl.protocol + '://' + parsedUrl.host;
+    let adServerDomain = (pubAdServerDomain !== '') ? pubAdServerDomain : GOOGLE_IFRAME_HOSTNAME;
+    let fullAdServerDomain = parsedUrl.protocol + '://' + adServerDomain;
 
     function renderAd(ev) {
       let key = ev.message ? 'message' : 'data';
@@ -114,7 +115,7 @@ export function newRenderingManager(win, environment) {
       let message = JSON.stringify({
         message: 'Prebid Request',
         adId: adId,
-        adServerDomain: adServerDomain
+        adServerDomain: fullAdServerDomain
       });
       win.parent.postMessage(message, publisherDomain);
     }
@@ -147,7 +148,7 @@ export function newRenderingManager(win, environment) {
    * @param {string} size size of the creative
    * @param {Bool} isMobileApp flag to detect mobile app
    */
-  function renderAmpOrMobileAd(cacheHost, cachePath, uuid, size, isMobileApp) {
+  function renderAmpOrMobileAd(cacheHost, cachePath, uuid = '', size, isMobileApp) {
     // For MoPub, creative is stored in localStorage via SDK.
     let search = 'Prebid_';
     if(uuid.substr(0, search.length) === search) {

@@ -3,6 +3,7 @@ import * as utils from 'src/utils';
 import { expect } from 'chai';
 import { mocks } from 'test/helpers/mocks';
 import { merge } from 'lodash';
+import { debug } from 'util';
 
 const renderingMocks = {
   messages: [],
@@ -198,9 +199,8 @@ describe('renderingManager', function() {
     });
 
     it('should render cross domain creative', function() {
-      debugger;
       parseStub.returns({
-        protocol: 'http:',
+        protocol: 'http',
         host: 'example.com'
       });
       iframeStub.returns(mockIframe);
