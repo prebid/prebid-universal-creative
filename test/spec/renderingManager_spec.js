@@ -200,7 +200,7 @@ describe('renderingManager', function() {
     it('should render cross domain creative', function() {
       debugger;
       parseStub.returns({
-        protocol: 'http:',
+        protocol: 'http',
         host: 'example.com'
       });
       iframeStub.returns(mockIframe);

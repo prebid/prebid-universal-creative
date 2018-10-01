@@ -1,6 +1,6 @@
 import * as utils from './utils';
 
-const GOOGLE_IFRAME_HOSTNAME = '//tpc.googlesyndication.com';
+const GOOGLE_IFRAME_HOSTNAME = 'tpc.googlesyndication.com';
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
 
@@ -66,8 +66,8 @@ export function newRenderingManager(win, environment) {
    */
   function renderCrossDomain(adId, pubAdServerDomain, pubUrl) {
     let parsedUrl = utils.parseUrl(pubUrl);
-    let publisherDomain = parsedUrl.protocol + '//' + parsedUrl.host;
-    let adServerDomain = (pubAdServerDomain) ? parsedUrl.protocol + '//' + pubAdServerDomain : parsedUrl.protocol + GOOGLE_IFRAME_HOSTNAME;
+    let publisherDomain = parsedUrl.protocol + '://' + parsedUrl.host;
+    let adServerDomain = (pubAdServerDomain) ? parsedUrl.protocol + '://' + pubAdServerDomain : parsedUrl.protocol + '://' + GOOGLE_IFRAME_HOSTNAME;
 
     function renderAd(ev) {
       let key = ev.message ? 'message' : 'data';
