@@ -67,8 +67,12 @@ export function newRenderingManager(win, environment) {
   function renderCrossDomain(adId, pubAdServerDomain = '', pubUrl) {
     let parsedUrl = utils.parseUrl(pubUrl);
     let publisherDomain = parsedUrl.protocol + '://' + parsedUrl.host;
+<<<<<<< HEAD
     let adServerDomain = (pubAdServerDomain !== '') ? pubAdServerDomain : GOOGLE_IFRAME_HOSTNAME;
     let fullAdServerDomain = parsedUrl.protocol + '://' + adServerDomain;
+=======
+    let adServerDomain = (pubAdServerDomain) ? parsedUrl.protocol + '://' + pubAdServerDomain : parsedUrl.protocol + '://' + GOOGLE_IFRAME_HOSTNAME;
+>>>>>>> master
 
     function renderAd(ev) {
       let key = ev.message ? 'message' : 'data';
