@@ -7,8 +7,8 @@ export const mocks = {
       location: {
         href: href,
       },
-      parent: null,
-      top: null
+      parent: {},
+      top: {}
     };
   }
 }

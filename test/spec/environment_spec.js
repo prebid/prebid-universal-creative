@@ -16,7 +16,7 @@ const envMocks = {
 describe('environment module', function() {
   
   it('should return env object with proper public api', function() {
-    const mockWin = merge(mocks.createFakeWindow('http://google.com'), envMocks.getWindowObject());
+    const mockWin = merge(mocks.createFakeWindow('http://appnexus.com'), envMocks.getWindowObject());
     const env = newEnvironment(mockWin);
     expect(env.isMobileApp).to.exist;
     expect(env.isCrossDomain).to.exist;
@@ -25,19 +25,39 @@ describe('environment module', function() {
   });
 
   it('should detect safeframe', function() {
-    const mockWin = merge(mocks.createFakeWindow('http://google.com'), envMocks.getWindowObject());
+    const mockWin = merge(mocks.createFakeWindow('http://appnexus.com'), envMocks.getWindowObject());
     const env = newEnvironment(mockWin);
     expect(env.isSafeFrame()).to.equal(true);
   });
 
   it('should detect amp', function() {
-    const mockWin = merge(mocks.createFakeWindow('http://google.com'), envMocks.getWindowObject());
+		let localWindow = {
+			top: {
+				location: {
+					toString: () => { throw new Error('error')}
+				}
+			}
+		}
+    const mockWin = merge(mocks.createFakeWindow('http://appnexus.com'), envMocks.getWindowObject(), localWindow);
     const env = newEnvironment(mockWin);
-    expect(env.isAmp('123')).to.equal(true);
-  });
+    expect(env.isAmp('some-uuid')).to.equal(true);
+	});
+	
+	it('should detect crossDomain', function() {
+		let localWindow = {
+			top: {
+				location: {
+					toString: () => { throw new Error('error')}
+				}
+			}
+		}
+    const mockWin = merge(mocks.createFakeWindow('http://appnexus.com'), envMocks.getWindowObject(), localWindow);
+    const env = newEnvironment(mockWin);
+    expect(env.isCrossDomain()).to.equal(true);
+	});
   
   it('should detect mobile app', function() {
-    const mockWin = merge(mocks.createFakeWindow('http://google.com'), envMocks.getWindowObject());
+    const mockWin = merge(mocks.createFakeWindow('http://appnexus.com'), envMocks.getWindowObject());
     const env = newEnvironment(mockWin);
     expect(env.isMobileApp('mobile-app')).to.equal(true);
   });
