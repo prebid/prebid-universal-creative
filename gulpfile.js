@@ -19,11 +19,11 @@ var karmaConfMaker = require('./karma.conf.maker');
 
 var dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
 var banner = '/* <%= creative.name %> v<%= creative.version %>\n' + dateString + ' */\n';
-var port = 9999;
+var port = 9990;
 
-gulp.task('serve', ['clean', 'test', 'build-dev', 'connect']);
+gulp.task('serve', ['clean', 'test', 'build-dev', 'build-native-dev', 'connect']);
 
-gulp.task('build', ['build-prod', 'build-cookie-sync']);
+gulp.task('build', ['build-prod', 'build-cookie-sync', 'build-native']);
 
 gulp.task('clean', () => {
   return gulp.src(['dist/', 'build/'], {
@@ -52,6 +52,27 @@ gulp.task('build-prod', ['clean'], () => {
       basename: 'creative',
       extname: '.js'
     }))
+    .pipe(gulp.dest('dist'));
+});
+
+gulp.task('build-native-dev', () => {
+  var cloned = _.cloneDeep(webpackConfig);
+  cloned.output.filename = 'nativeTrackerManager.js';
+
+  return gulp.src(['src/nativeTrackerManager.js'])
+    .pipe(webpackStream(cloned))
+    .pipe(gulp.dest('build'));
+});
+
+gulp.task('build-native', () => {
+  var cloned = _.cloneDeep(webpackConfig);
+  delete cloned.devtool;
+  cloned.output.filename = 'nativeTrackerManager.js';
+
+  return gulp.src(['src/nativeTrackerManager.js'])
+    .pipe(webpackStream(cloned))
+    .pipe(uglify())
+    .pipe(header('/* v<%= creative.version %>\n'+ dateString + ' */\n', { creative: creative }))
     .pipe(gulp.dest('dist'));
 });
 
