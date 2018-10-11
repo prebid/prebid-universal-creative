@@ -50,6 +50,10 @@
     "mocha": "^5.2.0",
     "open": "0.0.5",
     "sinon": "^6.3.4",
+    "wdio-browserstack-service": "^0.1.16",
+    "wdio-mocha-framework": "^0.6.3",
+    "wdio-spec-reporter": "^0.1.5",
+    "webdriverio": "^4.13.2",
     "webpack": "^3.0.0",
     "webpack-stream": "^4.0.0",
     "yargs": "^11.0.0"

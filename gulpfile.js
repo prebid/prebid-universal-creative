@@ -19,7 +19,7 @@ var karmaConfMaker = require('./karma.conf.maker');
 
 var dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
 var banner = '/* <%= creative.name %> v<%= creative.version %>\n' + dateString + ' */\n';
-var port = 9999;
+var port = 9990;
 
 gulp.task('serve', ['clean', 'test', 'build-dev', 'connect']);
 
