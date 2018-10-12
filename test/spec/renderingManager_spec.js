@@ -198,7 +198,6 @@ describe('renderingManager', function() {
     });
 
     it('should render cross domain creative', function() {
-      debugger;
       parseStub.returns({
         protocol: 'http',
         host: 'example.com'

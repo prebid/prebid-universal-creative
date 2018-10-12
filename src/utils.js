@@ -163,7 +163,7 @@ export function transformAuctionTargetingData(dataObject) {
 
   // set keys not in targetingMap and/or the keys setup within a non-DFP adserver
   Object.keys(dataObject).forEach(function (key) {
-    if (key !== 'targetingMap' && typeof dataObject[key] === 'string') {
+    if (key !== 'targetingMap' && typeof dataObject[key] === 'string' && dataObject[key] !== '') {
       auctionData[key] = dataObject[key];
     }
   });
