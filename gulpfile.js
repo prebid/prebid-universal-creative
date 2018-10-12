@@ -1,27 +1,27 @@
 'use strict';
 
-var _ = require('lodash');
-var gulp = require('gulp');
-var argv = require('yargs').argv;
-var connect = require('gulp-connect');
-var header = require('gulp-header');
-var creative = require('./package.json');
-var uglify = require('gulp-uglify');
-var clean = require('gulp-clean');
-var webpackStream = require('webpack-stream');
-var webpack = require('webpack');
-var webpackConfig = require('./webpack.conf');
-var inject = require('gulp-inject');
-var rename = require('gulp-rename');
-var KarmaServer = require('karma').Server;
-var opens = require('open');
-var karmaConfMaker = require('./karma.conf.maker');
-var execa       = require('execa');
-var path        = require('path');
+const _ = require('lodash');
+const gulp = require('gulp');
+const argv = require('yargs').argv;
+const connect = require('gulp-connect');
+const header = require('gulp-header');
+const creative = require('./package.json');
+const uglify = require('gulp-uglify');
+const clean = require('gulp-clean');
+const webpackStream = require('webpack-stream');
+const webpack = require('webpack');
+const webpackConfig = require('./webpack.conf');
+const inject = require('gulp-inject');
+const rename = require('gulp-rename');
+const KarmaServer = require('karma').Server;
+const opens = require('open');
+const karmaConfMaker = require('./karma.conf.maker');
+const execa = require('execa');
+const path = require('path');
 
-var dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
-var banner = '/* <%= creative.name %> v<%= creative.version %>\n' + dateString + ' */\n';
-var port = 9990;
+const dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
+const banner = '/* <%= creative.name %> v<%= creative.version %>\n' + dateString + ' */\n';
+const port = 9990;
 
 gulp.task('serve', ['clean', 'test', 'build-dev', 'connect']);
 
@@ -41,7 +41,7 @@ gulp.task('build-dev', () => {
 });
 
 gulp.task('build-prod', ['clean'], () => {
-  var cloned = _.cloneDeep(webpackConfig);
+  let cloned = _.cloneDeep(webpackConfig);
   delete cloned.devtool;
 
   return gulp.src(['src/creative.js'])
@@ -58,11 +58,11 @@ gulp.task('build-prod', ['clean'], () => {
 });
 
 gulp.task('build-cookie-sync', () => {
-  var cloned = _.cloneDeep(webpackConfig);
+  let cloned = _.cloneDeep(webpackConfig);
   delete cloned.devtool;
 
-  var target = gulp.src('resources/load-cookie.html');
-  var sources = gulp.src(['src/cookieSync.js'])
+  let target = gulp.src('resources/load-cookie.html');
+  let sources = gulp.src(['src/cookieSync.js'])
     .pipe(webpackStream(cloned))
     .pipe(uglify());
  
@@ -95,14 +95,14 @@ gulp.task('connect', (done) => {
 // If --e2e is given, it will run test defined in ./test/e2e/specs in browserstack
 gulp.task('test', ['serve-e2e'], (done) => {
 	if(argv.e2e) {
-		var wdioCmd = path.join(__dirname, 'node_modules/.bin/wdio');
-		var wdioConf = path.join(__dirname, 'wdio.conf.js');
-		var wdioOpts = [
+		let wdioCmd = path.join(__dirname, 'node_modules/.bin/wdio');
+		let wdioConf = path.join(__dirname, 'wdio.conf.js');
+		let wdioOpts = [
 			wdioConf
 		];
 		return execa(wdioCmd, wdioOpts, { stdio: 'inherit' });
 	} else {
-		var karmaConf = karmaConfMaker(false, argv.browserstack, argv.watch);
+		let karmaConf = karmaConfMaker(false, argv.browserstack, argv.watch);
   	new KarmaServer(karmaConf, newKarmaCallback(done)).start();
 	}
 });
@@ -132,7 +132,7 @@ gulp.task('test-coverage', ['set-test-node-env'], (done) => {
 })
 
 gulp.task('view-coverage', () => {
-  var coveragePort = 1999;
+  let coveragePort = 1999;
 
   connect.server({
     port: coveragePort,
