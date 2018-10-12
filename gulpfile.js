@@ -92,6 +92,7 @@ gulp.task('connect', (done) => {
 //
 // If --watch is given, the task will open the karma debug window 
 // If --browserstack is given, it will run the full suite of currently supported browsers.
+// If --e2e is given, it will run test defined in ./test/e2e/specs in browserstack
 gulp.task('test', ['serve-e2e'], (done) => {
 	if(argv.e2e) {
 		var wdioCmd = path.join(__dirname, 'node_modules/.bin/wdio');
