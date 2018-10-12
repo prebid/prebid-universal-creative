@@ -16,6 +16,8 @@ var rename = require('gulp-rename');
 var KarmaServer = require('karma').Server;
 var opens = require('open');
 var karmaConfMaker = require('./karma.conf.maker');
+var execa       = require('execa');
+var path        = require('path');
 
 var dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
 var banner = '/* <%= creative.name %> v<%= creative.version %>\n' + dateString + ' */\n';
@@ -74,13 +76,14 @@ gulp.task('build-cookie-sync', () => {
     .pipe(gulp.dest('dist'));
 });
 
-gulp.task('connect', () => {
+gulp.task('connect', (done) => {
   connect.server({
     https: argv.https,
     port: port,
     root: './',
     livereload: true
-  });
+	});
+	done();
 });
 
 // Run the unit tests.
@@ -89,9 +92,24 @@ gulp.task('connect', () => {
 //
 // If --watch is given, the task will open the karma debug window 
 // If --browserstack is given, it will run the full suite of currently supported browsers.
-gulp.task('test', (done) => {
-  var karmaConf = karmaConfMaker(false, argv.browserstack, argv.watch);
-  new KarmaServer(karmaConf, newKarmaCallback(done)).start();
+gulp.task('test', ['serve-e2e'], (done) => {
+	if(argv.e2e) {
+		var wdioCmd = path.join(__dirname, 'node_modules/.bin/wdio');
+		var wdioConf = path.join(__dirname, 'wdio.conf.js');
+		var wdioOpts = [
+			wdioConf
+		];
+		return execa(wdioCmd, wdioOpts, { stdio: 'inherit' });
+	} else {
+		var karmaConf = karmaConfMaker(false, argv.browserstack, argv.watch);
+  	new KarmaServer(karmaConf, newKarmaCallback(done)).start();
+	}
+});
+
+gulp.task('serve-e2e', () => {
+	if(argv.e2e) {
+		return gulp.start('serve');
+	}
 });
 
 function newKarmaCallback(done) {

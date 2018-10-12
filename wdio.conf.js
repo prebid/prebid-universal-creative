@@ -1,3 +1,28 @@
+const browsers =  require('./browsers.json');
+
+function getCapabilities() {
+	function getPlatform(os) {
+		const platformMap = {
+			'Windows': 'WINDOWS',
+			'OS X': 'MAC',
+		}
+		return platformMap[os];
+	}
+
+	let capabilities = []
+	Object.keys(browsers).forEach(key => {
+		let browser = browsers[key];
+		capabilities.push({
+			browserName: browser.browser,
+			platform: getPlatform(browser.os),
+			version: browser.browser_version,
+			acceptSslCerts: true,
+			build: 'UC '+ new Date().toLocaleString() 
+		});
+	});
+	return capabilities;
+}
+
 exports.config = {
 	specs: [
 		'./test/e2e/specs/*.js'
@@ -6,29 +31,10 @@ exports.config = {
   user: process.env.BROWSERSTACK_USERNAME,
   key: process.env.BROWSERSTACK_ACCESS_KEY,
 	browserstackLocal: true,
-	// browserstackOpts: {},
-	maxInstances: 15,
-	capabilities: [
-		{
-			browserName: 'chrome',
-			platform: 'WINDOWS',
-			version: '62',
-			acceptSslCerts: true
-		},
-		{
-			browserName: 'IE',
-			platform: 'WINDOWS',
-			version: '11',
-			acceptSslCerts: true
-		},
-		{
-			browserName: 'Edge',
-			platform: 'WINDOWS',
-			version: '15.0',
-			acceptSslCerts: true
-		}
-	],
-	logLevel: 'verbose',               // Level of logging verbosity: silent | verbose | command | data | result | error
+	// Do not increase this, since we have only 5 parallel tests in browserstack account
+	maxInstances: 5,
+	capabilities: getCapabilities(),
+	logLevel: 'silent',               // Level of logging verbosity: silent | verbose | command | data | result | error
 	coloredLogs: true,
 	waitforTimeout: 90000,            // Default timeout for all waitFor* commands.
   connectionRetryTimeout: 90000,    // Default timeout in milliseconds for request if Selenium Grid doesn't send response
@@ -39,5 +45,6 @@ exports.config = {
 		timeout: 90000,
 		compilers: ['js:babel-register'],
 	},
-	reporters: ['spec']
+	// if you see error, update this to spec reporter and logLevel above to get detailed report.
+	reporters: ['concise']
 };
