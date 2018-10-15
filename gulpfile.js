@@ -29,8 +29,8 @@ gulp.task('build', ['build-prod', 'build-cookie-sync', 'build-native']);
 
 gulp.task('clean', () => {
   return gulp.src(['dist/', 'build/'], {
-      read: false
-    })
+    read: false
+  })
     .pipe(clean());
 });
 
@@ -74,7 +74,7 @@ gulp.task('build-native', () => {
   return gulp.src(['src/nativeTrackers.js'])
     .pipe(webpackStream(cloned))
     .pipe(uglify())
-    .pipe(header('/* v<%= creative.version %>\n'+ dateString + ' */\n', { creative: creative }))
+    .pipe(header('/* v<%= creative.version %>\n' + dateString + ' */\n', { creative: creative }))
     .pipe(gulp.dest('dist'));
 });
 
@@ -86,14 +86,14 @@ gulp.task('build-cookie-sync', () => {
   let sources = gulp.src(['src/cookieSync.js'])
     .pipe(webpackStream(cloned))
     .pipe(uglify());
- 
+
   return target.pipe(inject(sources, {
     starttag: '// cookie-sync start',
     endtag: '// end',
     transform: function (filePath, file) {
       return file.contents.toString('utf8')
     }
-    }))
+  }))
     .pipe(gulp.dest('dist'));
 });
 
@@ -103,8 +103,8 @@ gulp.task('connect', (done) => {
     port: port,
     root: './',
     livereload: true
-	});
-	done();
+  });
+  done();
 });
 
 // Run the unit tests.
@@ -115,23 +115,23 @@ gulp.task('connect', (done) => {
 // If --browserstack is given, it will run the full suite of currently supported browsers.
 // If --e2e is given, it will run test defined in ./test/e2e/specs in browserstack
 gulp.task('test', ['serve-e2e'], (done) => {
-	if(argv.e2e) {
-		let wdioCmd = path.join(__dirname, 'node_modules/.bin/wdio');
-		let wdioConf = path.join(__dirname, 'wdio.conf.js');
-		let wdioOpts = [
-			wdioConf
-		];
-		return execa(wdioCmd, wdioOpts, { stdio: 'inherit' });
-	} else {
-		let karmaConf = karmaConfMaker(false, argv.browserstack, argv.watch);
-  	new KarmaServer(karmaConf, newKarmaCallback(done)).start();
-	}
+  if (argv.e2e) {
+    let wdioCmd = path.join(__dirname, 'node_modules/.bin/wdio');
+    let wdioConf = path.join(__dirname, 'wdio.conf.js');
+    let wdioOpts = [
+      wdioConf
+    ];
+    return execa(wdioCmd, wdioOpts, { stdio: 'inherit' });
+  } else {
+    let karmaConf = karmaConfMaker(false, argv.browserstack, argv.watch);
+    new KarmaServer(karmaConf, newKarmaCallback(done)).start();
+  }
 });
 
 gulp.task('serve-e2e', () => {
-	if(argv.e2e) {
-		return gulp.start('serve');
-	}
+  if (argv.e2e) {
+    return gulp.start('serve');
+  }
 });
 
 function newKarmaCallback(done) {
