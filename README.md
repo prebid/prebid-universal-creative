@@ -54,7 +54,9 @@ We like to test a lot before releasing newer versions.
    gulp test --browserstack
    ```
 
-   For End to End testing, you need to set `test.localhost` in your hosts file.
+   For End to End testing, 
+   - Set `test.localhost` in your hosts file. 
+   - Use node version <=8.1.2 since gulp-connect is having a bug in ssl mode. More info here https://github.com/intesso/connect-livereload/issues/79
 
    ```
    gulp test --e2e --https
