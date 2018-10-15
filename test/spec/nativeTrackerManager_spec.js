@@ -4,7 +4,6 @@ import { mocks } from 'test/helpers/mocks';
 import { merge } from 'lodash';
 
 const renderingMocks = {
-  messages: [],
   getWindowObject: function() {
     return {
       document: {},
