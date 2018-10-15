@@ -57,7 +57,7 @@ gulp.task('build-prod', ['clean'], () => {
 
 gulp.task('build-native-dev', () => {
   var cloned = _.cloneDeep(webpackConfig);
-  cloned.output.filename = 'nativeTrackers.js';
+  cloned.output.filename = 'native-trk.js';
 
   return gulp.src(['src/nativeTrackers.js'])
     .pipe(webpackStream(cloned))
@@ -67,7 +67,7 @@ gulp.task('build-native-dev', () => {
 gulp.task('build-native', () => {
   var cloned = _.cloneDeep(webpackConfig);
   delete cloned.devtool;
-  cloned.output.filename = 'nativeTrackers.js';
+  cloned.output.filename = 'native-trk.js';
 
   return gulp.src(['src/nativeTrackers.js'])
     .pipe(webpackStream(cloned))

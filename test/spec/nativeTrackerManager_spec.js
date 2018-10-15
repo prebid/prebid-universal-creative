@@ -16,7 +16,6 @@ const renderingMocks = {
 };
 
 function trimPort(url) {
-  console.log((/:\d+/).test(url));
   return ((/:\d+/).test(url)) ? url.substring(0, url.lastIndexOf(':')) : url;
 }
 
