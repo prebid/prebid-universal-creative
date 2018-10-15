@@ -15,6 +15,11 @@ const renderingMocks = {
   }
 };
 
+function trimPort(url) {
+  console.log((/:\d+/).test(url));
+  return ((/:\d+/).test(url)) ? url.substring(0, url.lastIndexOf(':')) : url;
+}
+
 describe('nativeTrackerManager', function () {
   describe('load startTrackers', function () {
     let mockWin;
@@ -25,7 +30,7 @@ describe('nativeTrackerManager', function () {
     };
 
     beforeEach(function () {
-      mockWin = merge(mocks.createFakeWindow('http://example.com'), renderingMocks.getWindowObject());
+      mockWin = merge(mocks.createFakeWindow(tagData.pubUrl), renderingMocks.getWindowObject());
       consoleWarn = sinon.stub(console, 'warn');
     });
 
@@ -55,7 +60,7 @@ describe('nativeTrackerManager', function () {
       expect(rawPostMessage.message).to.exist.and.to.equal("Prebid Native");
       expect(rawPostMessage.adId).to.exist.and.to.equal("ad123");
       expect(rawPostMessage.action).to.not.exist;
-      expect(postMessageTargetDomain).to.equal('http://example.com');
+      expect(trimPort(postMessageTargetDomain)).to.equal(tagData.pubUrl);
     });
 
     it('should verify the postMessages for the impression and click trackers were executed', function() {
@@ -90,7 +95,7 @@ describe('nativeTrackerManager', function () {
       expect(rawPostMessage.message).to.exist.and.to.equal("Prebid Native");
       expect(rawPostMessage.adId).to.exist.and.to.equal("ad123");
       expect(rawPostMessage.action).to.exist.and.to.equal('click');
-      expect(postMessageTargetDomain).to.equal('http://example.com');
+      expect(trimPort(postMessageTargetDomain)).to.equal(tagData.pubUrl);
     });
 
     it('should verify the warning message was executed', function() { 
