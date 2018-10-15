@@ -35,6 +35,36 @@ When we run `npm publish`, prepublish script of package.json is executed. Script
 
 [jsDelivr](https://www.jsdelivr.com/) – Open Source CDN is used to serve creative.js file.
 
+## Test
+
+We like to test a lot before releasing newer versions. 
+
+   ```
+   gulp test // Run unit tests in your local environment
+   ```
+
+   Set the environment variables. You may want to add these to your `~/.bashrc` for convenience.
+
+   ```
+   export BROWSERSTACK_USERNAME="my browserstack username"
+   export BROWSERSTACK_ACCESS_KEY="my browserstack access key"
+   ```
+   
+   ```
+   gulp test --browserstack
+   ```
+
+   For End to End testing, 
+   - Set `test.localhost` in your hosts file. 
+   - Use node version <=8.1.2 since gulp-connect is having a bug in ssl mode. More info here https://github.com/intesso/connect-livereload/issues/79
+
+   ```
+   gulp test --e2e --https
+   ``` 
+
+   Reason to add specific host to your host file is
+   - To test against your local build, we had to give local path in dfp creative. Redirecting request is not possible in browserstack.
+   - On localhost domain you do not receive bid from certain SSP's, hence you have to have some host defined in hosts file. As of now we are using `test.localhost` defined in local host file as well as `DFP creative`.
 ## Contributing
 
 Found a bug? Great!

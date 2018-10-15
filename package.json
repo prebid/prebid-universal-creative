@@ -3,6 +3,9 @@
   "version": "0.4.0",
   "description": "Universal creative for Prebid apps",
   "main": "dist/creative.js",
+  "engines": {
+    "node": "<=8.1.2"
+  },
   "scripts": {
     "test": "echo test",
     "prepublish": "gulp build"
@@ -28,9 +31,10 @@
     "babel-plugin-transform-es3-property-literals": "^6.22.0",
     "babel-preset-env": "^1.6.1",
     "chai": "^4.1.2",
+    "execa": "^1.0.0",
     "gulp": "^3.9.1",
     "gulp-clean": "^0.4.0",
-    "gulp-connect": "^5.2.0",
+    "gulp-connect": "^5.5.0",
     "gulp-eslint": "^4.0.2",
     "gulp-header": "^2.0.1",
     "gulp-inject": "^4.3.0",
@@ -52,6 +56,11 @@
     "mocha": "^5.2.0",
     "open": "0.0.5",
     "sinon": "^6.3.4",
+    "wdio-browserstack-service": "^0.1.16",
+    "wdio-concise-reporter": "^0.1.2",
+    "wdio-mocha-framework": "^0.6.3",
+    "wdio-spec-reporter": "^0.1.5",
+    "webdriverio": "^4.13.2",
     "webpack": "^3.0.0",
     "webpack-stream": "^4.0.0",
     "yargs": "^11.0.0"

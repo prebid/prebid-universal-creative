@@ -1,9 +1,9 @@
 {
-  "bs_edge_14_windows_10": {
+  "bs_edge_15_windows_10": {
     "base": "BrowserStack",
     "os_version": "10",
     "browser": "edge",
-    "browser_version": "14.0",
+    "browser_version": "15.0",
     "device": null,
     "os": "Windows"
   },

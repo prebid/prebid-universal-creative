@@ -70,15 +70,9 @@
 "use strict";
 
 
-var _utils = __webpack_require__(1);
+var _renderingManager = __webpack_require__(1);
 
-var utils = _interopRequireWildcard(_utils);
-
-var _environment = __webpack_require__(3);
-
-var environment = _interopRequireWildcard(_environment);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+var _environment = __webpack_require__(4);
 
 /**
  * creative.js
@@ -91,255 +85,310 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
  * - All safeFrame creatives
  */
 
-var pbjs = window.pbjs = window.pbjs || {};
-var GOOGLE_IFRAME_HOSTNAME = '//tpc.googlesyndication.com';
+window.ucTag = window.ucTag || {};
+
+var environment = (0, _environment.newEnvironment)(window);
+var renderCreative = (0, _renderingManager.newRenderingManager)(window, environment);
+
+window.ucTag.renderAd = renderCreative.renderAd;
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.newRenderingManager = newRenderingManager;
+
+var _utils = __webpack_require__(2);
+
+var utils = _interopRequireWildcard(_utils);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+
+var GOOGLE_IFRAME_HOSTNAME = 'tpc.googlesyndication.com';
 var DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 var DEFAULT_CACHE_PATH = '/pbc/v1/cache';
 
 /**
- * DataObject passed to render the ad
- * @typedef {Object} dataObject
- * @property {string} host - Prebid cache host
- * @property {string} uuid - ID to fetch the value from prebid cache
- * @property {string} mediaType - Creative media type, It can be banner, native or video
- * @property {string} pubUrl - Publisher url
+ * 
+ * @param {Object} win Window object
+ * @param {Object} environment Environment object
+ * @returns {Object} 
  */
+function newRenderingManager(win, environment) {
+  /**
+   * DataObject passed to render the ad
+   * @typedef {Object} dataObject
+   * @property {string} host - Prebid cache host
+   * @property {string} uuid - ID to fetch the value from prebid cache
+   * @property {string} mediaType - Creative media type, It can be banner, native or video
+   * @property {string} pubUrl - Publisher url
+   */
 
-/**
- * Public render ad function to be used in dfp creative setup
- * @param  {object} doc
- * @param  {string} adId
- * @param  {dataObject} dataObject
- */
-pbjs.renderAd = function (doc, adId, dataObject) {
-  if (environment.isMobileApp(dataObject)) {
-    renderAmpOrMobileAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid, dataObject.size, true);
-  } else if (environment.isAmp(dataObject)) {
-    renderAmpOrMobileAd(dataObject.cacheHost, dataObject.cachePath, dataObject.uuid, dataObject.size);
-  } else if (environment.isCrossDomain()) {
-    renderCrossDomain(adId, dataObject.pubUrl);
-  } else {
-    renderLegacy(doc, adId);
-  }
-};
-
-/**
- * Calls prebid.js renderAd function to render ad
- * @param {Object} doc Document
- * @param {string} adId Id of creative to render
- */
-function renderLegacy(doc, adId) {
-  var w = window;
-  for (var i = 0; i < 10; i++) {
-    w = w.parent;
-    if (w.pbjs) {
-      try {
-        w.pbjs.renderAd(document, adId);
-        break;
-      } catch (e) {
-        continue;
-      }
-    }
-  }
-}
-
-/**
- * Render ad in safeframe using postmessage
- * @param {string} adId Id of creative to render
- * @param {string} pubUrl Url of publisher page
- */
-function renderCrossDomain(adId, pubUrl) {
-  var urlParser = document.createElement('a');
-  urlParser.href = pubUrl;
-  var publisherDomain = urlParser.protocol + '//' + urlParser.host;
-  var adServerDomain = urlParser.protocol + GOOGLE_IFRAME_HOSTNAME;
-
-  function renderAd(ev) {
-    var key = ev.message ? 'message' : 'data';
-    var adObject = {};
-    try {
-      adObject = JSON.parse(ev[key]);
-    } catch (e) {
-      return;
-    }
-
-    var origin = ev.origin || ev.originalEvent.origin;
-    if (adObject.message && adObject.message === 'Prebid Response' && publisherDomain === origin && adObject.adId === adId && (adObject.ad || adObject.adUrl)) {
-      var body = window.document.body;
-      var ad = adObject.ad;
-      var url = adObject.adUrl;
-      var width = adObject.width;
-      var height = adObject.height;
-
-      if (adObject.mediaType === 'video') {
-        console.log('Error trying to write ad.');
-      } else if (ad) {
-        var iframe = utils.getEmptyIframe(adObject.height, adObject.width);
-        body.appendChild(iframe);
-        iframe.contentDocument.open();
-        iframe.contentDocument.write(ad);
-        iframe.contentDocument.close();
-      } else if (url) {
-        var _iframe = utils.getEmptyIframe(height, width);
-        _iframe.style.display = 'inline';
-        _iframe.style.overflow = 'hidden';
-        _iframe.src = url;
-
-        utils.insertElement(_iframe, doc, 'body');
-      } else {
-        console.log('Error trying to write ad. No ad for bid response id: ' + id);
-      }
-    }
-  }
-
-  function requestAdFromPrebid() {
-    var message = JSON.stringify({
-      message: 'Prebid Request',
-      adId: adId,
-      adServerDomain: adServerDomain
-    });
-    window.parent.postMessage(message, publisherDomain);
-  }
-
-  function listenAdFromPrebid() {
-    window.addEventListener('message', renderAd, false);
-  }
-
-  listenAdFromPrebid();
-  requestAdFromPrebid();
-}
-
-/**
- * Returns cache endpoint concatenated with cache path
- * @param {string} cacheHost Cache Endpoint host
- * @param {string} cachePath Cache Endpoint path
- */
-function getCacheEndpoint(cacheHost, cachePath) {
-  var host = typeof cacheHost === 'undefined' || cacheHost === "" ? DEFAULT_CACHE_HOST : cacheHost;
-  var path = typeof cachePath === 'undefined' || cachePath === "" ? DEFAULT_CACHE_PATH : cachePath;
-  return 'https://' + host + path;
-}
-
-/**
- * Render mobile or amp ad
- * @param {string} cacheHost Cache host
- * @param {string} cachePath Cache path
- * @param {string} uuid id to render response from cache endpoint
- * @param {Bool} isMobileApp flag to detect mobile app
- */
-function renderAmpOrMobileAd(cacheHost, cachePath, uuid, size, isMobileApp) {
-  // For MoPub, creative is stored in localStorage via SDK.
-  if (uuid.startsWith('Prebid_')) {
-    loadFromLocalCache(uuid);
-  } else {
-    var adUrl = getCacheEndpoint(cacheHost, cachePath) + '?uuid=' + uuid;
-
-    //register creative right away to not miss initial geom-update
-    if (typeof size !== 'undefined' && size !== "") {
-      var sizeArr = size.split('x').map(Number);
-      resizeIframe(sizeArr[0], sizeArr[1]);
+  /**
+   * Public render ad function to be used in dfp creative setup
+   * @param  {object} doc
+   * @param  {dataObject} dataObject
+   */
+  var renderAd = function renderAd(doc, dataObject) {
+    var targetingData = utils.transformAuctionTargetingData(dataObject);
+    if (environment.isMobileApp(targetingData.env)) {
+      renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, true);
+    } else if (environment.isAmp(targetingData.uuid)) {
+      renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size);
+    } else if (environment.isCrossDomain()) {
+      renderCrossDomain(targetingData.adId, targetingData.adServerDomain, targetingData.pubUrl);
     } else {
-      console.log('Targeting key hb_size not found to resize creative');
-    }
-    utils.sendRequest(adUrl, responseCallback(isMobileApp));
-  }
-}
-
-/**
- * Cache request Callback to display creative
- * @param {Bool} isMobileApp 
- */
-function responseCallback(isMobileApp) {
-  return function (response) {
-    var bidObject = parseResponse(response);
-    var ad = utils.getCreativeCommentMarkup(bidObject);
-    var width = bidObject.width ? bidObject.width : bidObject.w;
-    var height = bidObject.height ? bidObject.height : bidObject.h;
-    if (bidObject.adm) {
-      ad += isMobileApp ? constructMarkup(bidObject.adm, width, height) : bidObject.adm;
-      if (bidObject.nurl) {
-        ad += utils.createTrackPixelHtml(decodeURIComponent(bidObject.nurl));
-      }
-      utils.writeAdHtml(ad);
-    } else if (bidObject.nurl) {
-      if (isMobileApp) {
-        var adhtml = utils.loadScript(window, bidObject.nurl);
-        ad += constructMarkup(adhtml.outerHTML, width, height);
-        utils.writeAdHtml(ad);
-      } else {
-        var nurl = bidObject.nurl;
-        var commentElm = utils.getCreativeComment(bidObject);
-        utils.insertElement(commentElm, document, 'body');
-        utils.writeAdUrl(nurl, width, height);
-      }
-    }
-    if (bidObject.burl) {
-      utils.triggerBurl(bidObject.burl);
+      renderLegacy(doc, targetingData.adId);
     }
   };
-};
 
-/**
- * Load response from localStorage. In case of MoPub, sdk caches response
- * @param {string} cacheId 
- */
-function loadFromLocalCache(cacheId) {
-  var bid = localStorage.getItem(cacheId);
-  var displayFn = responseCallback(true);
-  displayFn(bid);
-}
-
-/**
- * Parse response
- * @param {string} response 
- */
-function parseResponse(response) {
-  var bidObject = void 0;
-  try {
-    bidObject = JSON.parse(response);
-  } catch (error) {
-    console.log('Error parsing response from cache host: ' + error);
-  }
-  return bidObject;
-}
-
-/**
- * Wrap mobile app creative in div
- * @param {string} ad 
- * @param {Number} width 
- * @param {Number} height 
- */
-function constructMarkup(ad, width, height) {
-  var id = utils.getUUID();
-  return '<div id="' + id + '" style="border-style: none; position: absolute; width:100%; height:100%;">\n    <div id="' + id + '_inner" style="margin: 0 auto; width:' + width + '; height:' + height + '">' + ad + '</div>\n    </div>';
-}
-
-function resizeIframe(width, height) {
-  if (environment.isSafeFrame()) {
-    var resize = function resize(status) {
-      var newWidth = width - iframeWidth;
-      var newHeight = height - iframeHeight;
-      $sf.ext.expand({ r: newWidth, b: newHeight, push: true });
-    };
-
-    var iframeWidth = window.innerWidth;
-    var iframeHeight = window.innerHeight;
-
-    if (iframeWidth !== width || iframeHeight !== height) {
-      $sf.ext.register(width, height, resize);
-      // we need to resize the DFP container as well
-      window.parent.postMessage({
-        sentinel: 'amp',
-        type: 'embed-size',
-        width: width,
-        height: height
-      }, '*');
+  /**
+   * Calls prebid.js renderAd function to render ad
+   * @param {Object} doc Document
+   * @param {string} adId Id of creative to render
+   */
+  function renderLegacy(doc, adId) {
+    var w = win;
+    for (var i = 0; i < 10; i++) {
+      w = w.parent;
+      if (w.pbjs) {
+        try {
+          w.pbjs.renderAd(doc, adId);
+          break;
+        } catch (e) {
+          continue;
+        }
+      }
     }
   }
+
+  /**
+   * Render ad in safeframe using postmessage
+   * @param {string} adId Id of creative to render
+   * @param {string} pubAdServerDomain publisher adserver domain name
+   * @param {string} pubUrl Url of publisher page
+   */
+  function renderCrossDomain(adId) {
+    var pubAdServerDomain = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+    var pubUrl = arguments[2];
+
+    var parsedUrl = utils.parseUrl(pubUrl);
+    var publisherDomain = parsedUrl.protocol + '://' + parsedUrl.host;
+    var adServerDomain = pubAdServerDomain !== '' ? pubAdServerDomain : GOOGLE_IFRAME_HOSTNAME;
+    var fullAdServerDomain = parsedUrl.protocol + '://' + adServerDomain;
+
+    function renderAd(ev) {
+      var key = ev.message ? 'message' : 'data';
+      var adObject = {};
+      try {
+        adObject = JSON.parse(ev[key]);
+      } catch (e) {
+        return;
+      }
+
+      var origin = ev.origin || ev.originalEvent.origin;
+      if (adObject.message && adObject.message === 'Prebid Response' && publisherDomain === origin && adObject.adId === adId && (adObject.ad || adObject.adUrl)) {
+        var body = win.document.body;
+        var ad = adObject.ad;
+        var url = adObject.adUrl;
+        var width = adObject.width;
+        var height = adObject.height;
+
+        if (adObject.mediaType === 'video') {
+          console.log('Error trying to write ad.');
+        } else if (ad) {
+          var iframe = utils.getEmptyIframe(adObject.height, adObject.width);
+          body.appendChild(iframe);
+          iframe.contentDocument.open();
+          iframe.contentDocument.write(ad);
+          iframe.contentDocument.close();
+        } else if (url) {
+          var _iframe = utils.getEmptyIframe(height, width);
+          _iframe.style.display = 'inline';
+          _iframe.style.overflow = 'hidden';
+          _iframe.src = url;
+
+          utils.insertElement(_iframe, doc, 'body');
+        } else {
+          console.log('Error trying to write ad. No ad for bid response id: ' + id);
+        }
+      }
+    }
+
+    function requestAdFromPrebid() {
+      var message = JSON.stringify({
+        message: 'Prebid Request',
+        adId: adId,
+        adServerDomain: fullAdServerDomain
+      });
+      win.parent.postMessage(message, publisherDomain);
+    }
+
+    function listenAdFromPrebid() {
+      win.addEventListener('message', renderAd, false);
+    }
+
+    listenAdFromPrebid();
+    requestAdFromPrebid();
+  }
+
+  /**
+   * Returns cache endpoint concatenated with cache path
+   * @param {string} cacheHost Cache Endpoint host
+   * @param {string} cachePath Cache Endpoint path
+   */
+  function getCacheEndpoint(cacheHost, cachePath) {
+    var host = typeof cacheHost === 'undefined' || cacheHost === "" ? DEFAULT_CACHE_HOST : cacheHost;
+    var path = typeof cachePath === 'undefined' || cachePath === "" ? DEFAULT_CACHE_PATH : cachePath;
+
+    return 'https://' + host + path;
+  }
+
+  /**
+   * Render mobile or amp ad
+   * @param {string} cacheHost Cache host
+   * @param {string} cachePath Cache path
+   * @param {string} uuid id to render response from cache endpoint
+   * @param {string} size size of the creative
+   * @param {Bool} isMobileApp flag to detect mobile app
+   */
+  function renderAmpOrMobileAd(cacheHost, cachePath) {
+    var uuid = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
+    var size = arguments[3];
+    var isMobileApp = arguments[4];
+
+    // For MoPub, creative is stored in localStorage via SDK.
+    var search = 'Prebid_';
+    if (uuid.substr(0, search.length) === search) {
+      loadFromLocalCache(uuid);
+    } else {
+      var adUrl = getCacheEndpoint(cacheHost, cachePath) + '?uuid=' + uuid;
+
+      //register creative right away to not miss initial geom-update
+      if (typeof size !== 'undefined' && size !== "") {
+        var sizeArr = size.split('x').map(Number);
+        resizeIframe(sizeArr[0], sizeArr[1]);
+      } else {
+        console.log('Targeting key hb_size not found to resize creative');
+      }
+      utils.sendRequest(adUrl, responseCallback(isMobileApp));
+    }
+  }
+
+  /**
+   * Cache request Callback to display creative
+   * @param {Bool} isMobileApp 
+   * @returns {function} a callback function that parses response
+   */
+  function responseCallback(isMobileApp) {
+    return function (response) {
+      var bidObject = parseResponse(response);
+      var ad = utils.getCreativeCommentMarkup(bidObject);
+      var width = bidObject.width ? bidObject.width : bidObject.w;
+      var height = bidObject.height ? bidObject.height : bidObject.h;
+      if (bidObject.adm) {
+        ad += isMobileApp ? constructMarkup(bidObject.adm, width, height) : bidObject.adm;
+        if (bidObject.nurl) {
+          ad += utils.createTrackPixelHtml(decodeURIComponent(bidObject.nurl));
+        }
+        utils.writeAdHtml(ad);
+      } else if (bidObject.nurl) {
+        if (isMobileApp) {
+          var adhtml = utils.loadScript(win, bidObject.nurl);
+          ad += constructMarkup(adhtml.outerHTML, width, height);
+          utils.writeAdHtml(ad);
+        } else {
+          var nurl = bidObject.nurl;
+          var commentElm = utils.getCreativeComment(bidObject);
+          utils.insertElement(commentElm, document, 'body');
+          utils.writeAdUrl(nurl, width, height);
+        }
+      }
+      if (bidObject.burl) {
+        utils.triggerBurl(bidObject.burl);
+      }
+    };
+  };
+
+  /**
+   * Load response from localStorage. In case of MoPub, sdk caches response
+   * @param {string} cacheId 
+   */
+  function loadFromLocalCache(cacheId) {
+    var bid = win.localStorage.getItem(cacheId);
+    var displayFn = responseCallback(true);
+    displayFn(bid);
+  }
+
+  /**
+   * Parse response
+   * @param {string} response 
+   * @returns {Object} bidObject parsed response
+   */
+  function parseResponse(response) {
+    var bidObject = void 0;
+    try {
+      bidObject = JSON.parse(response);
+    } catch (error) {
+      console.log('Error parsing response from cache host: ' + error);
+    }
+    return bidObject;
+  }
+
+  /**
+   * Wrap mobile app creative in div
+   * @param {string} ad html for creative
+   * @param {Number} width width of creative
+   * @param {Number} height height of creative
+   * @returns {string} creative markup
+   */
+  function constructMarkup(ad, width, height) {
+    var id = utils.getUUID();
+    return '<div id="' + id + '" style="border-style: none; position: absolute; width:100%; height:100%;">\n      <div id="' + id + '_inner" style="margin: 0 auto; width:' + width + '; height:' + height + '">' + ad + '</div>\n      </div>';
+  }
+
+  /**
+   * Resize container iframe
+   * @param {Number} width width of creative
+   * @param {Number} height height of creative
+   */
+  function resizeIframe(width, height) {
+    if (environment.isSafeFrame()) {
+      var resize = function resize(status) {
+        var newWidth = width - iframeWidth;
+        var newHeight = height - iframeHeight;
+        win.$sf.ext.expand({ r: newWidth, b: newHeight, push: true });
+      };
+
+      var iframeWidth = win.innerWidth;
+      var iframeHeight = win.innerHeight;
+
+      if (iframeWidth !== width || iframeHeight !== height) {
+        win.$sf.ext.register(width, height, resize);
+        // we need to resize the DFP container as well
+        win.parent.postMessage({
+          sentinel: 'amp',
+          type: 'embed-size',
+          width: width,
+          height: height
+        }, '*');
+      }
+    }
+  }
+
+  return {
+    renderAd: renderAd
+  };
 }
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -359,7 +408,9 @@ exports.getCreativeComment = getCreativeComment;
 exports.getCreativeCommentMarkup = getCreativeCommentMarkup;
 exports.insertElement = insertElement;
 exports.triggerBurl = triggerBurl;
-var postscribe = __webpack_require__(2);
+exports.transformAuctionTargetingData = transformAuctionTargetingData;
+exports.parseUrl = parseUrl;
+var postscribe = __webpack_require__(3);
 
 function createTrackPixelHtml(url) {
   if (!url) {
@@ -497,8 +548,58 @@ function triggerBurl(url) {
   img.src = url;
 };
 
+function transformAuctionTargetingData(dataObject) {
+  var auctionKeyMap = {
+    hb_adid: 'adId',
+    hb_cache_host: 'cacheHost',
+    hb_cache_path: 'cachePath',
+    hb_cache_id: 'uuid',
+    hb_format: 'mediaType',
+    hb_env: 'env',
+    hb_size: 'size'
+  };
+
+  var auctionData = {};
+
+  // set keys defined in targetingMap object (if it's defined)
+  var tarMap = dataObject.targetingMap || {};
+  var tarMapKeys = Object.keys(tarMap);
+  if (tarMapKeys.length > 0) {
+    tarMapKeys.forEach(function (key) {
+      if (Array.isArray(tarMap[key]) && tarMap[key].length > 0) {
+        var internalKey = auctionKeyMap[key] || key;
+        auctionData[internalKey] = tarMap[key][0];
+      }
+    });
+  }
+
+  // set keys not in targetingMap and/or the keys setup within a non-DFP adserver
+  Object.keys(dataObject).forEach(function (key) {
+    if (key !== 'targetingMap' && typeof dataObject[key] === 'string' && dataObject[key] !== '') {
+      auctionData[key] = dataObject[key];
+    }
+  });
+
+  return auctionData;
+}
+
+function parseUrl(url) {
+  var parsed = document.createElement('a');
+  parsed.href = url;
+
+  return {
+    href: parsed.href,
+    protocol: (parsed.protocol || '').replace(/:$/, ''),
+    hostname: parsed.hostname,
+    port: +parsed.port,
+    pathname: parsed.pathname.replace(/^(?!\/)/, '/'),
+    hash: (parsed.hash || '').replace(/^#/, ''),
+    host: parsed.host || window.location.host
+  };
+}
+
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -2591,7 +2692,7 @@ return /******/ (function(modules) { // webpackBootstrap
 //# sourceMappingURL=postscribe.js.map
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2600,97 +2701,80 @@ return /******/ (function(modules) { // webpackBootstrap
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.isAmp = isAmp;
-exports.isSafeFrame = isSafeFrame;
-exports.isCrossDomain = isCrossDomain;
-exports.isMobileApp = isMobileApp;
+exports.newEnvironment = newEnvironment;
 /***************************************
  * Detect Environment Helper Functions
  ***************************************/
 
 /**
  * Functions to detect below environments:
- *  CodeOnPage: div directly on publisher's page
  *  Amp: google Accelerate Mobile Pages ampproject.org
- *  Dfp: google doubleclick for publishers https://www.doubleclickbygoogle.com/
- *  DfpInAmp: AMP page containing a DFP iframe
  *  SafeFrame: SafeFrame
- *  DfpSafeFrame: An iframe that can't get to the top window
- *  Sandboxed: An iframe that can't get to the top window
- *  SuperSandboxed: An iframe without allow-same-origin
- *  Unknown: A default sandboxed implementation delivered by EnvironmentDispatch when all positive environment checks fail
+ *  CrossDomain: An iframe that can't get to the top window
+ *  Mobile App: function to detect mobile app environment
  */
 
-/**
- * @returns true if we are running on the top window at dispatch time
- */
-function isTopWindow() {
-  return window === window.parent;
-}
+function newEnvironment(win) {
+  /**
+   * @param {String} uuid key value from auction, contains the cache id of the winning bid stored in prebid cache
+   * @returns true if there is an AMP context object
+   */
+  function isAmp(uuid) {
+    // TODO Use amp context once it is available in cross domain
+    // https://github.com/ampproject/amphtml/issues/6829
+    return typeof uuid === 'string' && uuid !== "" && isCrossDomain();
+  }
 
-/**
- * @returns true if the environment is both DFP and AMP
- */
-function isDfpInAmp() {
-  return isDfp() && isAmp();
-}
+  /**
+   * @returns true if the environment is a SafeFrame.
+   */
+  function isSafeFrame() {
+    return !!(win.$sf && win.$sf.ext);
+  }
 
-/**
- * @returns true if the window is in an iframe whose id and parent element id match DFP
- */
-function isDfp() {
-  try {
-    var frameElement = window.frameElement;
-    var parentElement = window.frameElement.parentNode;
-    if (frameElement && parentElement) {
-      return frameElement.id.indexOf('google_ads_iframe') > -1 && parentElement.id.indexOf('google_ads_iframe') > -1;
+  /**
+    * Return true if we are in an iframe and can't access the top window.
+    * @returns true if the environment is a Cross Domain
+    */
+  function isCrossDomain() {
+    return win.top !== win && !canInspectWindow(win);
+  }
+
+  /**
+   * Returns true if win's properties can be accessed and win is defined.
+   * This functioned is used to determine if a window is cross-domained
+   * from the perspective of the current window.
+   * @param {!Window} win
+   * @return {boolean}
+   */
+  function canInspectWindow(win) {
+    try {
+      // force an exception in x-domain environments. #1509
+      win.top.location.toString();
+      var currentWindow = void 0;
+      do {
+        currentWindow = currentWindow ? currentWindow.parent : win;
+      } while (currentWindow !== win.top);
+      return true;
+    } catch (e) {
+      return false;
     }
-    return false;
-  } catch (e) {
-    return false;
   }
-}
 
-/**
- * @returns true if there is an AMP context object
- */
-function isAmp(dataObject) {
-  // TODO Use amp context once it is available in cross domain
-  // https://github.com/ampproject/amphtml/issues/6829
-  return typeof dataObject.uuid === 'string' && dataObject.uuid != "" && isCrossDomain();
-}
-
-/**
- * @returns true if the environment is a SafeFrame.
- */
-function isSafeFrame() {
-  return window.$sf && window.$sf.ext;
-}
-
-/**
- * @returns true if the environment is a dfp safe frame.
- */
-function isDFPSafeFrame() {
-  if (window.location && window.location.href) {
-    var href = window.location.href;
-    return isSafeFrame() && href.indexOf('google') !== -1 && href.indexOf('safeframe') !== -1;
+  /**
+   * @param {String} env key value from auction, indicates the environment where tag is served
+   * @returns true if env exists and is equal to the string 'mobile-app'
+   */
+  function isMobileApp(env) {
+    return env && env === 'mobile-app';
   }
-  return false;
-}
 
-/**
- * Return true if we are in an iframe and can't access the top window.
- */
-function isCrossDomain() {
-  return window.top !== window && !window.frameElement;
-}
-
-/**
- * Returns true if envrionment is mobile app
- * @param {Object} dataObject 
- */
-function isMobileApp(dataObject) {
-  return dataObject.env && dataObject.env === 'mobile-app';
+  return {
+    isMobileApp: isMobileApp,
+    isCrossDomain: isCrossDomain,
+    isSafeFrame: isSafeFrame,
+    isAmp: isAmp
+  };
 }
 
 /***/ })
