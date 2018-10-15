@@ -23,9 +23,9 @@ const dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
 const banner = '/* <%= creative.name %> v<%= creative.version %>\n' + dateString + ' */\n';
 const port = 9990;
 
-gulp.task('serve', ['clean', 'test', 'build-dev', 'connect']);
+gulp.task('serve', ['clean', 'test', 'build-dev', 'build-native-dev', 'connect']);
 
-gulp.task('build', ['build-prod', 'build-cookie-sync']);
+gulp.task('build', ['build-prod', 'build-cookie-sync', 'build-native']);
 
 gulp.task('clean', () => {
   return gulp.src(['dist/', 'build/'], {
@@ -54,6 +54,27 @@ gulp.task('build-prod', ['clean'], () => {
       basename: 'creative',
       extname: '.js'
     }))
+    .pipe(gulp.dest('dist'));
+});
+
+gulp.task('build-native-dev', () => {
+  var cloned = _.cloneDeep(webpackConfig);
+  cloned.output.filename = 'native-trk.js';
+
+  return gulp.src(['src/nativeTrackers.js'])
+    .pipe(webpackStream(cloned))
+    .pipe(gulp.dest('build'));
+});
+
+gulp.task('build-native', () => {
+  var cloned = _.cloneDeep(webpackConfig);
+  delete cloned.devtool;
+  cloned.output.filename = 'native-trk.js';
+
+  return gulp.src(['src/nativeTrackers.js'])
+    .pipe(webpackStream(cloned))
+    .pipe(uglify())
+    .pipe(header('/* v<%= creative.version %>\n'+ dateString + ' */\n', { creative: creative }))
     .pipe(gulp.dest('dist'));
 });
 
