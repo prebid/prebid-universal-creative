@@ -91,15 +91,15 @@ describe('utils', function () {
       let encUrl = 'http%3A%2F%2Fjsnellbaker.devnxs.net%2Fast_uc_sf_test.html%3Fpbjs_debug%3Dtrue%26ast_debug%3Dtrue';
       
       let result = utils.parseUrl(encUrl);
-      expect(result).to.deep.equal({
-        href: 'http://jsnellbaker.devnxs.net/ast_uc_sf_test.html?pbjs_debug=true&ast_debug=true',
-        protocol: 'http',
-        hostname: 'jsnellbaker.devnxs.net',
-        port: 0,
-        pathname: '/ast_uc_sf_test.html',
-        hash: '',
-        host: 'jsnellbaker.devnxs.net'
-      });
+      
+      expect(result).to.be.an('object');
+      expect(result.href).to.exist.and.to.equal('http://jsnellbaker.devnxs.net/ast_uc_sf_test.html?pbjs_debug=true&ast_debug=true');
+      expect(result.protocol).to.exist.and.to.equal('http');
+      expect(result.hostname).to.exist.and.to.equal('jsnellbaker.devnxs.net');
+      expect(result.port).to.exist.and.that.is.oneOf([0, 80]);
+      expect(result.pathname).to.exist.and.to.equal('/ast_uc_sf_test.html');
+      expect(result.hash).to.exist.and.to.equal('');
+      expect(result.host).to.exist.and.that.is.oneOf(['jsnellbaker.devnxs.net','jsnellbaker.devnxs.net:80']);
     });
   });
 });
