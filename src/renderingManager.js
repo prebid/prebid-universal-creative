@@ -235,9 +235,9 @@ export function newRenderingManager(win, environment) {
    * @returns {string} creative markup
    */
   function constructMarkup(ad, width, height) {
-    var id = utils.getUUID();
+    let id = utils.getUUID();
     return `<div id="${id}" style="border-style: none; position: absolute; width:100%; height:100%;">
-      <div id="${id}_inner" style="margin: 0 auto; width:${width}; height:${height}">${ad}</div>
+      <div id="${id}_inner" style="margin: 0 auto; width:${width}; height:${height}; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">${ad}</div>
       </div>`;
   }
 
