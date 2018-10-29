@@ -173,7 +173,8 @@ export function transformAuctionTargetingData(dataObject) {
 
 export function parseUrl(url) {
   let parsed = document.createElement('a');
-  parsed.href = url;
+
+  parsed.href = decodeURIComponent(url);
   
   return {
     href: parsed.href,
