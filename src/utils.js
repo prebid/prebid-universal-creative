@@ -251,7 +251,7 @@ export function parseUrl(url) {
 }
 
 function isA(object, _t) {
-  return toString.call(object) === '[object ' + _t + ']';
+  return Object.prototype.toString.call(object) === '[object ' + _t + ']';
 };
 
 function isPlainObject(object) {
