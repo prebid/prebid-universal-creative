@@ -54,7 +54,6 @@ describe('utils', function () {
         pubUrl: 'http://www.test.com',
         adId: ''
       };
-
       let auctionData = utils.transformAuctionTargetingData(ucTagData);
       expect(auctionData).to.deep.equal({
         adId: '123abc',
@@ -74,7 +73,6 @@ describe('utils', function () {
           hb_bidder: ['appnexus']
         }
       };
-
       let auctionData = utils.transformAuctionTargetingData(ucTagData);
       expect(auctionData).to.deep.equal({
         adId: '123abc',
@@ -83,6 +81,29 @@ describe('utils', function () {
         size: '300x250',
         hb_bidder: 'appnexus'
       });
+    });
+
+    it('should transform data from targetingKeywords param properly', function() {
+      let ucTagData = {
+        targetingKeywords: "hb_adid:123abc,hb_adid_appnexus:123abc,hb_format:banner,hb_size:300x250,hb_bidder:appnexus,test"
+      };
+      let auctionData = utils.transformAuctionTargetingData(ucTagData);
+      expect(auctionData).to.deep.equal({
+        adId: '123abc',
+        hb_adid_appnexus: '123abc',
+        mediaType: 'banner',
+        size: '300x250',
+        hb_bidder: 'appnexus'
+      });
+
+      ucTagData = {
+        targetingKeywords: '',
+        pubUrl: 'http://www.test.com'
+      };
+      auctionData = utils.transformAuctionTargetingData(ucTagData);
+      expect(auctionData).to.deep.equal({
+        pubUrl: 'http://www.test.com'
+      })
     });
   });
 
