@@ -5,7 +5,7 @@
 
 _Note: If `github.com/prebid/prebid-universal-creative` is not configured as the git origin for your repo, all of the following git commands will have to be modified to reference the proper remote (e.g. `upstream`)_
 
-1. Make Sure all browserstack tests are passing. On PR merge to master CircleCI will run unit tests on browserstack. Checking the last CircleCI build **here (update me later when project is setup)** for master branch will show you detailed results. 
+1. Make Sure all browserstack tests are passing. On PR merge to master CircleCI will run unit tests on browserstack. Checking the last CircleCI build [here](https://circleci.com/gh/prebid/prebid-universal-creative) for master branch will show you detailed results. 
   
    In case of failure do following, 
      - Try to fix the failing tests.
