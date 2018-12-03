@@ -3,7 +3,7 @@
 const _ = require('lodash');
 const gulp = require('gulp');
 const argv = require('yargs').argv;
-const connect = require('gulp-connect');
+const webserver = require('gulp-webserver');
 const header = require('gulp-header');
 const creative = require('./package.json');
 const uglify = require('gulp-uglify');
@@ -23,7 +23,7 @@ const dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
 const banner = '/* <%= creative.name %> v<%= creative.version %>\n' + dateString + ' */\n';
 const port = 9990;
 
-gulp.task('serve', ['clean', 'test', 'build-dev', 'build-native-dev', 'connect']);
+gulp.task('serve', ['clean', 'test', 'build-dev', 'build-native-dev', 'build-cookie-sync', 'connect']);
 
 gulp.task('build', ['build-prod', 'build-cookie-sync', 'build-native']);
 
@@ -98,20 +98,19 @@ gulp.task('build-cookie-sync', () => {
 });
 
 gulp.task('connect', (done) => {
-  connect.server({
-    https: argv.https,
-    port: port,
-    root: './',
-    livereload: true
-  });
-  done();
+  let stream = gulp.src(".").pipe(webserver({
+    livereload: true,
+    directoryListing: true,
+    open: true
+  }));
+  stream.on('finish', done);
 });
 
 // Run the unit tests.
 //
 // By default, this runs in headless chrome.
 //
-// If --watch is given, the task will open the karma debug window 
+// If --watch is given, the task will open the karma debug window
 // If --browserstack is given, it will run the full suite of currently supported browsers.
 // If --e2e is given, it will run test defined in ./test/e2e/specs in browserstack
 gulp.task('test', ['serve-e2e'], (done) => {
@@ -152,14 +151,12 @@ gulp.task('test-coverage', ['set-test-node-env'], (done) => {
   new KarmaServer(karmaConfMaker(true, false, false), newKarmaCallback(done)).start();
 })
 
-gulp.task('view-coverage', () => {
+gulp.task('view-coverage', (done) => {
   let coveragePort = 1999;
 
-  connect.server({
+  let stream = gulp.src("./coverage/").pipe(webserver({
     port: coveragePort,
-    root: 'coverage/',
-    livereload: false
-  });
-  opens('http://localhost:' + coveragePort);
+    open: true
+  }));
+  stream.on('finish', done);
 });
-

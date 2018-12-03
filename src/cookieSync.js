@@ -1,4 +1,14 @@
+/**
+ * This script runs the Prebid Server cookie syncs.
+ * For more details, see https://github.com/prebid/prebid-server/blob/master/docs/developers/cookie-syncs.md
+ *
+ * This script uses the following query params in the URL:
+ *
+ *   max_sync_count (optional): The number of syncs allowed on the page. If present, this should be a positive integer.
+ */
+
 const ENDPOINT = 'https://prebid.adnxs.com/pbs/v1/cookie_sync';
+const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt(parseQueryParam('max_sync_count', window.location.search), 10));
 
 function doBidderSync(type, url, bidder) {
   if (!url) {
@@ -21,8 +31,10 @@ function triggerPixel(url) {
 function process(response) {
   let result = JSON.parse(response);
   if (result.status === 'OK' || result.status === 'no_cookie') {
-    if (result.bidder_status) {
-      result.bidder_status.forEach(bidder => {
+    let bidders = result.bidder_status;
+    if (bidders) {
+      bidders = limitLength(bidders, MAX_SYNC_COUNT);
+      bidders.forEach(bidder => {
         if (bidder.no_cookie) {
           doBidderSync(bidder.usersync.type, bidder.usersync.url, bidder.bidder);
         }
@@ -32,6 +44,10 @@ function process(response) {
 }
 
 function ajax(url, callback, data, options = {}) {
+  if (MAX_SYNC_COUNT <= 0) {
+    return;
+  }
+
   try {
     let timeout = 3000;
     let x;
@@ -82,7 +98,7 @@ function ajax(url, callback, data, options = {}) {
       x.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
     }
     x.setRequestHeader('Content-Type', options.contentType || 'text/plain');
-    
+
     if (method === 'POST' && data) {
       x.send(data);
     } else {
@@ -91,6 +107,38 @@ function ajax(url, callback, data, options = {}) {
   } catch (error) {
     console.log('xhr construction', error);
   }
+}
+
+/**
+ * Parse a query param value from the window.location.search string.
+ * Implementation comes from: https://davidwalsh.name/query-string-javascript
+ *
+ * @param {string} name The name of the query param you want the value for.
+ * @param {string} urlSearch The search string in the URL: window.location.search
+ * @return {string} The value of the "name" query param.
+ */
+function parseQueryParam(name, urlSearch) {
+  var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+  var results = regex.exec(urlSearch);
+  return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+};
+
+/**
+ * If the value is a valid sync count (0 or a positive number), return it.
+ * Otherwise return a really big integer (equivalent to "no sync").
+ */
+function sanitizeSyncCount(value) {
+  if (isNaN(value) || value < 0) {
+    return 9007199254740991 // Number.MAX_SAFE_INTEGER isn't supported in IE
+  }
+  return value;
+}
+
+function limitLength(list, limit) {
+  if (list.length > limit) {
+    return list.slice(0, limit);
+  }
+  return list;
 }
 
 // Send empty data to receive cookie sync status for all prebid server adapters.
