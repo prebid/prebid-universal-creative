@@ -98,12 +98,12 @@ gulp.task('build-cookie-sync', () => {
 });
 
 gulp.task('connect', (done) => {
-  let stream = gulp.src(".").pipe(webserver({
-    livereload: true,
-    directoryListing: true,
-    open: true
-  }));
-  stream.on('finish', done);
+  return gulp.src(".").
+    pipe(webserver({
+      livereload: true,
+      directoryListing: true,
+      open: true
+    }));
 });
 
 // Run the unit tests.
@@ -154,9 +154,8 @@ gulp.task('test-coverage', ['set-test-node-env'], (done) => {
 gulp.task('view-coverage', (done) => {
   let coveragePort = 1999;
 
-  let stream = gulp.src("./coverage/").pipe(webserver({
+  return gulp.src("./coverage/").pipe(webserver({
     port: coveragePort,
     open: true
   }));
-  stream.on('finish', done);
 });
