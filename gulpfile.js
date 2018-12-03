@@ -97,7 +97,7 @@ gulp.task('build-cookie-sync', () => {
     .pipe(gulp.dest('dist'));
 });
 
-gulp.task('connect', (done) => {
+gulp.task('connect', () => {
   return gulp.src(".").
     pipe(webserver({
       livereload: true,
@@ -151,7 +151,7 @@ gulp.task('test-coverage', ['set-test-node-env'], (done) => {
   new KarmaServer(karmaConfMaker(true, false, false), newKarmaCallback(done)).start();
 })
 
-gulp.task('view-coverage', (done) => {
+gulp.task('view-coverage', () => {
   let coveragePort = 1999;
 
   return gulp.src("./coverage/").pipe(webserver({
