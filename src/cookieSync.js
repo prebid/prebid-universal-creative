@@ -34,6 +34,7 @@ function process(response) {
     let bidders = result.bidder_status;
     if (bidders) {
       bidders = limitLength(bidders, MAX_SYNC_COUNT);
+      shuffle(bidders);
       bidders.forEach(bidder => {
         if (bidder.no_cookie) {
           doBidderSync(bidder.usersync.type, bidder.usersync.url, bidder.bidder);
@@ -139,6 +140,20 @@ function limitLength(list, limit) {
     return list.slice(0, limit);
   }
   return list;
+}
+
+/**
+ * Shuffle the list, in place.
+ *
+ * @param {array} list
+ */
+function shuffle(list) {
+  for (let i = list.length - 1; i > 0; i--) {
+      let j = Math.floor(Math.random() * (i + 1));
+      let x = list[i];
+      list[i] = list[j];
+      list[j] = x;
+  }
 }
 
 // Send empty data to receive cookie sync status for all prebid server adapters.
