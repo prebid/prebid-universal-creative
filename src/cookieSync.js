@@ -45,10 +45,6 @@ function process(response) {
 }
 
 function ajax(url, callback, data, options = {}) {
-  if (MAX_SYNC_COUNT <= 0) {
-    return;
-  }
-
   try {
     let timeout = 3000;
     let x;
@@ -135,13 +131,6 @@ function sanitizeSyncCount(value) {
   return value;
 }
 
-function limitLength(list, limit) {
-  if (list.length > limit) {
-    return list.slice(0, limit);
-  }
-  return list;
-}
-
 /**
  * Shuffle the list, in place.
  *
@@ -156,7 +145,9 @@ function shuffle(list) {
   }
 }
 
-// Send empty data to receive cookie sync status for all prebid server adapters.
+// Request MAX_SYNC_COUNT cookie syncs from prebid server.
 // In next phase we will read placement id's from query param and will only get cookie sync status of bidders participating in auction
-var data = '{}';
+var data = JSON.stringify({
+  limit: MAX_SYNC_COUNT
+});
 ajax(ENDPOINT, process, data);
