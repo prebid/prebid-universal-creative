@@ -31,9 +31,8 @@ function triggerPixel(url) {
 function process(response) {
   let result = JSON.parse(response);
   if (result.status === 'OK' || result.status === 'no_cookie') {
-    let bidders = result.bidder_status;
-    if (bidders) {
-      bidders.forEach(bidder => {
+    if (result.bidder_status) {
+      result.bidder_status.forEach(bidder => {
         if (bidder.no_cookie) {
           doBidderSync(bidder.usersync.type, bidder.usersync.url, bidder.bidder);
         }
