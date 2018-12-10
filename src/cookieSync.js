@@ -33,8 +33,6 @@ function process(response) {
   if (result.status === 'OK' || result.status === 'no_cookie') {
     let bidders = result.bidder_status;
     if (bidders) {
-      bidders = limitLength(bidders, MAX_SYNC_COUNT);
-      shuffle(bidders);
       bidders.forEach(bidder => {
         if (bidder.no_cookie) {
           doBidderSync(bidder.usersync.type, bidder.usersync.url, bidder.bidder);
@@ -129,20 +127,6 @@ function sanitizeSyncCount(value) {
     return 9007199254740991 // Number.MAX_SAFE_INTEGER isn't supported in IE
   }
   return value;
-}
-
-/**
- * Shuffle the list, in place.
- *
- * @param {array} list
- */
-function shuffle(list) {
-  for (let i = list.length - 1; i > 0; i--) {
-      let j = Math.floor(Math.random() * (i + 1));
-      let x = list[i];
-      list[i] = list[j];
-      list[j] = x;
-  }
 }
 
 // Request MAX_SYNC_COUNT cookie syncs from prebid server.
