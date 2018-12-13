@@ -1,4 +1,14 @@
+/**
+ * This script runs the Prebid Server cookie syncs.
+ * For more details, see https://github.com/prebid/prebid-server/blob/master/docs/developers/cookie-syncs.md
+ *
+ * This script uses the following query params in the URL:
+ *
+ *   max_sync_count (optional): The number of syncs allowed on the page. If present, this should be a positive integer.
+ */
+
 const ENDPOINT = 'https://prebid.adnxs.com/pbs/v1/cookie_sync';
+const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt(parseQueryParam('max_sync_count', window.location.search), 10));
 /**
  * checks to make sure URL is valid. Regex from https://validatejs.org/#validators-url, https://gist.github.com/dperini/729294
  */
@@ -86,7 +96,7 @@ function ajax(url, callback, data, options = {}) {
       x.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
     }
     x.setRequestHeader('Content-Type', options.contentType || 'text/plain');
-    
+
     if (method === 'POST' && data) {
       x.send(data);
     } else {
@@ -97,7 +107,34 @@ function ajax(url, callback, data, options = {}) {
   }
 }
 
-// Send empty data to receive cookie sync status for all prebid server adapters.
+/**
+ * Parse a query param value from the window.location.search string.
+ * Implementation comes from: https://davidwalsh.name/query-string-javascript
+ *
+ * @param {string} name The name of the query param you want the value for.
+ * @param {string} urlSearch The search string in the URL: window.location.search
+ * @return {string} The value of the "name" query param.
+ */
+function parseQueryParam(name, urlSearch) {
+  var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+  var results = regex.exec(urlSearch);
+  return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+};
+
+/**
+ * If the value is a valid sync count (0 or a positive number), return it.
+ * Otherwise return a really big integer (equivalent to "no sync").
+ */
+function sanitizeSyncCount(value) {
+  if (isNaN(value) || value < 0) {
+    return 9007199254740991 // Number.MAX_SAFE_INTEGER isn't supported in IE
+  }
+  return value;
+}
+
+// Request MAX_SYNC_COUNT cookie syncs from prebid server.
 // In next phase we will read placement id's from query param and will only get cookie sync status of bidders participating in auction
-var data = '{}';
+var data = JSON.stringify({
+  limit: MAX_SYNC_COUNT
+});
 ajax(ENDPOINT, process, data);
