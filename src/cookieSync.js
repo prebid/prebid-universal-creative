@@ -14,27 +14,27 @@ const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt(parseQueryParam('max_sync_coun
  */
 const isValidUrl =  new RegExp(/^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z0-9\u00a1-\uffff][a-z0-9\u00a1-\uffff_-]{0,62})?[a-z0-9\u00a1-\uffff]\.)+(?:[a-z\u00a1-\uffff]{2,}\.?))(?::\d{2,5})?(?:[/?#]\S*)?$/i);
 
-function doBidderSync(type, url, bidder, callback) {
+function doBidderSync(type, url, bidder, done) {
   if (!url || !isValidUrl.test(url)) {
     console.log(`No valid sync url for bidder "${bidder}": ${url}`);
-    callback();
+    done();
   } else if (type === 'image' || type === 'redirect') {
     console.log(`Invoking image pixel user sync for bidder: "${bidder}"`);
-    triggerPixel(url, callback);
+    triggerPixel(url, done);
   } else if (type == 'iframe') {
     console.log(`Skipping iframe pixel user sync for bidder: "${bidder}". This isn't implemented yet.`);
     // TODO test iframe solution
-    callback();
+    done();
   } else {
     console.log(`User sync type "${type}" not supported for bidder: "${bidder}"`);
-    callback();
+    done();
   }
 }
 
-function triggerPixel(url, callback) {
+function triggerPixel(url, done) {
   const img = new Image();
-  img.addEventListener('load', callback);
-  img.addEventListener('error', callback);
+  img.addEventListener('load', done);
+  img.addEventListener('error', done);
   img.src = url;
 }
 
