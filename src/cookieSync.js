@@ -150,10 +150,10 @@ function sanitizeGdpr(value) {
  * Otherwise it will return undefined.
  */
 function sanitizeGdprConsent(value) {
-  if (value && typeof value === 'String') {
+  if (value) {
     return value;
   }
-  console.log('Ignoring gdpr_consent param, it should be a non empty string')
+  console.log('Ignoring gdpr_consent param, it should be a non empty value')
 }
 
 // Request MAX_SYNC_COUNT cookie syncs from prebid server.
