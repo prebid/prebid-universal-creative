@@ -36,7 +36,7 @@ function triggerPixel(url) {
 
 function process(response) {
   let result = JSON.parse(response);
-  if (result.status === 'OK' || result.status === 'no_cookie') {
+  if (result.status === 'ok' || result.status === 'no_cookie') {
     if (result.bidder_status) {
       result.bidder_status.forEach(bidder => {
         if (bidder.no_cookie) {
@@ -171,4 +171,6 @@ function getStringifiedData() {
 }
 
 
-ajax(ENDPOINT, process, getStringifiedData());
+ajax(ENDPOINT, process, getStringifiedData(), {
+  withCredentials: true
+});
