@@ -9,7 +9,7 @@
 
 const ENDPOINT = 'https://prebid.adnxs.com/pbs/v1/cookie_sync';
 const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt(parseQueryParam('max_sync_count', window.location.search), 10));
-const GDPR = sanitizeGdpr(parseInt(parseQueryParam('gdpr', window.location.search)));
+const GDPR = sanitizeGdpr(parseInt(parseQueryParam('gdpr', window.location.search), 10));
 const GDPR_CONSENT = sanitizeGdprConsent(parseQueryParam('gdpr_consent', window.location.search));
 /**
  * checks to make sure URL is valid. Regex from https://validatejs.org/#validators-url, https://gist.github.com/dperini/729294
