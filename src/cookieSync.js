@@ -9,6 +9,8 @@
 
 const ENDPOINT = 'https://prebid.adnxs.com/pbs/v1/cookie_sync';
 const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt(parseQueryParam('max_sync_count', window.location.search), 10));
+const GDPR = sanitizeGdpr(parseInt(parseQueryParam('gdpr', window.location.search), 10));
+const GDPR_CONSENT = sanitizeGdprConsent(parseQueryParam('gdpr_consent', window.location.search));
 /**
  * checks to make sure URL is valid. Regex from https://validatejs.org/#validators-url, https://gist.github.com/dperini/729294
  */
@@ -132,11 +134,43 @@ function sanitizeSyncCount(value) {
   return value;
 }
 
+/**
+ * If the value is 0 or 1 return it.
+ * Otherwise it will return undefined.
+ */
+function sanitizeGdpr(value) {
+  if (value === 0 || value === 1) {
+    return value;
+  }
+  console.log('Ignoring gdpr param, it should be 1 or 0')
+}
+
+/**
+ * If the value is a non empty string return it.
+ * Otherwise it will return undefined.
+ */
+function sanitizeGdprConsent(value) {
+  if (value) {
+    return value;
+  }
+  console.log('Ignoring gdpr_consent param, it should be a non empty value')
+}
+
 // Request MAX_SYNC_COUNT cookie syncs from prebid server.
 // In next phase we will read placement id's from query param and will only get cookie sync status of bidders participating in auction
-var data = JSON.stringify({
-  limit: MAX_SYNC_COUNT
-});
-ajax(ENDPOINT, process, data, {
+
+function getStringifiedData() {
+  var data = {
+    limit: MAX_SYNC_COUNT,
+  }
+
+  if(GDPR) data.gdpr = GDPR;
+  if(GDPR_CONSENT) data.gdpr_consent = GDPR_CONSENT;
+
+  return JSON.stringify(data);
+}
+
+
+ajax(ENDPOINT, process, getStringifiedData(), {
   withCredentials: true
 });
