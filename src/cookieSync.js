@@ -45,8 +45,7 @@ function doAllSyncs(bidders) {
     return;
   }
 
-  const thisSync = bidders[bidders.length - 1];
-  bidders = bidders.slice(0, bidders.length - 1);
+  const thisSync = bidders.pop();
   if (thisSync.no_cookie) {
     doBidderSync(thisSync.usersync.type, thisSync.usersync.url, thisSync.bidder, doAllSyncs.bind(null, bidders));
   } else {
