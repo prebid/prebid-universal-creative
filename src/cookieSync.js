@@ -16,33 +16,48 @@ const GDPR_CONSENT = sanitizeGdprConsent(parseQueryParam('gdpr_consent', window.
  */
 const isValidUrl =  new RegExp(/^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z0-9\u00a1-\uffff][a-z0-9\u00a1-\uffff_-]{0,62})?[a-z0-9\u00a1-\uffff]\.)+(?:[a-z\u00a1-\uffff]{2,}\.?))(?::\d{2,5})?(?:[/?#]\S*)?$/i);
 
-function doBidderSync(type, url, bidder) {
+function doBidderSync(type, url, bidder, done) {
   if (!url || !isValidUrl.test(url)) {
     console.log(`No valid sync url for bidder "${bidder}": ${url}`);
+    done();
   } else if (type === 'image' || type === 'redirect') {
     console.log(`Invoking image pixel user sync for bidder: "${bidder}"`);
-    triggerPixel(url);
+    triggerPixel(url, done);
   } else if (type == 'iframe') {
+    console.log(`Skipping iframe pixel user sync for bidder: "${bidder}". This isn't implemented yet.`);
     // TODO test iframe solution
+    done();
   } else {
     console.log(`User sync type "${type}" not supported for bidder: "${bidder}"`);
+    done();
   }
 }
 
-function triggerPixel(url) {
+function triggerPixel(url, done) {
   const img = new Image();
+  img.addEventListener('load', done);
+  img.addEventListener('error', done);
   img.src = url;
+}
+
+function doAllSyncs(bidders) {
+  if (bidders.length === 0) {
+    return;
+  }
+
+  const thisSync = bidders.pop();
+  if (thisSync.no_cookie) {
+    doBidderSync(thisSync.usersync.type, thisSync.usersync.url, thisSync.bidder, doAllSyncs.bind(null, bidders));
+  } else {
+    doAllSyncs(bidders);
+  }
 }
 
 function process(response) {
   let result = JSON.parse(response);
   if (result.status === 'ok' || result.status === 'no_cookie') {
     if (result.bidder_status) {
-      result.bidder_status.forEach(bidder => {
-        if (bidder.no_cookie) {
-          doBidderSync(bidder.usersync.type, bidder.usersync.url, bidder.bidder);
-        }
-      });
+      doAllSyncs(result.bidder_status);
     }
   }
 }
