@@ -6,9 +6,11 @@
  *
  *   max_sync_count (optional): The number of syncs allowed on the page. If present, this should be a positive integer.
  *
- *   endpoint (optional): The endpoint to handle bidder sync. If present, this should be valid url string.
+ *   endpoint (optional): The endpoint to handle bidder sync. If present, this should be a defined property in VALID_ENDPOINTS.
  */
-
+const VALID_ENDPOINTS = {
+    rubicon: 'https://prebid-server.rubiconproject.com/cookie_sync'
+};
 const ENDPOINT = sanitizeEndpoint(parseQueryParam('endpoint', window.location.search));
 const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt(parseQueryParam('max_sync_count', window.location.search), 10));
 const GDPR = sanitizeGdpr(parseInt(parseQueryParam('gdpr', window.location.search), 10));
@@ -141,14 +143,13 @@ function parseQueryParam(name, urlSearch) {
 };
 
 /**
- * If the value is a valid url (string and passes regular expression), return it.
+ * If the value is a valid url (string and is defined in VALID_ENDPOINTS), return it.
  * Otherwise it will return a default value
  */
 function sanitizeEndpoint(value) {
-    if ((value) && isValidUrl.test(value)) {
-        return value
+    if (value && VALID_ENDPOINTS.hasOwnProperty(value)) {
+        return VALID_ENDPOINTS[value]
     }
-    console.log('Ignoring endpoint param, it should be a valid url')
     return 'https://prebid.adnxs.com/pbs/v1/cookie_sync';
 }
 
