@@ -9,7 +9,7 @@
  *   endpoint (optional): The endpoint to handle bidder sync. If present, this should be a defined property in VALID_ENDPOINTS.
  */
 const VALID_ENDPOINTS = {
-    rubicon: 'https://prebid-server.rubiconproject.com/cookie_sync'
+  rubicon: 'https://prebid-server.rubiconproject.com/cookie_sync'
 };
 const ENDPOINT = sanitizeEndpoint(parseQueryParam('endpoint', window.location.search));
 const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt(parseQueryParam('max_sync_count', window.location.search), 10));
