@@ -21,111 +21,111 @@ const GDPR_CONSENT = sanitizeGdprConsent(parseQueryParam('gdpr_consent', window.
 const isValidUrl =  new RegExp(/^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z0-9\u00a1-\uffff][a-z0-9\u00a1-\uffff_-]{0,62})?[a-z0-9\u00a1-\uffff]\.)+(?:[a-z\u00a1-\uffff]{2,}\.?))(?::\d{2,5})?(?:[/?#]\S*)?$/i);
 
 function doBidderSync(type, url, bidder, done) {
-    if (!url || !isValidUrl.test(url)) {
-        console.log(`No valid sync url for bidder "${bidder}": ${url}`);
-        done();
-    } else if (type === 'image' || type === 'redirect') {
-        console.log(`Invoking image pixel user sync for bidder: "${bidder}"`);
-        triggerPixel(url, done);
-    } else if (type == 'iframe') {
-        console.log(`Skipping iframe pixel user sync for bidder: "${bidder}". This isn't implemented yet.`);
-        // TODO test iframe solution
-        done();
-    } else {
-        console.log(`User sync type "${type}" not supported for bidder: "${bidder}"`);
-        done();
-    }
+  if (!url || !isValidUrl.test(url)) {
+    console.log(`No valid sync url for bidder "${bidder}": ${url}`);
+    done();
+  } else if (type === 'image' || type === 'redirect') {
+    console.log(`Invoking image pixel user sync for bidder: "${bidder}"`);
+    triggerPixel(url, done);
+  } else if (type == 'iframe') {
+    console.log(`Skipping iframe pixel user sync for bidder: "${bidder}". This isn't implemented yet.`);
+    // TODO test iframe solution
+    done();
+  } else {
+    console.log(`User sync type "${type}" not supported for bidder: "${bidder}"`);
+    done();
+  }
 }
 
 function triggerPixel(url, done) {
-    const img = new Image();
-    img.addEventListener('load', done);
-    img.addEventListener('error', done);
-    img.src = url;
+  const img = new Image();
+  img.addEventListener('load', done);
+  img.addEventListener('error', done);
+  img.src = url;
 }
 
 function doAllSyncs(bidders) {
-    if (bidders.length === 0) {
-        return;
-    }
+  if (bidders.length === 0) {
+    return;
+  }
 
-    const thisSync = bidders.pop();
-    if (thisSync.no_cookie) {
-        doBidderSync(thisSync.usersync.type, thisSync.usersync.url, thisSync.bidder, doAllSyncs.bind(null, bidders));
-    } else {
-        doAllSyncs(bidders);
-    }
+  const thisSync = bidders.pop();
+  if (thisSync.no_cookie) {
+    doBidderSync(thisSync.usersync.type, thisSync.usersync.url, thisSync.bidder, doAllSyncs.bind(null, bidders));
+  } else {
+    doAllSyncs(bidders);
+  }
 }
 
 function process(response) {
-    let result = JSON.parse(response);
-    if (result.status === 'ok' || result.status === 'no_cookie') {
-        if (result.bidder_status) {
-            doAllSyncs(result.bidder_status);
-        }
+  let result = JSON.parse(response);
+  if (result.status === 'ok' || result.status === 'no_cookie') {
+    if (result.bidder_status) {
+      doAllSyncs(result.bidder_status);
     }
+  }
 }
 
 function ajax(url, callback, data, options = {}) {
-    try {
-        let timeout = 3000;
-        let x;
-        let method = options.method || (data ? 'POST' : 'GET');
+  try {
+    let timeout = 3000;
+    let x;
+    let method = options.method || (data ? 'POST' : 'GET');
 
-        let callbacks = typeof callback === 'object' ? callback : {
-            success: function() {
-                console.log('xhr success');
-            },
-            error: function(e) {
-                console.log('xhr error', null, e);
-            }
-        };
+    let callbacks = typeof callback === 'object' ? callback : {
+      success: function() {
+        console.log('xhr success');
+      },
+      error: function(e) {
+        console.log('xhr error', null, e);
+      }
+    };
 
-        if (typeof callback === 'function') {
-            callbacks.success = callback;
-        }
-
-        x = new window.XMLHttpRequest();
-        x.onreadystatechange = function () {
-            if (x.readyState === 4) {
-                let status = x.status;
-                if ((status >= 200 && status < 300) || status === 304) {
-                    callbacks.success(x.responseText, x);
-                } else {
-                    callbacks.error(x.statusText, x);
-                }
-            }
-        };
-        x.ontimeout = function () {
-            console.log('xhr timeout after ', x.timeout, 'ms');
-        };
-
-        if (method === 'GET' && data) {
-            let urlInfo = parseURL(url, options);
-            Object.assign(urlInfo.search, data);
-            url = formatURL(urlInfo);
-        }
-
-        x.open(method, url);
-        // IE needs timoeut to be set after open - see #1410
-        x.timeout = timeout;
-
-        if (options.withCredentials) {
-            x.withCredentials = true;
-        }
-        if (options.preflight) {
-            x.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-        }
-        x.setRequestHeader('Content-Type', options.contentType || 'text/plain');
-
-        if (method === 'POST' && data) {
-            x.send(data);
-        } else {
-            x.send();
-        }
-    } catch (error) {
-        console.log('xhr construction', error);
+    if (typeof callback === 'function') {
+      callbacks.success = callback;
     }
+
+    x = new window.XMLHttpRequest();
+    x.onreadystatechange = function () {
+      if (x.readyState === 4) {
+        let status = x.status;
+        if ((status >= 200 && status < 300) || status === 304) {
+          callbacks.success(x.responseText, x);
+        } else {
+          callbacks.error(x.statusText, x);
+        }
+      }
+    };
+    x.ontimeout = function () {
+      console.log('xhr timeout after ', x.timeout, 'ms');
+    };
+
+    if (method === 'GET' && data) {
+      let urlInfo = parseURL(url, options);
+      Object.assign(urlInfo.search, data);
+      url = formatURL(urlInfo);
+    }
+
+    x.open(method, url);
+    // IE needs timoeut to be set after open - see #1410
+    x.timeout = timeout;
+
+    if (options.withCredentials) {
+      x.withCredentials = true;
+    }
+    if (options.preflight) {
+      x.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    }
+    x.setRequestHeader('Content-Type', options.contentType || 'text/plain');
+
+    if (method === 'POST' && data) {
+      x.send(data);
+    } else {
+      x.send();
+    }
+  } catch (error) {
+    console.log('xhr construction', error);
+  }
 }
 
 /**
@@ -137,9 +137,9 @@ function ajax(url, callback, data, options = {}) {
  * @return {string} The value of the "name" query param.
  */
 function parseQueryParam(name, urlSearch) {
-    var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-    var results = regex.exec(urlSearch);
-    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+  var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+  var results = regex.exec(urlSearch);
+  return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 };
 
 /**
@@ -147,10 +147,10 @@ function parseQueryParam(name, urlSearch) {
  * Otherwise it will return a default value
  */
 function sanitizeEndpoint(value) {
-    if (value && VALID_ENDPOINTS.hasOwnProperty(value)) {
-        return VALID_ENDPOINTS[value]
-    }
-    return 'https://prebid.adnxs.com/pbs/v1/cookie_sync';
+  if (value && VALID_ENDPOINTS.hasOwnProperty(value)) {
+    return VALID_ENDPOINTS[value]
+  }
+  return 'https://prebid.adnxs.com/pbs/v1/cookie_sync';
 }
 
 /**
@@ -158,10 +158,10 @@ function sanitizeEndpoint(value) {
  * Otherwise return a really big integer (equivalent to "no sync").
  */
 function sanitizeSyncCount(value) {
-    if (isNaN(value) || value < 0) {
-        return 9007199254740991 // Number.MAX_SAFE_INTEGER isn't supported in IE
-    }
-    return value;
+  if (isNaN(value) || value < 0) {
+    return 9007199254740991 // Number.MAX_SAFE_INTEGER isn't supported in IE
+  }
+  return value;
 }
 
 /**
@@ -169,10 +169,10 @@ function sanitizeSyncCount(value) {
  * Otherwise it will return undefined.
  */
 function sanitizeGdpr(value) {
-    if (value === 0 || value === 1) {
-        return value;
-    }
-    console.log('Ignoring gdpr param, it should be 1 or 0')
+  if (value === 0 || value === 1) {
+    return value;
+  }
+  console.log('Ignoring gdpr param, it should be 1 or 0')
 }
 
 /**
@@ -180,27 +180,27 @@ function sanitizeGdpr(value) {
  * Otherwise it will return undefined.
  */
 function sanitizeGdprConsent(value) {
-    if (value) {
-        return value;
-    }
-    console.log('Ignoring gdpr_consent param, it should be a non empty value')
+  if (value) {
+    return value;
+  }
+  console.log('Ignoring gdpr_consent param, it should be a non empty value')
 }
 
 // Request MAX_SYNC_COUNT cookie syncs from prebid server.
 // In next phase we will read placement id's from query param and will only get cookie sync status of bidders participating in auction
 
 function getStringifiedData() {
-    var data = {
-        limit: MAX_SYNC_COUNT,
-    }
+  var data = {
+    limit: MAX_SYNC_COUNT,
+  }
 
-    if(GDPR) data.gdpr = GDPR;
-    if(GDPR_CONSENT) data.gdpr_consent = GDPR_CONSENT;
+  if(GDPR) data.gdpr = GDPR;
+  if(GDPR_CONSENT) data.gdpr_consent = GDPR_CONSENT;
 
-    return JSON.stringify(data);
+  return JSON.stringify(data);
 }
 
 
 ajax(ENDPOINT, process, getStringifiedData(), {
-    withCredentials: true
+  withCredentials: true
 });
