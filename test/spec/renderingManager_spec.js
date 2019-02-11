@@ -16,7 +16,7 @@ const renderingMocks = {
       },
       parent: {
         postMessage: sinon.spy(),
-        pbjs: {
+        $$PREBID_GLOBAL$$: {
           renderAd: sinon.spy()
         }
       },
@@ -252,7 +252,7 @@ describe('renderingManager', function() {
       };
         
       renderObject.renderAd(mockWin.document, ucTagData);
-      expect(mockWin.parent.pbjs.renderAd.callCount).to.equal(1);
+      expect(mockWin.parent.$$PREBID_GLOBAL$$.renderAd.callCount).to.equal(1);
     });
   });
 });
