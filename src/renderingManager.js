@@ -47,9 +47,9 @@ export function newRenderingManager(win, environment) {
     let w = win;
     for (let i = 0; i < 10; i++) {
       w = w.parent;
-      if (w.pbjs) {
+      if (w.$$PREBID_GLOBAL$$) {
         try {
-          w.pbjs.renderAd(doc, adId);
+          w.$$PREBID_GLOBAL$$.renderAd(doc, adId);
           break;
         } catch (e) {
           continue;

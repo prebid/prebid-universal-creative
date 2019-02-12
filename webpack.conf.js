@@ -1,4 +1,5 @@
 var creative = require('./package.json');
+var StringReplacePlugin = require('string-replace-webpack-plugin');
 var path = require('path');
 var webpack = require('webpack');
 
@@ -26,6 +27,20 @@ module.exports = {
             }
           }
         ]
+      },
+      {
+        test: /\.js$/,
+        include: /(src|test|testpages)/,
+        loader: StringReplacePlugin.replace({
+          replacements: [
+            {
+              pattern: /\$\$PREBID_GLOBAL\$\$/g,
+              replacement: function (match, p1, offset, string) {
+                return creative.globalVarName;
+              }
+            }
+          ]
+        })
       }
     ]
   }
