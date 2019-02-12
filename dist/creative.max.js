@@ -350,7 +350,7 @@ function newRenderingManager(win, environment) {
    */
   function constructMarkup(ad, width, height) {
     var id = utils.getUUID();
-    return '<div id="' + id + '" style="border-style: none; position: absolute; width:100%; height:100%;">\n      <div id="' + id + '_inner" style="margin: 0 auto; width:' + width + '; height:' + height + '">' + ad + '</div>\n      </div>';
+    return '<div id="' + id + '" style="border-style: none; position: absolute; width:100%; height:100%;">\n      <div id="' + id + '_inner" style="margin: 0 auto; width:' + width + '; height:' + height + '; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">' + ad + '</div>\n      </div>';
   }
 
   /**
@@ -548,7 +548,9 @@ function triggerBurl(url) {
   img.src = url;
 };
 
-function transformAuctionTargetingData(dataObject) {
+function transformAuctionTargetingData(tagData) {
+  // this map object translates the Prebid.js auction keys to their equivalent Prebid Universal Creative keys
+  // when the publisher uses their adserver's generic macro that provides all targeting keys (ie tagData.targetingMap), we need to convert the keys
   var auctionKeyMap = {
     hb_adid: 'adId',
     hb_cache_host: 'cacheHost',
@@ -559,24 +561,80 @@ function transformAuctionTargetingData(dataObject) {
     hb_size: 'size'
   };
 
-  var auctionData = {};
+  /**
+   * Determine if the supplied property of the tagData object exists and is populated with its own values/properties according to its type
+   * @param {string} paramName name of the property to check (eg tagData.targetingMap)
+   * @returns true/false
+   */
+  function isMacroPresent(paramName) {
+    return !!(tagData[paramName] && (isPlainObject(tagData[paramName]) && Object.keys(tagData[paramName]).length > 0 || isStr(tagData[paramName]) && tagData[paramName] !== ''));
+  }
 
-  // set keys defined in targetingMap object (if it's defined)
-  var tarMap = dataObject.targetingMap || {};
-  var tarMapKeys = Object.keys(tarMap);
-  if (tarMapKeys.length > 0) {
-    tarMapKeys.forEach(function (key) {
+  /**
+   * Converts the specifically formatted object of keypairs to a more generalized structure
+   * It specifically extracts the keyvalue from an array and stores it as a normal string
+   * @param {object} tarMap object of keys with the keyvalue stored in an array; eg {"hb_adid":["26566ee8c7f251"], ...}
+   * @returns {object} result is an object map like the following: {"hb_cache_id":"123456", "other_key":"other_value", ...}
+   */
+  function convertTargetingMapToNormalMap(tarMap) {
+    var newTarMap = {};
+
+    Object.keys(tarMap).forEach(function (key) {
       if (Array.isArray(tarMap[key]) && tarMap[key].length > 0) {
-        var internalKey = auctionKeyMap[key] || key;
-        auctionData[internalKey] = tarMap[key][0];
+        newTarMap[key] = tarMap[key][0];
       }
+    });
+    return newTarMap;
+  }
+
+  /**
+   * Converts a specifically formatted string of keypairs to a specifically formatted object map
+   * @param {String} keywordsStr string of keypairs; eg "hb_cache_id:123456,other_key:other_value"
+   * @returns {object} result is an object map like the following: {"hb_cache_id":"123456", "other_key":"other_value", ...}
+   */
+  function convertKeyPairStringToMap(keywordsStr) {
+    var keywordsMap = {};
+    var keywordsArr = keywordsStr.split(',');
+
+    if (keywordsArr.length > 0) {
+      keywordsArr.forEach(function (keyPairStr) {
+        var keyPairArr = keyPairStr.split(':');
+        if (keyPairArr.length === 2) {
+          var k = keyPairArr[0];
+          var v = keyPairArr[1];
+          keywordsMap[k] = v;
+        }
+      });
+    }
+    return keywordsMap;
+  }
+
+  /**
+   * Rename key if it's part of the auctionKeyMap object; if not, leave key as is
+   * Store the resultant keypair in the auctionData object for later use in renderingManager.renderAd()
+   * @param {object} adServerKeyMap incoming object map of the auction keys from the UC tag; eg {'key1':'value1', 'key2':'value2', ...}
+   */
+  function renameKnownAuctionKeys(adServerKeyMap) {
+    Object.keys(adServerKeyMap).forEach(function (key) {
+      var internalKey = auctionKeyMap[key] || key;
+      auctionData[internalKey] = adServerKeyMap[key];
     });
   }
 
-  // set keys not in targetingMap and/or the keys setup within a non-DFP adserver
-  Object.keys(dataObject).forEach(function (key) {
-    if (key !== 'targetingMap' && typeof dataObject[key] === 'string' && dataObject[key] !== '') {
-      auctionData[key] = dataObject[key];
+  var auctionData = {};
+  var formattedKeyMap = {};
+
+  if (isMacroPresent('targetingMap')) {
+    formattedKeyMap = convertTargetingMapToNormalMap(tagData.targetingMap);
+  } else if (isMacroPresent('targetingKeywords')) {
+    formattedKeyMap = convertKeyPairStringToMap(tagData.targetingKeywords);
+  }
+  renameKnownAuctionKeys(formattedKeyMap);
+
+  // set keys not in defined map macros (eg targetingMap) and/or the keys setup within a non-DFP adserver
+  Object.keys(tagData).forEach(function (key) {
+    if (key !== 'targetingMap' && key !== 'targetingKeywords' && isStr(tagData[key]) && tagData[key] !== '') {
+      auctionData[key] = tagData[key];
     }
   });
 
@@ -585,7 +643,8 @@ function transformAuctionTargetingData(dataObject) {
 
 function parseUrl(url) {
   var parsed = document.createElement('a');
-  parsed.href = url;
+
+  parsed.href = decodeURIComponent(url);
 
   return {
     href: parsed.href,
@@ -597,6 +656,18 @@ function parseUrl(url) {
     host: parsed.host || window.location.host
   };
 }
+
+function isA(object, _t) {
+  return Object.prototype.toString.call(object) === '[object ' + _t + ']';
+};
+
+function isPlainObject(object) {
+  return isA(object, 'Object');
+}
+
+function isStr(object) {
+  return isA(object, 'String');
+};
 
 /***/ }),
 /* 3 */
