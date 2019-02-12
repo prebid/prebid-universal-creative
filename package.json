@@ -17,7 +17,7 @@
   "keywords": [
     "Prebid.js"
   ],
-  "globalVarName": "pwpbjs",
+  "globalVarName": "pbjs",
   "author": "Prebid.org Contributors",
   "license": "Apache-2.0",
   "bugs": {
