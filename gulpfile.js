@@ -101,6 +101,7 @@ gulp.task('connect', () => {
   return gulp.src(".").
     pipe(webserver({
       livereload: true,
+      port,
       directoryListing: true,
       open: true
     }));
