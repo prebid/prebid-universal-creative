@@ -1,4 +1,5 @@
 const postscribe = require('postscribe');
+import * as domHelper from './domHelper';
 
 export function createTrackPixelHtml(url) {
   if (!url) {
@@ -11,7 +12,7 @@ export function createTrackPixelHtml(url) {
 }
 
 export function writeAdUrl(adUrl, width, height) {
-  let iframe = getEmptyIframe(height, width);
+  let iframe = domHelper.getEmptyIframe(height, width);
   iframe.src = adUrl;
   document.body.appendChild(iframe);
 }
@@ -29,20 +30,6 @@ export function sendRequest(url, callback) {
   oReq.addEventListener('load', reqListener);
   oReq.open('GET', url);
   oReq.send();
-}
-
-export function getEmptyIframe(height, width) {
-  let frame = document.createElement('iframe');
-  frame.setAttribute('frameborder', 0);
-  frame.setAttribute('scrolling', 'no');
-  frame.setAttribute('marginheight', 0);
-  frame.setAttribute('marginwidth', 0);
-  frame.setAttribute('TOPMARGIN', 0);
-  frame.setAttribute('LEFTMARGIN', 0);
-  frame.setAttribute('allowtransparency', 'true');
-  frame.setAttribute('width', width);
-  frame.setAttribute('height', height);
-  return frame;
 }
 
 export function getUUID() {
@@ -107,34 +94,6 @@ export function getCreativeCommentMarkup(bid) {
   wrapper.appendChild(creativeComment);
   return wrapper.innerHTML;
 }
-
-/**
- * Insert element to passed target
- * @param {object} elm
- * @param {object} doc
- * @param {string} target
- */
-export function insertElement(elm, doc, target) {
-  doc = doc || document;
-  let elToAppend;
-  if (target) {
-    elToAppend = doc.getElementsByTagName(target);
-  } else {
-    elToAppend = doc.getElementsByTagName('head');
-  }
-  try {
-    elToAppend = elToAppend.length ? elToAppend : doc.getElementsByTagName('body');
-    if (elToAppend.length) {
-      elToAppend = elToAppend[0];
-      elToAppend.insertBefore(elm, elToAppend.firstChild);
-    }
-  } catch (e) {}
-}
-
-export function triggerBurl(url) {
-  const img = new Image();
-  img.src = url;
-};
 
 export function transformAuctionTargetingData(tagData) {
   // this map object translates the Prebid.js auction keys to their equivalent Prebid Universal Creative keys

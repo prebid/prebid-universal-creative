@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
+/******/ 	return __webpack_require__(__webpack_require__.s = 1);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -70,9 +70,68 @@
 "use strict";
 
 
-var _renderingManager = __webpack_require__(1);
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getEmptyIframe = getEmptyIframe;
+exports.insertElement = insertElement;
+/**
+ * domHelper: a collection of helpful dom things
+ */
 
-var _environment = __webpack_require__(4);
+/**
+ * returns a empty iframe element with specified height/width
+ * @param {Number} height height iframe set to 
+ * @param {Number} width width iframe set to
+ * @returns {Element} iframe DOM element 
+ */
+function getEmptyIframe(height, width) {
+  var frame = document.createElement('iframe');
+  frame.setAttribute('frameborder', 0);
+  frame.setAttribute('scrolling', 'no');
+  frame.setAttribute('marginheight', 0);
+  frame.setAttribute('marginwidth', 0);
+  frame.setAttribute('TOPMARGIN', 0);
+  frame.setAttribute('LEFTMARGIN', 0);
+  frame.setAttribute('allowtransparency', 'true');
+  frame.setAttribute('width', width);
+  frame.setAttribute('height', height);
+  return frame;
+}
+
+/**
+* Insert element to passed target
+* @param {object} elm
+* @param {object} doc
+* @param {string} target
+*/
+function insertElement(elm, doc, target) {
+  doc = doc || document;
+  var elToAppend = void 0;
+  if (target) {
+    elToAppend = doc.getElementsByTagName(target);
+  } else {
+    elToAppend = doc.getElementsByTagName('head');
+  }
+  try {
+    elToAppend = elToAppend.length ? elToAppend : doc.getElementsByTagName('body');
+    if (elToAppend.length) {
+      elToAppend = elToAppend[0];
+      elToAppend.insertBefore(elm, elToAppend.firstChild);
+    }
+  } catch (e) {}
+}
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _renderingManager = __webpack_require__(2);
+
+var _environment = __webpack_require__(5);
 
 /**
  * creative.js
@@ -93,7 +152,7 @@ var renderCreative = (0, _renderingManager.newRenderingManager)(window, environm
 window.ucTag.renderAd = renderCreative.renderAd;
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -104,9 +163,13 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.newRenderingManager = newRenderingManager;
 
-var _utils = __webpack_require__(2);
+var _utils = __webpack_require__(3);
 
 var utils = _interopRequireWildcard(_utils);
+
+var _domHelper = __webpack_require__(0);
+
+var domHelper = _interopRequireWildcard(_domHelper);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
 
@@ -203,18 +266,18 @@ function newRenderingManager(win, environment) {
         if (adObject.mediaType === 'video') {
           console.log('Error trying to write ad.');
         } else if (ad) {
-          var iframe = utils.getEmptyIframe(adObject.height, adObject.width);
+          var iframe = domHelper.getEmptyIframe(adObject.height, adObject.width);
           body.appendChild(iframe);
           iframe.contentDocument.open();
           iframe.contentDocument.write(ad);
           iframe.contentDocument.close();
         } else if (url) {
-          var _iframe = utils.getEmptyIframe(height, width);
+          var _iframe = domHelper.getEmptyIframe(height, width);
           _iframe.style.display = 'inline';
           _iframe.style.overflow = 'hidden';
           _iframe.src = url;
 
-          utils.insertElement(_iframe, doc, 'body');
+          domHelper.insertElement(_iframe, doc, 'body');
         } else {
           console.log('Error trying to write ad. No ad for bid response id: ' + id);
         }
@@ -306,7 +369,7 @@ function newRenderingManager(win, environment) {
         } else {
           var nurl = bidObject.nurl;
           var commentElm = utils.getCreativeComment(bidObject);
-          utils.insertElement(commentElm, document, 'body');
+          domHelper.insertElement(commentElm, document, 'body');
           utils.writeAdUrl(nurl, width, height);
         }
       }
@@ -388,7 +451,7 @@ function newRenderingManager(win, environment) {
 }
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -401,17 +464,20 @@ exports.createTrackPixelHtml = createTrackPixelHtml;
 exports.writeAdUrl = writeAdUrl;
 exports.writeAdHtml = writeAdHtml;
 exports.sendRequest = sendRequest;
-exports.getEmptyIframe = getEmptyIframe;
 exports.getUUID = getUUID;
 exports.loadScript = loadScript;
 exports.getCreativeComment = getCreativeComment;
 exports.getCreativeCommentMarkup = getCreativeCommentMarkup;
-exports.insertElement = insertElement;
-exports.triggerBurl = triggerBurl;
 exports.transformAuctionTargetingData = transformAuctionTargetingData;
 exports.parseUrl = parseUrl;
-var postscribe = __webpack_require__(3);
 
+var _domHelper = __webpack_require__(0);
+
+var domHelper = _interopRequireWildcard(_domHelper);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+
+var postscribe = __webpack_require__(4);
 function createTrackPixelHtml(url) {
   if (!url) {
     return '';
@@ -423,7 +489,7 @@ function createTrackPixelHtml(url) {
 }
 
 function writeAdUrl(adUrl, width, height) {
-  var iframe = getEmptyIframe(height, width);
+  var iframe = domHelper.getEmptyIframe(height, width);
   iframe.src = adUrl;
   document.body.appendChild(iframe);
 }
@@ -441,20 +507,6 @@ function sendRequest(url, callback) {
   oReq.addEventListener('load', reqListener);
   oReq.open('GET', url);
   oReq.send();
-}
-
-function getEmptyIframe(height, width) {
-  var frame = document.createElement('iframe');
-  frame.setAttribute('frameborder', 0);
-  frame.setAttribute('scrolling', 'no');
-  frame.setAttribute('marginheight', 0);
-  frame.setAttribute('marginwidth', 0);
-  frame.setAttribute('TOPMARGIN', 0);
-  frame.setAttribute('LEFTMARGIN', 0);
-  frame.setAttribute('allowtransparency', 'true');
-  frame.setAttribute('width', width);
-  frame.setAttribute('height', height);
-  return frame;
 }
 
 function getUUID() {
@@ -519,34 +571,6 @@ function getCreativeCommentMarkup(bid) {
   wrapper.appendChild(creativeComment);
   return wrapper.innerHTML;
 }
-
-/**
- * Insert element to passed target
- * @param {object} elm
- * @param {object} doc
- * @param {string} target
- */
-function insertElement(elm, doc, target) {
-  doc = doc || document;
-  var elToAppend = void 0;
-  if (target) {
-    elToAppend = doc.getElementsByTagName(target);
-  } else {
-    elToAppend = doc.getElementsByTagName('head');
-  }
-  try {
-    elToAppend = elToAppend.length ? elToAppend : doc.getElementsByTagName('body');
-    if (elToAppend.length) {
-      elToAppend = elToAppend[0];
-      elToAppend.insertBefore(elm, elToAppend.firstChild);
-    }
-  } catch (e) {}
-}
-
-function triggerBurl(url) {
-  var img = new Image();
-  img.src = url;
-};
 
 function transformAuctionTargetingData(tagData) {
   // this map object translates the Prebid.js auction keys to their equivalent Prebid Universal Creative keys
@@ -670,7 +694,7 @@ function isStr(object) {
 };
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -2763,7 +2787,7 @@ return /******/ (function(modules) { // webpackBootstrap
 //# sourceMappingURL=postscribe.js.map
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
