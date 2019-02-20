@@ -9,21 +9,18 @@ const creative = require('./package.json');
 const uglify = require('gulp-uglify');
 const clean = require('gulp-clean');
 const webpackStream = require('webpack-stream');
-const webpack = require('webpack');
 const webpackConfig = require('./webpack.conf');
 const inject = require('gulp-inject');
 const rename = require('gulp-rename');
 const KarmaServer = require('karma').Server;
-const opens = require('open');
 const karmaConfMaker = require('./karma.conf.maker');
 const execa = require('execa');
 const path = require('path');
 
 const dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
 const banner = '/* <%= creative.name %> v<%= creative.version %>\n' + dateString + ' */\n';
-const port = 9990;
 
-gulp.task('serve', ['clean', 'test', 'build-dev', 'build-native-dev', 'build-cookie-sync', 'connect']);
+gulp.task('serve', ['clean', 'test', 'build-dev', 'build-native-dev', 'build-cookie-sync', 'connect', 'watch']);
 
 gulp.task('build', ['build-prod', 'build-cookie-sync', 'build-native']);
 
@@ -106,6 +103,13 @@ gulp.task('connect', () => {
       open: true,
       https: argv.https
     }));
+});
+
+gulp.task('watch', () => {
+  gulp.watch(
+    ['src/**/*.js', 'test/**/*.js'],
+    ['clean', 'test', 'build-dev', 'build-native-dev', 'build-cookie-sync']
+  );
 });
 
 // Run the unit tests.
