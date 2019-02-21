@@ -39,15 +39,16 @@ function doBidderSync(type, url, bidder, done) {
 }
 
 function triggerIframeLoad(url, bidder, done) {
+  if(!url){
+   return;
+  }
   let iframe = domHelper.getEmptyIframe(0, 0);
   iframe.id = `sync_${bidder}_${Date.now()}`;
-  if(url){
-    iframe.src = url;
-    iframe.onload = done;
-    // we aren't listening to onerror because it won't fire for x-domain sources
-    // however, in the event that the URL can't be resolved, the browser still invokes onload
-    domHelper.insertElement(iframe, document, 'html');
-  }
+  iframe.src = url;
+  iframe.onload = done;
+  // we aren't listening to onerror because it won't fire for x-domain sources
+  // however, in the event that the URL can't be resolved, the browser still invokes onload
+  domHelper.insertElement(iframe, document, 'html');
 }
 
 function triggerPixel(url, done) {
