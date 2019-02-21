@@ -8,6 +8,8 @@
  *
  *   endpoint (optional): The endpoint to handle bidder sync. If present, this should be a defined property in VALID_ENDPOINTS.
  */
+import * as domHelper from './domHelper';
+
 const VALID_ENDPOINTS = {
   rubicon: 'https://prebid-server.rubiconproject.com/cookie_sync'
 };
@@ -28,13 +30,25 @@ function doBidderSync(type, url, bidder, done) {
     console.log(`Invoking image pixel user sync for bidder: "${bidder}"`);
     triggerPixel(url, done);
   } else if (type == 'iframe') {
-    console.log(`Skipping iframe pixel user sync for bidder: "${bidder}". This isn't implemented yet.`);
-    // TODO test iframe solution
-    done();
+    console.log(`Invoking iframe pixel user sync for bidder: "${bidder}"`);
+    triggerIframeLoad(url, bidder, done);
   } else {
     console.log(`User sync type "${type}" not supported for bidder: "${bidder}"`);
     done();
   }
+}
+
+function triggerIframeLoad(url, bidder, done) {
+  if(!url){
+   return;
+  }
+  let iframe = domHelper.getEmptyIframe(0, 0);
+  iframe.id = `sync_${bidder}_${Date.now()}`;
+  iframe.src = url;
+  iframe.onload = done;
+  // we aren't listening to onerror because it won't fire for x-domain sources
+  // however, in the event that the URL can't be resolved, the browser still invokes onload
+  domHelper.insertElement(iframe, document, 'html');
 }
 
 function triggerPixel(url, done) {

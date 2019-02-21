@@ -1,5 +1,6 @@
 import { newRenderingManager } from 'src/renderingManager';
 import * as utils from 'src/utils';
+import * as domHelper from 'src/domHelper';
 import { expect } from 'chai';
 import { mocks } from 'test/helpers/mocks';
 import { merge } from 'lodash';
@@ -189,7 +190,7 @@ describe('renderingManager', function() {
     let iframeStub;
     beforeEach(function(){
       parseStub = sinon.stub(utils, 'parseUrl');
-      iframeStub = sinon.stub(utils, 'getEmptyIframe');
+      iframeStub = sinon.stub(domHelper, 'getEmptyIframe');
     });
 
     after(function() {

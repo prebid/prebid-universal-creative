@@ -1,4 +1,5 @@
 import * as utils from './utils';
+import * as domHelper from './domHelper';
 
 const GOOGLE_IFRAME_HOSTNAME = 'tpc.googlesyndication.com';
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
@@ -93,18 +94,18 @@ export function newRenderingManager(win, environment) {
         if (adObject.mediaType === 'video') {
           console.log('Error trying to write ad.');
         } else if (ad) {
-          const iframe = utils.getEmptyIframe(adObject.height, adObject.width);
+          const iframe =  domHelper.getEmptyIframe(adObject.height, adObject.width);
           body.appendChild(iframe);
           iframe.contentDocument.open();
           iframe.contentDocument.write(ad);
           iframe.contentDocument.close();
         } else if (url) {
-          const iframe = utils.getEmptyIframe(height, width);
+          const iframe = domHelper.getEmptyIframe(height, width);
           iframe.style.display = 'inline';
           iframe.style.overflow = 'hidden';
           iframe.src = url;
 
-          utils.insertElement(iframe, doc, 'body');
+          domHelper.insertElement(iframe, doc, 'body');
         } else {
           console.log(`Error trying to write ad. No ad for bid response id: ${id}`);
         }
@@ -192,7 +193,7 @@ export function newRenderingManager(win, environment) {
         } else {
           let nurl = bidObject.nurl;
           let commentElm = utils.getCreativeComment(bidObject);
-          utils.insertElement(commentElm, document, 'body');
+          domHelper.insertElement(commentElm, document, 'body');
           utils.writeAdUrl(nurl, width, height);
         }
       }
