@@ -1,5 +1,6 @@
 /**
- *
+ * Handles postMessage requests and responses for replacing native placeholder
+ * values in native creative templates.
  */
 
 const NATIVE_KEYS = {
@@ -23,105 +24,103 @@ const NATIVE_KEYS = {
 };
 
 export function newNativeAssetManager(win) {
-  let errorCount = 0;
+  let callback;
+  let errorCountEscapeHatch = 0;
 
-  /**
-   *
+  /*
+   * Entry point to search for placeholderes and set up postmessage roundtrip
+   * to retrieve native assets. Looks for placeholders for the given adId and
+   * fires a callback after the native html is updated.
    */
-  function scanForPlaceholders(adId) {
-    console.log('scanning for placeholders...', adId);
+  function loadAssets(adId, cb) {
+    const placeholders = scranForPlaceholders(adId);
 
-    // const placeholders = getPlaceholders();
-
-    // if (placeholders.length > 0) {
-    //   console.log(`Placeholders found!`, placeholders);
-    //   getAssets(placeholders);
-    // }
+    if (placeholders.length > 0) {
+      callback = cb;
+      requestAssets(adId, placeholders);
+    }
   }
 
-  /**
-   *
+  /*
+   * Searches the DOM for placeholder values sent in by Prebid Native
    */
-  function getPlaceholders() {
-    console.log('Finding native placeholders:');
-
+  function scranForPlaceholders(adId) {
     let placeholders = [];
 
     Object.keys(NATIVE_KEYS).forEach(key => {
-      const value = NATIVE_KEYS[key];
-      const placeholder = `${value}:`;
-      const adIdLength = 14;
-
+      const placeholderKey = NATIVE_KEYS[key];
+      const placeholder = `${placeholderKey}:${adId}`;
       const placeholderIndex = win.document.body.innerHTML.indexOf(placeholder);
 
       if (~placeholderIndex) {
-        const placeholderWithAdId = win.document.body.innerHTML.slice(
-          placeholderIndex,
-          placeholderIndex + placeholder.length + adIdLength
-        );
-
-        placeholders.push(placeholderWithAdId);
+        placeholders.push(placeholderKey);
       }
     });
 
     return placeholders;
   }
 
-  /**
-   *
+  /*
+   * Sends postmessage to Prebid for asset placeholders found in the native
+   * creative template, and setups up a listener for when Prebid responds.
    */
-  function getAssets(placeholders) {
-    win.addEventListener('message', replaceListener, false);
-
-    const requestedAssets = placeholders.map(placeholder => placeholder.split(':')[0]);
-    const adId = placeholders[0].split(':')[1];
+  function requestAssets(adId, assets) {
+    win.addEventListener('message', replaceAssets, false);
 
     const message = {
       message: 'Prebid Native',
-      action: 'requestAssets',
+      action: 'assetRequest',
       adId,
-      assets: requestedAssets,
+      assets,
     };
 
     win.parent.postMessage(JSON.stringify(message), '*');
   }
 
-  /**
-   *
+  /*
+   * Postmessage listener for when Prebid responds with requested native assets.
    */
-  function replaceListener(event) {
+  function replaceAssets(event) {
     var data = {};
 
     try {
       data = JSON.parse(event.data);
     } catch (e) {
-      if (errorCount++ > 10) {
-        win.removeEventListener('message', replaceListener);
+      if (errorCountEscapeHatch++ > 10) {
+        /*
+         * if for some reason Prebid never responds with the native assets,
+         * get rid of this listener because other messages won't stop coming
+         */
+        win.removeEventListener('message', replaceAssets);
       }
       return;
     }
 
-    if (data.message === 'gotLink') {
-      console.log('gotLink', data);
-      replace(data);
-      // attachClickListeners(findAdElements(AD_ANCHOR_CLASS_NAME));
-      win.removeEventListener('message', replaceListener);
+    if (data.message === 'assetResponse') {
+      const body = win.document.body.innerHTML;
+      const newHtml = replace(body, data);
+
+      win.document.body.innerHTML = newHtml;
+      callback && callback();
+      win.removeEventListener('message', replaceAssets);
     }
   }
 
   /**
-   *
+   * Replaces occurrences of native placeholder values with their actual values
+   * in the given document.
    */
-  function replace(data) {
-    data.assets.forEach(asset => {
-      win.document.body.innerHTML = win.document.body.innerHTML.replace(
-        `${NATIVE_KEYS[asset.key]}:${data.adId}`,
-        asset.value
-      );
+  function replace(document, { assets, adId }) {
+    let html = document;
+
+    (assets || []).forEach(asset => {
+      html = html.replace(`${NATIVE_KEYS[asset.key]}:${adId}`, asset.value);
     });
+
+    return html;
   }
 
   return {
-    scanForPlaceholders
+    loadAssets
   };
 }
