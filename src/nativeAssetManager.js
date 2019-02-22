@@ -3,6 +3,10 @@
  * values in native creative templates.
  */
 
+/*
+ * Native asset->key mapping from Prebid.js/src/constants.json
+ * https://github.com/prebid/Prebid.js/blob/8635c91942de9df4ec236672c39b19448545a812/src/constants.json#L67
+ */
 const NATIVE_KEYS = {
   title: 'hb_native_title',
   body: 'hb_native_body',
