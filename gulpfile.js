@@ -103,7 +103,8 @@ gulp.task('connect', () => {
       livereload: true,
       port,
       directoryListing: true,
-      open: true
+      open: true,
+      https: argv.https
     }));
 });
 
