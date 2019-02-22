@@ -2,6 +2,7 @@
  * Script to handle firing impression and click trackers from native teamplates
  */
 import { parseUrl } from './utils';
+import { newNativeAssetManager } from './nativeAssetManager';
 
 const AD_ANCHOR_CLASS_NAME = 'pb-click';
 const AD_DATA_ADID_ATTRIBUTE = 'pbAdId';
@@ -43,6 +44,14 @@ export function newNativeTrackerManager(win) {
     fireTracker(adId, 'impression');
   }
 
+  function attachClickListeners(adElements) {
+    adElements = adElements || findAdElements(AD_ANCHOR_CLASS_NAME);
+
+    for (let i = 0; i < adElements.length; i++) {
+      adElements[i].addEventListener('click', loadClickTrackers, true);
+    }
+  }
+
   function fireTracker(adId, action) {
     if (adId === '') {
       console.warn('Prebid tracking event was missing \'adId\'.  Was adId macro set in the HTML attribute ' + AD_DATA_ADID_ATTRIBUTE + 'on the ad\'s anchor element');
@@ -64,9 +73,15 @@ export function newNativeTrackerManager(win) {
     publisherDomain = parsedUrl.protocol + '://' + parsedUrl.host;
 
     let adElements = findAdElements(AD_ANCHOR_CLASS_NAME);
-    for (let i = 0; i < adElements.length; i++) {
-      adElements[i].addEventListener('click', loadClickTrackers, true);
-    }
+
+    // look for and replace any found native placeholders
+    const nativeAssetManager = newNativeAssetManager(window);
+    nativeAssetManager.loadAssets(
+      readAdIdFromElement(adElements),
+      attachClickListeners
+    );
+
+    attachClickListeners(adElements);
 
     // fires native impressions on creative load
     if (adElements.length > 0) {
