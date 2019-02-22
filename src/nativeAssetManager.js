@@ -33,7 +33,7 @@ export function newNativeAssetManager(win) {
    * fires a callback after the native html is updated.
    */
   function loadAssets(adId, cb) {
-    const placeholders = scranForPlaceholders(adId);
+    const placeholders = scanForPlaceholders(adId);
 
     if (placeholders.length > 0) {
       callback = cb;
@@ -44,7 +44,7 @@ export function newNativeAssetManager(win) {
   /*
    * Searches the DOM for placeholder values sent in by Prebid Native
    */
-  function scranForPlaceholders(adId) {
+  function scanForPlaceholders(adId) {
     let placeholders = [];
 
     Object.keys(NATIVE_KEYS).forEach(key => {
