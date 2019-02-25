@@ -23,7 +23,7 @@ const dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
 const banner = '/* <%= creative.name %> v<%= creative.version %>\n' + dateString + ' */\n';
 const port = 9990;
 
-gulp.task('serve', ['clean', 'test', 'build-dev', 'build-native-dev', 'build-cookie-sync', 'connect']);
+gulp.task('serve', ['clean', 'test', 'build-dev', 'build-native-dev', 'build-cookie-sync', 'connect', 'watch']);
 
 gulp.task('build', ['build-prod', 'build-cookie-sync', 'build-native']);
 
@@ -106,6 +106,13 @@ gulp.task('connect', () => {
       open: true,
       https: argv.https
     }));
+});
+
+gulp.task('watch', () => {
+  gulp.watch(
+    ['src/**/*.js', 'test/**/*.js'],
+    ['clean', 'test', 'build-dev', 'build-native-dev', 'build-cookie-sync']
+  );
 });
 
 // Run the unit tests.
