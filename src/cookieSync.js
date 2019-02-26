@@ -16,7 +16,8 @@ const VALID_ENDPOINTS = {
 };
 const ENDPOINT = sanitizeEndpoint(parseQueryParam('endpoint', window.location.search));
 const ENDPOINT_ARGS = sanitizeEndpointArgs(parseQueryParam('args', window.location.search));
-const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt(parseQueryParam('max_sync_count', window.location.search), 10));
+const maxSyncCountParam = parseQueryParam('max_sync_count', window.location.search);
+const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt((maxSyncCountParam) ? maxSyncCountParam : 5, 10));
 const GDPR = sanitizeGdpr(parseInt(parseQueryParam('gdpr', window.location.search), 10));
 const GDPR_CONSENT = sanitizeGdprConsent(parseQueryParam('gdpr_consent', window.location.search));
 /**
@@ -163,7 +164,7 @@ function parseQueryParam(name, urlSearch) {
  * Otherwise it will return a default value
  */
 function sanitizeEndpoint(value) {
-  return (value && VALID_ENDPOINTS.hasOwnProperty(value)) ? VALID_ENDPOINTS[value] : undefined;
+  return (value && VALID_ENDPOINTS.hasOwnProperty(value)) ? VALID_ENDPOINTS[value] : 'https://prebid.adnxs.com/pbs/v1/cookie_sync';
 }
 
 function sanitizeEndpointArgs(value) {
@@ -171,7 +172,7 @@ function sanitizeEndpointArgs(value) {
     var argProperties = value.split(',').reduce(function(keyValues, key) {
       var keyValue = key.split(':');
       if (keyValue.length === 2 && keyValue[0] !== '' && keyValue[1] !== '') {
-        keyValues[keyValue[0]] = keyValue[1];
+        keyValues[keyValue[0]] = /^\d+$/.test(keyValue[1]) ? parseInt(keyValue[1]) : keyValue[1];
       }
       return keyValues;
     }, {});
