@@ -52,6 +52,7 @@ describe('uid module', function() {
       "buyeruids": {"appnexus":"12345"}
     }
     expect(callbackSpy.calledWith(null, expectedResponse)).to.be.true;
+    expect(requests.length).to.equal(0);
   });
 
   it('should get buyer ids from endpoint when local storage not supported', function() {

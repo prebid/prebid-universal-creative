@@ -22,7 +22,7 @@ const REFRESH_IN_DAYS = 14;
  */
 export function getBuyerUids(callback) {
   let uidData = commons.getDataFromLocalStorage(STORAGE_KEY);
-  if (hasValidData(uidData)) {
+  if (hasInvalidData(uidData)) {
     loadData(callback);
   } else {
     try {
@@ -54,7 +54,7 @@ export function loadData(callback) {
   }
 
   let uidData = commons.getDataFromLocalStorage(STORAGE_KEY);
-  if (hasValidData(uidData)) {
+  if (hasInvalidData(uidData)) {
     commons.ajax(ENDPOINT, saveData, null, {
       withCredentials: true
     });
@@ -66,8 +66,8 @@ export function loadData(callback) {
  * @param {Object} uidData 
  * @returns {boolean}
  */
-function hasValidData(uidData) {
-  return !uidData || commons.timestamp() < uidData.lastUpdated + REFRESH_IN_DAYS * 24 * 60 * 60 * 1000
+function hasInvalidData(uidData) {
+  return !uidData || commons.timestamp() > uidData.lastUpdated + REFRESH_IN_DAYS * 24 * 60 * 60 * 1000
 }
 
 function noop() {}
