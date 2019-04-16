@@ -27,9 +27,15 @@ const NATIVE_KEYS = {
   salePrice: 'hb_native_saleprice',
 };
 
+const NATIVE_CLASS_IDS = {
+  icon: 'pb-icon',
+  image: 'pb-image'
+};
+
 export function newNativeAssetManager(win) {
   let callback;
   let errorCountEscapeHatch = 0;
+  let tokenType;
 
   /*
    * Entry point to search for placeholderes and set up postmessage roundtrip
@@ -51,10 +57,28 @@ export function newNativeAssetManager(win) {
   function scanForPlaceholders(adId) {
     let placeholders = [];
 
-    Object.keys(NATIVE_KEYS).forEach(key => {
+    Object.keys(NATIVE_KEYS).forEach(function(key) {
       const placeholderKey = NATIVE_KEYS[key];
-      const placeholder = `${placeholderKey}:${adId}`;
-      const placeholderIndex = win.document.body.innerHTML.indexOf(placeholder);
+      const sendIdPlaceholder = `${placeholderKey}:${adId}`;
+      const hardKeyPlaceholder = `%%${placeholderKey}%%`;
+
+      let placeholderIndex = -1;
+      let tokensToCheck = [sendIdPlaceholder];
+  
+      if (placeholderKey === NATIVE_KEYS.image) {
+        tokensToCheck.push('pb-image');
+      } else if (placeholderKey === NATIVE_KEYS.icon) {
+        tokensToCheck.push('pb-icon');
+      } else {
+        tokensToCheck.push(hardKeyPlaceholder);
+      }
+      
+      tokensToCheck.forEach(function(token) {
+        if (win.document.body.innerHTML.indexOf(token) !== -1) {
+          placeholderIndex = win.document.body.innerHTML.indexOf(token);
+          tokenType = (token === sendIdPlaceholder) ? 'sendId' : 'hardKey';
+        }
+      });
 
       if (~placeholderIndex) {
         placeholders.push(placeholderKey);
@@ -85,7 +109,7 @@ export function newNativeAssetManager(win) {
    * Postmessage listener for when Prebid responds with requested native assets.
    */
   function replaceAssets(event) {
-    var data = {};
+    let data = {};
 
     try {
       data = JSON.parse(event.data);
@@ -105,6 +129,7 @@ export function newNativeAssetManager(win) {
       const newHtml = replace(body, data);
 
       win.document.body.innerHTML = newHtml;
+      if (tokenType === 'hardKey') insertImages(win.document.body, data);
       callback && callback();
       win.removeEventListener('message', replaceAssets);
     }
@@ -116,12 +141,25 @@ export function newNativeAssetManager(win) {
    */
   function replace(document, { assets, adId }) {
     let html = document;
-
-    (assets || []).forEach(asset => {
-      html = html.replace(`${NATIVE_KEYS[asset.key]}:${adId}`, asset.value);
+    (assets || []).forEach(function(asset) {
+      let tokenSyntax = (tokenType === 'sendId') ? `${NATIVE_KEYS[asset.key]}:${adId}` : `%%${NATIVE_KEYS[asset.key]}%%`;
+      html = html.replace(tokenSyntax, asset.value);
     });
 
     return html;
+  }
+
+  /**
+   * Adds the src attribute to specific img tags identified by the class name.
+   * The value for the added src is dervied from either the native.icon or native.image bid assets.
+   */
+  function insertImages(document, { assets }) {
+    (assets || []).forEach(function(asset) {
+      if (asset.key === 'icon' || asset.key === 'image') {
+        let imageElement = document.getElementsByClassName(NATIVE_CLASS_IDS[asset.key]);
+        imageElement[0].setAttribute('src', asset.value);
+      }
+    });
   }
 
   return {
