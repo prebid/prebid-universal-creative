@@ -35,7 +35,7 @@ const NATIVE_CLASS_IDS = {
 export function newNativeAssetManager(win) {
   let callback;
   let errorCountEscapeHatch = 0;
-  let tokenType;
+  let tokenType = 'default';
 
   /*
    * Entry point to search for placeholderes and set up postmessage roundtrip
@@ -76,7 +76,9 @@ export function newNativeAssetManager(win) {
       tokensToCheck.forEach(function(token) {
         if (win.document.body.innerHTML.indexOf(token) !== -1) {
           placeholderIndex = win.document.body.innerHTML.indexOf(token);
-          tokenType = (token === sendIdPlaceholder) ? 'sendId' : 'hardKey';
+          if (tokenType === 'default') {
+            tokenType = (token === sendIdPlaceholder) ? 'sendId' : 'hardKey';
+          }
         }
       });
 
