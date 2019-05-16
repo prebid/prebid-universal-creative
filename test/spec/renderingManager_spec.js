@@ -168,7 +168,8 @@ describe('renderingManager', function() {
         cacheHost: 'example.com',
         cachePath: '/path',
         uuid: '123',
-        size: '300x250'
+        size: '300x250',
+        clearPrice: '10.00'
       };
         
       renderObject.renderAd(mockWin.document, ucTagData);
@@ -177,10 +178,10 @@ describe('renderingManager', function() {
         width: 300,
         height: 250,
         crid: 123,
-        adm: 'ad-markup'
+        adm: 'ad-markup${AUCTION_PRICE}'
       }
       requests[0].respond(200, {}, JSON.stringify(response));
-      expect(writeHtmlSpy.args[0][0]).to.equal('<!--Creative 123 served by Prebid.js Header Bidding-->ad-markup');
+      expect(writeHtmlSpy.args[0][0]).to.equal('<!--Creative 123 served by Prebid.js Header Bidding-->ad-markup10.00');
       expect(sendRequestSpy.args[0][0]).to.equal('https://example.com/path?uuid=123');
     });
   });
