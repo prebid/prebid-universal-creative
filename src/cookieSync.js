@@ -17,7 +17,7 @@ const VALID_ENDPOINTS = {
 const ENDPOINT = sanitizeEndpoint(parseQueryParam('endpoint', window.location.search));
 const ENDPOINT_ARGS = sanitizeEndpointArgs(parseQueryParam('args', window.location.search));
 const maxSyncCountParam = parseQueryParam('max_sync_count', window.location.search);
-const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt((maxSyncCountParam) ? maxSyncCountParam : 5, 10));
+const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt((maxSyncCountParam) ? maxSyncCountParam : 10, 10));
 const GDPR = sanitizeGdpr(parseInt(parseQueryParam('gdpr', window.location.search), 10));
 const GDPR_CONSENT = sanitizeGdprConsent(parseQueryParam('gdpr_consent', window.location.search));
 /**
