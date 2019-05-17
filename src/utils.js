@@ -106,7 +106,7 @@ export function transformAuctionTargetingData(tagData) {
     hb_format: 'mediaType',
     hb_env: 'env',
     hb_size: 'size',
-    hb_price: 'clearPrice'
+    hb_pb: 'clearPrice'
   };
 
   /**
