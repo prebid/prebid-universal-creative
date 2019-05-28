@@ -8,14 +8,16 @@ describe('utils', function () {
         cacheHost: 'example.com',
         cachePath: '/path',
         uuid: '123',
-        size: '300x250'
+        size: '300x250',
+        hbPb: '10.00'
       };
       let auctionData = utils.transformAuctionTargetingData(ucTagData);
       expect(auctionData).to.deep.equal({
         cacheHost: 'example.com',
         cachePath: '/path',
         uuid: '123',
-        size: '300x250'
+        size: '300x250',
+        hbPb: '10.00'
       });
     });
 
