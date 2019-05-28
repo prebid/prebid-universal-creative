@@ -182,7 +182,7 @@ export function newRenderingManager(win, environment) {
       let width = (bidObject.width) ? bidObject.width : bidObject.w;
       let height = (bidObject.height) ? bidObject.height : bidObject.h;
       if (bidObject.adm) {
-        if(hbPb) { // replace ${AUCTION_PRICE} macro with the clear price.
+        if(hbPb) { // replace ${AUCTION_PRICE} macro with the hb_pb.
           bidObject.adm = bidObject.adm.replace('${AUCTION_PRICE}', hbPb);
         } else {
           /*
