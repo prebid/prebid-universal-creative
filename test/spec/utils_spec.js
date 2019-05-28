@@ -41,7 +41,7 @@ describe('utils', function () {
         size: '300x250',
         mediaType: 'banner',
         env: 'mobile-app',
-        clearPrice: '10.00'
+        hbPb: '10.00'
       });
     });
 

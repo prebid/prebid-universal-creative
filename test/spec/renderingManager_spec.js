@@ -169,7 +169,7 @@ describe('renderingManager', function() {
         cachePath: '/path',
         uuid: '123',
         size: '300x250',
-        clearPrice: '10.00'
+        hbPb: '10.00'
       };
         
       renderObject.renderAd(mockWin.document, ucTagData);

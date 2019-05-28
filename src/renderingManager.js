@@ -29,9 +29,9 @@ export function newRenderingManager(win, environment) {
   let renderAd = function(doc, dataObject) {
     const targetingData = utils.transformAuctionTargetingData(dataObject);
     if(environment.isMobileApp(targetingData.env)) {
-      renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.clearPrice, true);
+      renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb, true);
     } else if (environment.isAmp(targetingData.uuid)) {
-      renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.clearPrice);
+      renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb);
     } else if (environment.isCrossDomain()) {
       renderCrossDomain(targetingData.adId, targetingData.adServerDomain, targetingData.pubUrl);
     } else {
@@ -147,10 +147,10 @@ export function newRenderingManager(win, environment) {
    * @param {string} cachePath Cache path
    * @param {string} uuid id to render response from cache endpoint
    * @param {string} size size of the creative
-   * @param {string} clearPrice final price of the winning bid
+   * @param {string} hbPb final price of the winning bid
    * @param {Bool} isMobileApp flag to detect mobile app
    */
-  function renderAmpOrMobileAd(cacheHost, cachePath, uuid = '', size, clearPrice, isMobileApp) {
+  function renderAmpOrMobileAd(cacheHost, cachePath, uuid = '', size, hbPb, isMobileApp) {
     // For MoPub, creative is stored in localStorage via SDK.
     let search = 'Prebid_';
     if(uuid.substr(0, search.length) === search) {
@@ -165,25 +165,25 @@ export function newRenderingManager(win, environment) {
       } else {
         console.log('Targeting key hb_size not found to resize creative');
       }
-      utils.sendRequest(adUrl, responseCallback(isMobileApp, clearPrice));
+      utils.sendRequest(adUrl, responseCallback(isMobileApp, hbPb));
     }
   }
 
   /**
    * Cache request Callback to display creative
    * @param {Bool} isMobileApp
-   * @param {string} clearPrice final price of the winning bid
+   * @param {string} hbPb final price of the winning bid
    * @returns {function} a callback function that parses response
    */
-  function responseCallback(isMobileApp, clearPrice) {
+  function responseCallback(isMobileApp, hbPb) {
     return function(response) {
       let bidObject = parseResponse(response);
       let ad = utils.getCreativeCommentMarkup(bidObject);
       let width = (bidObject.width) ? bidObject.width : bidObject.w;
       let height = (bidObject.height) ? bidObject.height : bidObject.h;
       if (bidObject.adm) {
-        if(clearPrice) { // replace ${AUCTION_PRICE} macro with the clear price.
-          bidObject.adm = bidObject.adm.replace('${AUCTION_PRICE}', clearPrice);
+        if(hbPb) { // replace ${AUCTION_PRICE} macro with the clear price.
+          bidObject.adm = bidObject.adm.replace('${AUCTION_PRICE}', hbPb);
         } else {
           /*
             From OpenRTB spec 2.5: If the source value is an optional parameter that was not specified, the macro will simply be removed (i.e., replaced with a zero-length string).
