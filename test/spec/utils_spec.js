@@ -8,14 +8,16 @@ describe('utils', function () {
         cacheHost: 'example.com',
         cachePath: '/path',
         uuid: '123',
-        size: '300x250'
+        size: '300x250',
+        hbPb: '10.00'
       };
       let auctionData = utils.transformAuctionTargetingData(ucTagData);
       expect(auctionData).to.deep.equal({
         cacheHost: 'example.com',
         cachePath: '/path',
         uuid: '123',
-        size: '300x250'
+        size: '300x250',
+        hbPb: '10.00'
       });
     });
 
@@ -28,7 +30,8 @@ describe('utils', function () {
           hb_cache_id: ['123'],
           hb_size: ['300x250'],
           hb_format: ['banner'],
-          hb_env: ['mobile-app']
+          hb_env: ['mobile-app'],
+          hb_pb: ['10.00']
         }
       };
       let auctionData = utils.transformAuctionTargetingData(ucTagData);
@@ -39,7 +42,8 @@ describe('utils', function () {
         uuid: '123',
         size: '300x250',
         mediaType: 'banner',
-        env: 'mobile-app'
+        env: 'mobile-app',
+        hbPb: '10.00'
       });
     });
 

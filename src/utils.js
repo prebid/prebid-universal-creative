@@ -105,7 +105,8 @@ export function transformAuctionTargetingData(tagData) {
     hb_cache_id: 'uuid',
     hb_format: 'mediaType',
     hb_env: 'env',
-    hb_size: 'size'
+    hb_size: 'size',
+    hb_pb: 'hbPb'
   };
 
   /**
