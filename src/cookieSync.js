@@ -12,7 +12,8 @@ import * as domHelper from './domHelper';
 
 const VALID_ENDPOINTS = {
   rubicon: 'https://prebid-server.rubiconproject.com/cookie_sync',
-  appnexus: 'https://prebid.adnxs.com/pbs/v1/cookie_sync'
+  appnexus: 'https://prebid.adnxs.com/pbs/v1/cookie_sync',
+  denakop: 'https://prebid.denakop.com/cookie_sync'
 };
 const ENDPOINT = sanitizeEndpoint(parseQueryParam('endpoint', window.location.search));
 const ENDPOINT_ARGS = sanitizeEndpointArgs(parseQueryParam('args', window.location.search));
@@ -177,7 +178,7 @@ function sanitizeEndpointArgs(value) {
       return keyValues;
     }, {});
     return (argProperties && Object.keys(argProperties).length) ? argProperties : undefined;
-  } 
+  }
 }
 
 /**
