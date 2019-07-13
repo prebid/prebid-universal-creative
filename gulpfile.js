@@ -9,12 +9,10 @@ const creative = require('./package.json');
 const uglify = require('gulp-uglify');
 const clean = require('gulp-clean');
 const webpackStream = require('webpack-stream');
-const webpack = require('webpack');
 const webpackConfig = require('./webpack.conf');
 const inject = require('gulp-inject');
 const rename = require('gulp-rename');
 const KarmaServer = require('karma').Server;
-const opens = require('open');
 const karmaConfMaker = require('./karma.conf.maker');
 const execa = require('execa');
 const path = require('path');
@@ -22,10 +20,6 @@ const path = require('path');
 const dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
 const banner = '/* <%= creative.name %> v<%= creative.version %>\n' + dateString + ' */\n';
 const port = 9990;
-
-gulp.task('serve', ['clean', 'test', 'build-dev', 'build-native-dev', 'build-cookie-sync', 'build-uid-dev', 'connect', 'watch']);
-
-gulp.task('build', ['build-prod', 'build-cookie-sync', 'build-native', 'build-uid']);
 
 gulp.task('clean', () => {
   return gulp.src(['dist/', 'build/'], {
@@ -40,23 +34,6 @@ gulp.task('build-dev', () => {
     .pipe(gulp.dest('build'));
 });
 
-gulp.task('build-prod', ['clean'], () => {
-  let cloned = _.cloneDeep(webpackConfig);
-  delete cloned.devtool;
-
-  return gulp.src(['src/creative.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(rename({ extname: '.max.js' }))
-    .pipe(gulp.dest('dist'))
-    .pipe(uglify())
-    .pipe(header(banner, { creative: creative }))
-    .pipe(rename({
-      basename: 'creative',
-      extname: '.js'
-    }))
-    .pipe(gulp.dest('dist'));
-});
-
 gulp.task('build-native-dev', () => {
   var cloned = _.cloneDeep(webpackConfig);
   cloned.output.filename = 'native-trk.js';
@@ -64,40 +41,6 @@ gulp.task('build-native-dev', () => {
   return gulp.src(['src/nativeTrackers.js'])
     .pipe(webpackStream(cloned))
     .pipe(gulp.dest('build'));
-});
-
-gulp.task('build-native', () => {
-  var cloned = _.cloneDeep(webpackConfig);
-  delete cloned.devtool;
-  cloned.output.filename = 'native-trk.js';
-
-  return gulp.src(['src/nativeTrackers.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(uglify())
-    .pipe(header('/* v<%= creative.version %>\n' + dateString + ' */\n', { creative: creative }))
-    .pipe(gulp.dest('dist'));
-});
-
-gulp.task('build-uid-dev', () => {
-  var cloned = _.cloneDeep(webpackConfig);
-  delete cloned.devtool;
-  cloned.output.filename = 'uid.js';
-  
-  return gulp.src(['src/ssp-userids/uid.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(gulp.dest('build'));
-});
-
-gulp.task('build-uid', () => {
-  var cloned = _.cloneDeep(webpackConfig);
-  delete cloned.devtool;
-  cloned.output.filename = 'uid.js';
-  
-  return gulp.src(['src/ssp-userids/uid.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(uglify())
-    .pipe(header('/* v<%= creative.version %>\n' + dateString + ' */\n', { creative: creative }))
-    .pipe(gulp.dest('dist'));
 });
 
 gulp.task('build-cookie-sync', () => {
@@ -119,6 +62,16 @@ gulp.task('build-cookie-sync', () => {
     .pipe(gulp.dest('dist'));
 });
 
+gulp.task('build-uid-dev', () => {
+  var cloned = _.cloneDeep(webpackConfig);
+  delete cloned.devtool;
+  cloned.output.filename = 'uid.js';
+
+  return gulp.src(['src/ssp-userids/uid.js'])
+    .pipe(webpackStream(cloned))
+    .pipe(gulp.dest('build'));
+});
+
 gulp.task('connect', () => {
   return gulp.src(".").
     pipe(webserver({
@@ -130,11 +83,53 @@ gulp.task('connect', () => {
     }));
 });
 
-gulp.task('watch', () => {
-  gulp.watch(
-    ['src/**/*.js', 'test/**/*.js'],
-    ['clean', 'test', 'build-dev', 'build-native-dev', 'build-cookie-sync']
-  );
+gulp.task('build-prod', gulp.series('clean', () => {
+  let cloned = _.cloneDeep(webpackConfig);
+  delete cloned.devtool;
+
+  return gulp.src(['src/creative.js'])
+    .pipe(webpackStream(cloned))
+    .pipe(rename({ extname: '.max.js' }))
+    .pipe(gulp.dest('dist'))
+    .pipe(uglify())
+    .pipe(header(banner, { creative: creative }))
+    .pipe(rename({
+      basename: 'creative',
+      extname: '.js'
+    }))
+    .pipe(gulp.dest('dist'));
+}));
+
+gulp.task('build-native', () => {
+  var cloned = _.cloneDeep(webpackConfig);
+  delete cloned.devtool;
+  cloned.output.filename = 'native-trk.js';
+
+  return gulp.src(['src/nativeTrackers.js'])
+    .pipe(webpackStream(cloned))
+    .pipe(uglify())
+    .pipe(header('/* v<%= creative.version %>\n' + dateString + ' */\n', { creative: creative }))
+    .pipe(gulp.dest('dist'));
+});
+
+gulp.task('build-uid', () => {
+  var cloned = _.cloneDeep(webpackConfig);
+  delete cloned.devtool;
+  cloned.output.filename = 'uid.js';
+
+  return gulp.src(['src/ssp-userids/uid.js'])
+    .pipe(webpackStream(cloned))
+    .pipe(uglify())
+    .pipe(header('/* v<%= creative.version %>\n' + dateString + ' */\n', { creative: creative }))
+    .pipe(gulp.dest('dist'));
+});
+
+gulp.task('serve-e2e', (done) => {
+  if (argv.e2e) {
+    gulp.series('serve');
+    done();
+  }
+  done();
 });
 
 // Run the unit tests.
@@ -144,7 +139,7 @@ gulp.task('watch', () => {
 // If --watch is given, the task will open the karma debug window
 // If --browserstack is given, it will run the full suite of currently supported browsers.
 // If --e2e is given, it will run test defined in ./test/e2e/specs in browserstack
-gulp.task('test', ['serve-e2e'], (done) => {
+gulp.task('test', gulp.series('serve-e2e', (done) => {
   if (argv.e2e) {
     let wdioCmd = path.join(__dirname, 'node_modules/.bin/wdio');
     let wdioConf = path.join(__dirname, 'wdio.conf.js');
@@ -156,13 +151,15 @@ gulp.task('test', ['serve-e2e'], (done) => {
     let karmaConf = karmaConfMaker(false, argv.browserstack, argv.watch);
     new KarmaServer(karmaConf, newKarmaCallback(done)).start();
   }
+}));
+
+gulp.task('watch', () => {
+  gulp.watch(['src/**/*.js', 'test/**/*.js'], gulp.series('clean', gulp.parallel('test', 'build-dev', 'build-native-dev', 'build-cookie-sync', 'build-uid-dev')));
 });
 
-gulp.task('serve-e2e', () => {
-  if (argv.e2e) {
-    return gulp.start('serve');
-  }
-});
+gulp.task('serve', gulp.series('clean', gulp.parallel('test', 'build-dev', 'build-native-dev', 'build-cookie-sync', 'build-uid-dev'), 'connect', 'watch'));
+
+gulp.task('build', gulp.parallel('build-prod', 'build-cookie-sync', 'build-native', 'build-uid'));
 
 function newKarmaCallback(done) {
   return function (exitCode) {
@@ -178,9 +175,9 @@ gulp.task('set-test-node-env', () => {
   return process.env.NODE_ENV = 'test';
 });
 
-gulp.task('test-coverage', ['set-test-node-env'], (done) => {
+gulp.task('test-coverage', gulp.series('set-test-node-env', (done) => {
   new KarmaServer(karmaConfMaker(true, false, false), newKarmaCallback(done)).start();
-})
+}));
 
 gulp.task('view-coverage', () => {
   let coveragePort = 1999;
