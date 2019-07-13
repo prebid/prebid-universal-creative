@@ -7,7 +7,7 @@ const webserver = require('gulp-webserver');
 const header = require('gulp-header');
 const creative = require('./package.json');
 const uglify = require('gulp-uglify');
-const clean = require('gulp-clean');
+const del = require('del');
 const webpackStream = require('webpack-stream');
 const webpackConfig = require('./webpack.conf');
 const inject = require('gulp-inject');
@@ -22,10 +22,10 @@ const banner = '/* <%= creative.name %> v<%= creative.version %>\n' + dateString
 const port = 9990;
 
 gulp.task('clean', () => {
-  return gulp.src(['dist/', 'build/'], {
-    read: false
-  })
-    .pipe(clean());
+  return del([
+    'build/',
+    'dist/'
+  ]);
 });
 
 gulp.task('build-dev', () => {
