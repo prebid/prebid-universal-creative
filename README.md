@@ -17,8 +17,8 @@ Prebid Universal Creative is a javascript api to render multiple formats. This f
 
 If you already have `Gulp` installed globally, you need to uninstall it before installing `gulp-cli`. You can run `gulp -v` and check the version in the `CLI` field in the output to see if it's installed. If it's major version is `2`, you already have `gulp-cli` installed. If it's same as the `Local` field, you need to uninstall `Gulp` globally.
 
-To uninstall the old package globally, run the command: `npm uninstall -g gulp`
-To install `gulp-cli` globally, run the command: `npm install -g gulp-cli`
+To uninstall the old package globally, run the command: `npm uninstall -g gulp`. <br />
+To install `gulp-cli` globally, run the command: `npm install -g gulp-cli`.
 
 Run `gulp -v` just to make sure that the `CLI` major version is `2`.
 
