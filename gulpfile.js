@@ -3,7 +3,8 @@
 const _ = require('lodash');
 const gulp = require('gulp');
 const argv = require('yargs').argv;
-const webserver = require('gulp-webserver');
+const connect = require('gulp-connect');
+const open = require('open');
 const header = require('gulp-header');
 const creative = require('./package.json');
 const uglify = require('gulp-uglify');
@@ -72,15 +73,22 @@ gulp.task('build-uid-dev', () => {
     .pipe(gulp.dest('build'));
 });
 
-gulp.task('connect', () => {
-  return gulp.src(".").
-    pipe(webserver({
-      livereload: true,
-      port,
-      directoryListing: true,
-      open: true,
-      https: argv.https
-    }));
+gulp.task('connect', (done) => {
+  const host = argv.host ? argv.host : 'localhost';
+
+  connect.server({
+    https: argv.https,
+    port: port,
+    root: './',
+    livereload: true
+  });
+
+  open(`http://${host}:${port}`)
+    .then(() => done())
+    .catch((err) => {
+        console.error(`some error occurred, can't open: http://${host}:${port}. ERR:: ${err}`);
+        done();
+    });
 });
 
 gulp.task('build-prod', gulp.series('clean', () => {
@@ -139,7 +147,8 @@ gulp.task('serve-e2e', (done) => {
 // If --watch is given, the task will open the karma debug window
 // If --browserstack is given, it will run the full suite of currently supported browsers.
 // If --e2e is given, it will run test defined in ./test/e2e/specs in browserstack
-gulp.task('test', gulp.series('serve-e2e', (done) => {
+
+function test(done) {
   if (argv.e2e) {
     let wdioCmd = path.join(__dirname, 'node_modules/.bin/wdio');
     let wdioConf = path.join(__dirname, 'wdio.conf.js');
@@ -151,10 +160,12 @@ gulp.task('test', gulp.series('serve-e2e', (done) => {
     let karmaConf = karmaConfMaker(false, argv.browserstack, argv.watch);
     new KarmaServer(karmaConf, newKarmaCallback(done)).start();
   }
-}));
+}
+gulp.task('test', gulp.series('serve-e2e', test));
 
-gulp.task('watch', () => {
+gulp.task('watch', (done) => {
   gulp.watch(['src/**/*.js', 'test/**/*.js'], gulp.series('clean', gulp.parallel('test', 'build-dev', 'build-native-dev', 'build-cookie-sync', 'build-uid-dev')));
+  done();
 });
 
 gulp.task('serve', gulp.series('clean', gulp.parallel('test', 'build-dev', 'build-native-dev', 'build-cookie-sync', 'build-uid-dev'), 'connect', 'watch'));
@@ -171,19 +182,29 @@ function newKarmaCallback(done) {
   }
 }
 
-gulp.task('set-test-node-env', () => {
-  return process.env.NODE_ENV = 'test';
+gulp.task('set-test-node-env', (done) => {
+  process.env.NODE_ENV = 'test';
+  done();
 });
 
 gulp.task('test-coverage', gulp.series('set-test-node-env', (done) => {
   new KarmaServer(karmaConfMaker(true, false, false), newKarmaCallback(done)).start();
 }));
 
-gulp.task('view-coverage', () => {
-  let coveragePort = 1999;
+gulp.task('view-coverage', (done) => {
+  const coveragePort = 1999;
+  const host = argv.host ? argv.host : 'localhost';
 
-  return gulp.src("./coverage/").pipe(webserver({
+  connect.server({
     port: coveragePort,
-    open: true
-  }));
+    root: './coverage',
+    livereload: false
+  });
+
+  open(`http://${host}:${coveragePort}`)
+    .then(() => done())
+    .catch((err) => {
+        console.error(`some error occurred, can't open: http://${host}:${coveragePort}. ERR:: ${err}`);
+        done();
+    });
 });
