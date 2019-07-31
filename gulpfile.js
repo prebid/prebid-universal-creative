@@ -154,18 +154,25 @@ gulp.task('test', ['serve-e2e'], (done) => {
     return execa(wdioCmd, wdioOpts, { stdio: 'inherit' });
   } else {
     let karmaConf = karmaConfMaker(false, argv.browserstack, argv.watch);
-    const server = new KarmaServer(karmaConf, function(exitCode) {
-      if (exitCode) {
-        done(new Error('Karma tests failed with exit code', exitCode));
-        process.exit(exitCode);
-      } else {
-        done();
-        process.exit(exitCode);
-      }
-    });
-    server.start();
+    new KarmaServer(karmaConf, newKarmaCallback(done)).start();
   }
 });
+
+function newKarmaCallback(done) {
+  return function(exitCode) {
+    if (exitCode) {
+      done(new Error('Karma tests failed with exit code' + exitCode));
+      if (argv.browserstack) {
+        process.exit(exitCode);
+      }
+    } else {
+      done();
+      if (argv.browserstack) {
+        process.exit(exitCode);
+      }
+    }
+  } 
+}
 
 gulp.task('serve-e2e', () => {
   if (argv.e2e) {
