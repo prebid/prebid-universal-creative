@@ -158,21 +158,27 @@ gulp.task('test', ['serve-e2e'], (done) => {
   }
 });
 
+function newKarmaCallback(done) {
+  return function(exitCode) {
+    if (exitCode) {
+      done(new Error('Karma tests failed with exit code' + exitCode));
+      if (argv.browserstack) {
+        process.exit(exitCode);
+      }
+    } else {
+      done();
+      if (argv.browserstack) {
+        process.exit(exitCode);
+      }
+    }
+  } 
+}
+
 gulp.task('serve-e2e', () => {
   if (argv.e2e) {
     return gulp.start('serve');
   }
 });
-
-function newKarmaCallback(done) {
-  return function (exitCode) {
-    if (exitCode) {
-      done(new Error('Karma tests failed with exit code ' + exitCode));
-    } else {
-      done();
-    }
-  }
-}
 
 gulp.task('set-test-node-env', () => {
   return process.env.NODE_ENV = 'test';
