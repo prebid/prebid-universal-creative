@@ -1,6 +1,21 @@
 const postscribe = require('postscribe');
 import * as domHelper from './domHelper';
 
+/**
+ * Inserts an image pixel with the specified `url` for cookie sync
+ * @param {string} url URL string of the image pixel to load
+ * @param  {function} [done] an optional exit callback, used when this usersync pixel is added during an async process
+ */
+export function triggerPixel(url, done) {
+  const img = new Image();
+  if (done && typeof done === 'function') {
+    img.addEventListener('load', done);
+    img.addEventListener('error', done);
+  }
+  img.src = url;
+}
+
+
 export function createTrackPixelHtml(url) {
   if (!url) {
     return '';

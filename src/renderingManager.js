@@ -19,6 +19,9 @@ export function newRenderingManager(win, environment) {
    * @property {string} uuid - ID to fetch the value from prebid cache
    * @property {string} mediaType - Creative media type, It can be banner, native or video
    * @property {string} pubUrl - Publisher url
+   *
+   * @property {string} winurl
+   * @property {string} winbidid
    */
 
   /**
@@ -28,6 +31,24 @@ export function newRenderingManager(win, environment) {
    */
   let renderAd = function(doc, dataObject) {
     const targetingData = utils.transformAuctionTargetingData(dataObject);
+
+    if (targetingData.winurl && targetingData.winbidid) {
+      if (targetingData.winurl.search(/(b=)(BIDID)/g)) {
+        const replacedWinurl = targetingData.winurl.replace(/(b=)(BIDID)/g, '$1' + targetingData.winbidid);
+        try {
+          utils.triggerPixel(replacedWinurl, function(event) {
+            if (event.type !== 'load') {
+              console.warn('failed to load pixel for winurl :%s', replacedWinurl);
+            }
+          });
+        } catch (e) {
+          console.warn('failed to create pixel for winurl: %s', replacedWinurl);
+        }
+      } else {
+        console.warn('failed to replace url token: winurl:%s, winbidid:%s', targetingData.winurl, targetingData.winbidid);
+      }
+    }
+
     if(environment.isMobileApp(targetingData.env)) {
       renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, true);
     } else if (environment.isAmp(targetingData.uuid)) {
