@@ -1,6 +1,20 @@
 const postscribe = require('postscribe');
 import * as domHelper from './domHelper';
 
+/**
+ * Inserts an image pixel with the specified `url` for cookie sync
+ * @param {string} url URL string of the image pixel to load
+ * @param  {function} [done] an optional exit callback, used when this usersync pixel is added during an async process
+ */
+export function triggerPixel(url, done) {
+  const img = new Image();
+  if (done && typeof done === 'function') {
+    img.addEventListener('load', done);
+    img.addEventListener('error', done);
+  }
+  img.src = url;
+}
+
 export function createTrackPixelHtml(url) {
   if (!url) {
     return '';
@@ -100,12 +114,14 @@ export function transformAuctionTargetingData(tagData) {
   // when the publisher uses their adserver's generic macro that provides all targeting keys (ie tagData.targetingMap), we need to convert the keys
   const auctionKeyMap = {
     hb_adid: 'adId',
+    hb_bidid: 'winbidid',
     hb_cache_host: 'cacheHost',
     hb_cache_path: 'cachePath',
     hb_cache_id: 'uuid',
     hb_format: 'mediaType',
     hb_env: 'env',
-    hb_size: 'size'
+    hb_size: 'size',
+    hb_winurl: 'winurl'
   };
 
   /**
@@ -182,6 +198,26 @@ export function transformAuctionTargetingData(tagData) {
     formattedKeyMap = convertKeyPairStringToMap(tagData.targetingKeywords);
   }
   renameKnownAuctionKeys(formattedKeyMap);
+
+  // both winurl and winbidid must be defined to support winurl
+  if (tagData.winurl && tagData.winbidid) {
+    // resolve the 'BIDID' macro in winurl with the value of winbidid
+    const captureBidId = /([?&]?\w+=)(BIDID)\b/g;
+    if (tagData.winurl.match(captureBidId)) {
+      tagData.winurl = tagData.winurl.replace(captureBidId, '$1' + tagData.winbidid);
+      try {
+        triggerPixel(tagData.winurl, function triggerPixelCallback(event) {
+          if (event.type !== 'load') {
+            console.warn('failed to load pixel for winurl :%s', tagData.winurl);
+          }
+        });
+      } catch (e) {
+        console.warn('failed to get pixel for winurl: %s', tagData.winurl);
+      }
+    } else {
+      console.warn('failed to replace BIDID in winurl: winurl:%s', tagData.winurl);
+    }
+  }
 
   // set keys not in defined map macros (eg targetingMap) and/or the keys setup within a non-DFP adserver
   Object.keys(tagData).forEach(function (key) {
