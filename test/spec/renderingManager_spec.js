@@ -89,7 +89,7 @@ describe('renderingManager', function() {
     const env = {
       isMobileApp: () => true,
       isSafeFrame: () => false
-    }
+    };
     
     it('should render mobile app creative', function() {
       const renderObject = newRenderingManager(mockWin, env);
@@ -97,7 +97,9 @@ describe('renderingManager', function() {
         cacheHost: 'example.com',
         cachePath: '/path',
         uuid: '123',
-        size: '300x250'
+        size: '300x250',
+        winurl: 'https://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
+        bidid: 'AAAA-BBBB-CCCC-DDDD'
       };
       
       renderObject.renderAd(mockWin.document, ucTagData);
@@ -107,7 +109,7 @@ describe('renderingManager', function() {
         height: 250,
         crid: 123,
         adm: 'ad-markup'
-      }
+      };
       requests[0].respond(200, {}, JSON.stringify(response));
       expect(writeHtmlSpy.callCount).to.equal(1);
       expect(sendRequestSpy.args[0][0]).to.equal('https://example.com/path?uuid=123');
@@ -117,7 +119,9 @@ describe('renderingManager', function() {
       const renderObject = newRenderingManager(mockWin, env);
       let ucTagData = {
         uuid: '123',
-        size: '300x250'
+        size: '300x250',
+        winurl: 'https://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
+        bidid: 'AAAA-BBBB-CCCC-DDDD'
       };
       
       renderObject.renderAd(mockWin.document, ucTagData);
@@ -127,7 +131,7 @@ describe('renderingManager', function() {
         height: 250,
         crid: 123,
         adm: 'ad-markup'
-      }
+      };
       requests[0].respond(200, {}, JSON.stringify(response));
       expect(writeHtmlSpy.callCount).to.equal(1);
       expect(sendRequestSpy.args[0][0]).to.equal('https://prebid.adnxs.com/pbc/v1/cache?uuid=123');
@@ -159,7 +163,7 @@ describe('renderingManager', function() {
       isMobileApp: () => false,
       isAmp: () => true,
       isSafeFrame: () => true
-    }
+    };
     
     it('should render amp creative', function() {
       const renderObject = newRenderingManager(mockWin, env);
@@ -169,7 +173,9 @@ describe('renderingManager', function() {
         cachePath: '/path',
         uuid: '123',
         size: '300x250',
-        hbPb: '10.00'
+        hbPb: '10.00',
+        winurl: 'https://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
+        bidid: 'AAAA-BBBB-CCCC-DDDD'
       };
         
       renderObject.renderAd(mockWin.document, ucTagData);
@@ -179,7 +185,7 @@ describe('renderingManager', function() {
         height: 250,
         crid: 123,
         adm: 'ad-markup${AUCTION_PRICE}'
-      }
+      };
       requests[0].respond(200, {}, JSON.stringify(response));
       expect(writeHtmlSpy.args[0][0]).to.equal('<!--Creative 123 served by Prebid.js Header Bidding-->ad-markup10.00');
       expect(sendRequestSpy.args[0][0]).to.equal('https://example.com/path?uuid=123');
@@ -211,12 +217,14 @@ describe('renderingManager', function() {
         isMobileApp: () => false,
         isAmp: () => false,
         isCrossDomain: () => true
-      }
+      };
       const renderObject = newRenderingManager(mockWin, env);
       let ucTagData = {
         adId: '123',
         adServerDomain: 'mypub.com',
         pubUrl: 'http://example.com',
+        winurl: 'https://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
+        bidid: 'AAAA-BBBB-CCCC-DDDD'
       };
 
       renderObject.renderAd(mockWin.document, ucTagData);
@@ -232,7 +240,7 @@ describe('renderingManager', function() {
           width: 300,
           height: 250
         })
-      }
+      };
       
       mockWin.postMessage(ev);
       expect(mockIframe.contentDocument.write.args[0][0]).to.equal("ad");
@@ -246,7 +254,7 @@ describe('renderingManager', function() {
         isMobileApp: () => false,
         isAmp: () => false,
         isCrossDomain: () => false
-      }
+      };
       const renderObject = newRenderingManager(mockWin, env);
 
       let ucTagData = {

@@ -74,55 +74,6 @@ Add the URL to an invisible image similar to the PBJS triggerpixel function in h
     } catch (e) {
         console.log(e);
     }
-
-
-    /*
-    function log(src) {
-    if (typeof src === 'string') {
-        return console.log('%s', src);
-    }
-    if (typeof src === 'object') {
-        return console.log('%o', src);
-    }
-}
-
-
-function getWinUrl() {
-    return 'https://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i';
-}
-
-function getBidIdFromUrl(url) {
-    //const replacedBidId = url.replace(/=(BIDID)/g, '=0123456789');
-    //const replacedBidId = url.replace(/=(BIDID)/g, '$1' + '0123456789' + '$2');
-    //const replacedBidId = url.replace(/(b=).*?(&)/g, '$1' + '0123456789' + '$2');
-    const replacedBidId = url.replace(/(b=)(BIDID)/g, '$1' + '0123456789');
-    return replacedBidId;
-}
-
-function getBidIdFromUrl2(url) {
-    //const regex = /[\\?&]([^&#]*(BIDID))/g; // 3 groups returned
-  	//const regex = /[\\?&]([^&#]*)(BIDID)/g; // 3 groups returned
-    const regex = /[\\?&][^&#]*(BIDID)/g; // 2 groups returned, group 2 has BIDID
-  	const results = regex.exec(url);
-    return results;
-  	//return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
-}
-
-
-function testBidId() {
-    console.group('testBidId 1');
-    const result = getBidIdFromUrl(getWinUrl());
- 	log(result);
-    console.groupEnd('testBidId 1');
-
-
-    console.group('testBidId 2');
-    const result2 = getBidIdFromUrl2(getWinUrl());
- 	log(result2);
-    console.groupEnd('testBidId 2');
-
-}
-     */
 </script>
 </body>
 </html>
