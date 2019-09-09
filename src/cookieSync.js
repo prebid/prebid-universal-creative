@@ -11,10 +11,13 @@
 import * as domHelper from './domHelper';
 
 const VALID_ENDPOINTS = {
-  rubicon: 'https://prebid-server.rubiconproject.com/cookie_sync'
+  rubicon: 'https://prebid-server.rubiconproject.com/cookie_sync',
+  appnexus: 'https://prebid.adnxs.com/pbs/v1/cookie_sync'
 };
 const ENDPOINT = sanitizeEndpoint(parseQueryParam('endpoint', window.location.search));
-const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt(parseQueryParam('max_sync_count', window.location.search), 10));
+const ENDPOINT_ARGS = sanitizeEndpointArgs(parseQueryParam('args', window.location.search));
+const maxSyncCountParam = parseQueryParam('max_sync_count', window.location.search);
+const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt((maxSyncCountParam) ? maxSyncCountParam : 10, 10));
 const GDPR = sanitizeGdpr(parseInt(parseQueryParam('gdpr', window.location.search), 10));
 const GDPR_CONSENT = sanitizeGdprConsent(parseQueryParam('gdpr_consent', window.location.search));
 /**
@@ -161,10 +164,20 @@ function parseQueryParam(name, urlSearch) {
  * Otherwise it will return a default value
  */
 function sanitizeEndpoint(value) {
-  if (value && VALID_ENDPOINTS.hasOwnProperty(value)) {
-    return VALID_ENDPOINTS[value]
-  }
-  return 'https://prebid.adnxs.com/pbs/v1/cookie_sync';
+  return (value && VALID_ENDPOINTS.hasOwnProperty(value)) ? VALID_ENDPOINTS[value] : 'https://prebid.adnxs.com/pbs/v1/cookie_sync';
+}
+
+function sanitizeEndpointArgs(value) {
+  if (value) {
+    var argProperties = value.split(',').reduce(function(keyValues, key) {
+      var keyValue = key.split(':');
+      if (keyValue.length === 2 && keyValue[0] !== '' && keyValue[1] !== '') {
+        keyValues[keyValue[0]] = /^\d+$/.test(keyValue[1]) ? parseInt(keyValue[1]) : keyValue[1];
+      }
+      return keyValues;
+    }, {});
+    return (argProperties && Object.keys(argProperties).length) ? argProperties : undefined;
+  } 
 }
 
 /**
@@ -203,10 +216,9 @@ function sanitizeGdprConsent(value) {
 // Request MAX_SYNC_COUNT cookie syncs from prebid server.
 // In next phase we will read placement id's from query param and will only get cookie sync status of bidders participating in auction
 
-function getStringifiedData() {
-  var data = {
-    limit: MAX_SYNC_COUNT,
-  }
+function getStringifiedData(endPointArgs) {
+  var data = (endPointArgs && typeof endPointArgs === 'object') ? endPointArgs : {}
+  data['limit'] = MAX_SYNC_COUNT;
 
   if(GDPR) data.gdpr = GDPR;
   if(GDPR_CONSENT) data.gdpr_consent = GDPR_CONSENT;
@@ -215,6 +227,6 @@ function getStringifiedData() {
 }
 
 
-ajax(ENDPOINT, process, getStringifiedData(), {
+ajax(ENDPOINT, process, getStringifiedData(ENDPOINT_ARGS), {
   withCredentials: true
 });

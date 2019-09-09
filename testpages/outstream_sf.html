@@ -54,10 +54,6 @@
       });
     }
 
-    setTimeout(function () {
-      initAdserver();
-    }, PREBID_TIMEOUT);
-
     googletag.cmd.push(function () {
       var slot1 = googletag.defineSlot('/19968336/puc_test_outstream_sf', [[300, 250]], 'div-gpt-ad-1536590946408-0').addService(googletag.pubads());
       googletag.pubads().disableInitialLoad();
