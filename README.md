@@ -13,7 +13,7 @@ Prebid Universal Creative is a javascript api to render multiple formats. This f
     $ cd prebid-universal-creative
     $ npm install
 
-*Note:* You need to have `NodeJS` 10.x.x or greater installed.
+*Note:* You need to have `NodeJS` 8.9.x or greater installed.
 
 *Note:* We have upgraded from Gulp v3.9.1 to Gulp v4.0.2. In accordance with the change, you need to have `gulp-cli` installed globally. This won't impact any other project using `gulp`.
 
