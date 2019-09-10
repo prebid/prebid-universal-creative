@@ -173,13 +173,19 @@ gulp.task('serve', gulp.series('clean', gulp.parallel('test', 'build-dev', 'buil
 gulp.task('build', gulp.parallel('build-prod', 'build-cookie-sync', 'build-native', 'build-uid'));
 
 function newKarmaCallback(done) {
-  return function (exitCode) {
+  return function(exitCode) {
     if (exitCode) {
-      done(new Error('Karma tests failed with exit code ' + exitCode));
+      done(new Error('Karma tests failed with exit code' + exitCode));
+      if (argv.browserstack) {
+        process.exit(exitCode);
+      }
     } else {
       done();
+      if (argv.browserstack) {
+        process.exit(exitCode);
+      }
     }
-  }
+  } 
 }
 
 gulp.task('set-test-node-env', (done) => {
