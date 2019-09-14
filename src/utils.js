@@ -199,34 +199,13 @@ export function transformAuctionTargetingData(tagData) {
     formattedKeyMap = convertKeyPairStringToMap(tagData.targetingKeywords);
   }
   renameKnownAuctionKeys(formattedKeyMap);
-
-  // both winurl and winbidid must be defined to support winurl
-  if (tagData.winurl && tagData.winbidid) {
-    // resolve the 'BIDID' macro in winurl with the value of winbidid
-    const captureBidId = /([?&]?\w+=)(BIDID)\b/g;
-    if (tagData.winurl.match(captureBidId)) {
-      tagData.winurl = tagData.winurl.replace(captureBidId, '$1' + tagData.winbidid);
-      try {
-        triggerPixel(tagData.winurl, function triggerPixelCallback(event) {
-          if (event.type !== 'load') {
-            console.warn('failed to load pixel for winurl :%s', tagData.winurl);
-          }
-        });
-      } catch (e) {
-        console.warn('failed to get pixel for winurl: %s', tagData.winurl);
-      }
-    } else {
-      console.warn('failed to replace BIDID in winurl: winurl:%s', tagData.winurl);
-    }
-  }
-
+  
   // set keys not in defined map macros (eg targetingMap) and/or the keys setup within a non-DFP adserver
   Object.keys(tagData).forEach(function (key) {
     if (key !== 'targetingMap' && key !== 'targetingKeywords' && isStr(tagData[key]) && tagData[key] !== '') {
       auctionData[key] = tagData[key];
     }
   });
-
   return auctionData;
 }
 

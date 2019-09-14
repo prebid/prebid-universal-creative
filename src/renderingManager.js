@@ -1,5 +1,6 @@
 import * as utils from './utils';
 import * as domHelper from './domHelper';
+import {triggerPixel} from "./utils";
 
 const GOOGLE_IFRAME_HOSTNAME = 'tpc.googlesyndication.com';
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
@@ -28,6 +29,38 @@ export function newRenderingManager(win, environment) {
    */
   let renderAd = function(doc, dataObject) {
     const targetingData = utils.transformAuctionTargetingData(dataObject);
+    
+    // The Prebid Universal Creative will be updated to look for the 
+    // ‘hb_winurl’ and 'hb_bidid_BIDDER' targeting variables and to hit the resolved URL after rendering the creative
+    function hasWinurl(targeting) {
+      return Object.keys(targeting).some(key => key.match(/^hb_winurl$/));
+    }
+    
+    if (hasWinurl(targetingData)) {
+      const targetingBidderIds = Object.keys(targetingData).filter(key => key.match(/^hb_bidderid_(\w)/));
+      
+      if (targetingBidderIds.length > 0) {
+        const winbidid = targetingBidderIds[0];
+        const captureBidId = /([?&]?\w+=)(BIDID)\b/g;
+        const matchWinUrl = targetingData.hb_winurl.match(captureBidId);
+        
+        if (matchWinUrl) {
+          const replacedUrl = targetingData.hb_winurl.replace(captureBidId, '$1' + targetingData[winbidid]);
+          try {
+            triggerPixel(replacedUrl, function triggerPixelCallback(event) {
+              if (event.type !== 'load') {
+                console.warn('failed to load pixel for winurl :%s', replacedUrl);
+              }
+            });
+          } catch (e) {
+            console.warn('failed to get pixel for winurl: %s', replacedUrl);
+          }
+        } else {
+          console.warn('failed to find BIDID in winurl', targetingData.hb_winurl);
+        }
+      }
+    }
+    
     if(environment.isMobileApp(targetingData.env)) {
       renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb, true);
     } else if (environment.isAmp(targetingData.uuid)) {
