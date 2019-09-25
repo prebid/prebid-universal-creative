@@ -30,22 +30,26 @@ export function newRenderingManager(win, environment) {
   let renderAd = function(doc, dataObject) {
     const targetingData = utils.transformAuctionTargetingData(dataObject);
     
-    // The Prebid Universal Creative will be updated to look for the 
-    // ‘hb_winurl’ and 'hb_bidid_BIDDER' targeting variables and to hit the resolved URL after rendering the creative
-    function hasWinurl(targeting) {
-      return !!targeting.winurl;
+    if(environment.isMobileApp(targetingData.env)) {
+      renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb, true);
+    } else if (environment.isAmp(targetingData.uuid)) {
+      renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb);
+    } else if (environment.isCrossDomain()) {
+      renderCrossDomain(targetingData.adId, targetingData.adServerDomain, targetingData.pubUrl);
+    } else {
+      renderLegacy(doc, targetingData.adId);
     }
     
-    if (hasWinurl(targetingData)) {
+    // check for winurl and replace BIDID token with value if it exists
+    if (!!targetingData.winurl) {
       const targetingBidderIds = Object.keys(targetingData).filter(key => key.match(/bidderid_(\w)/));
-      
       if (targetingBidderIds.length) {
         const winbidid = targetingBidderIds[0];
-        const captureBidId = /([?&]?\w+=)(BIDID)\b/;
-        const matchWinUrl = targetingData.hb_winurl.match(captureBidId);
-        
+        const captureBidId = /=BIDID\b/;
+        const matchWinUrl = targetingData.winurl.match(captureBidId);
+        // test if BIDID exists in winurl
         if (matchWinUrl) {
-          const replacedUrl = targetingData.hb_winurl.replace(captureBidId, '$1' + targetingData[winbidid]);
+          const replacedUrl = targetingData.winurl.replace(captureBidId, targetingData[winbidid]);
           try {
             triggerPixel(replacedUrl, function triggerPixelCallback(event) {
               if (event.type !== 'load') {
@@ -56,19 +60,9 @@ export function newRenderingManager(win, environment) {
             console.warn('failed to get pixel for winurl: %s', replacedUrl);
           }
         } else {
-          console.warn('failed to find BIDID in winurl', targetingData.hb_winurl);
+          console.warn('failed to find BIDID in winurl', targetingData.winurl);
         }
       }
-    }
-    
-    if(environment.isMobileApp(targetingData.env)) {
-      renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb, true);
-    } else if (environment.isAmp(targetingData.uuid)) {
-      renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb);
-    } else if (environment.isCrossDomain()) {
-      renderCrossDomain(targetingData.adId, targetingData.adServerDomain, targetingData.pubUrl);
-    } else {
-      renderLegacy(doc, targetingData.adId);
     }
   };
 
