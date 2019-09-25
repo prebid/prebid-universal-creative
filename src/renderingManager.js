@@ -33,7 +33,7 @@ export function newRenderingManager(win, environment) {
     // The Prebid Universal Creative will be updated to look for the 
     // ‘hb_winurl’ and 'hb_bidid_BIDDER' targeting variables and to hit the resolved URL after rendering the creative
     function hasWinurl(targeting) {
-      return Object.keys(targeting).some(key => key.match(/^hb_winurl$/));
+      return !!targeting.winurl;
     }
     
     if (hasWinurl(targetingData)) {
