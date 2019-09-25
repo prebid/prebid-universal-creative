@@ -45,11 +45,11 @@ export function newRenderingManager(win, environment) {
       const targetingBidderIds = Object.keys(targetingData).filter(key => key.match(/bidderid_(\w)/));
       if (targetingBidderIds.length) {
         const winbidid = targetingBidderIds[0];
-        const captureBidId = /=BIDID\b/;
-        const matchWinUrl = targetingData.winurl.match(captureBidId);
         // test if BIDID exists in winurl
+        const matchWinUrl = targetingData.winurl.match(/=BIDID\b/);
+        // if BIDID doesn't exist log console warning
         if (matchWinUrl) {
-          const replacedUrl = targetingData.winurl.replace(captureBidId, targetingData[winbidid]);
+          const replacedUrl = targetingData.winurl.replace(/=BIDID\b/, `=${targetingData[winbidid]}`);
           try {
             triggerPixel(replacedUrl, function triggerPixelCallback(event) {
               if (event.type !== 'load') {
