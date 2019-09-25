@@ -37,7 +37,7 @@ export function newRenderingManager(win, environment) {
     }
     
     if (hasWinurl(targetingData)) {
-      const targetingBidderIds = Object.keys(targetingData).filter(key => key.match(/^hb_bidderid_(\w)/));
+      const targetingBidderIds = Object.keys(targetingData).filter(key => key.match(/bidderid_(\w)/));
       
       if (targetingBidderIds.length > 0) {
         const winbidid = targetingBidderIds[0];
