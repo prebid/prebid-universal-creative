@@ -38,7 +38,7 @@ const renderingMocks = {
       innerHeight: 250
     }
   }
-} 
+}
 
 let mockIframe = {
   contentDocument: {
@@ -68,29 +68,33 @@ describe('renderingManager', function() {
   describe('mobile creative', function() {
     let writeHtmlSpy;
     let sendRequestSpy;
+    let triggerPixelSpy;
     let mockWin;
 
     before(function() {
       writeHtmlSpy = sinon.spy(utils, 'writeAdHtml');
       sendRequestSpy = sinon.spy(utils, 'sendRequest');
+      triggerPixelSpy = sinon.spy(utils, 'triggerPixel');
       mockWin = merge(mocks.createFakeWindow('http://example.com'), renderingMocks.getWindowObject());
     });
-    
+
     afterEach(function() {
       writeHtmlSpy.resetHistory();
       sendRequestSpy.resetHistory();
+      triggerPixelSpy.resetHistory();
     });
 
     after(function() {
       writeHtmlSpy.restore();
       sendRequestSpy.restore();
+      triggerPixelSpy.restore();
     });
 
     const env = {
       isMobileApp: () => true,
       isSafeFrame: () => false
     };
-    
+
     it('should render mobile app creative', function() {
       const renderObject = newRenderingManager(mockWin, env);
       let ucTagData = {
@@ -101,7 +105,7 @@ describe('renderingManager', function() {
         winurl: 'https://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
         winbidid: 'AAAA-BBBB-CCCC-DDDD'
       };
-      
+
       renderObject.renderAd(mockWin.document, ucTagData);
 
       let response = {
@@ -113,6 +117,7 @@ describe('renderingManager', function() {
       requests[0].respond(200, {}, JSON.stringify(response));
       expect(writeHtmlSpy.callCount).to.equal(1);
       expect(sendRequestSpy.args[0][0]).to.equal('https://example.com/path?uuid=123');
+      expect(triggerPixelSpy.args[0][0]).to.equal('https://prebid-server.rubiconproject.com/event?t=win&b=AAAA-BBBB-CCCC-DDDD&f=i');
     });
 
     it('should render mobile app creative using default cacheHost and cachePath', function() {
@@ -123,7 +128,7 @@ describe('renderingManager', function() {
         winurl: 'https://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
         winbidid: 'AAAA-BBBB-CCCC-DDDD'
       };
-      
+
       renderObject.renderAd(mockWin.document, ucTagData);
 
       let response = {
@@ -135,28 +140,33 @@ describe('renderingManager', function() {
       requests[0].respond(200, {}, JSON.stringify(response));
       expect(writeHtmlSpy.callCount).to.equal(1);
       expect(sendRequestSpy.args[0][0]).to.equal('https://prebid.adnxs.com/pbc/v1/cache?uuid=123');
+      expect(triggerPixelSpy.args[0][0]).to.equal('https://prebid-server.rubiconproject.com/event?t=win&b=AAAA-BBBB-CCCC-DDDD&f=i');
     });
   });
 
   describe('amp creative', function() {
     let writeHtmlSpy;
     let sendRequestSpy;
+    let triggerPixelSpy;
     let mockWin;
 
     before(function() {
       writeHtmlSpy = sinon.spy(utils, 'writeAdHtml');
       sendRequestSpy = sinon.spy(utils, 'sendRequest');
+      triggerPixelSpy = sinon.spy(utils, 'triggerPixel');
       mockWin = merge(mocks.createFakeWindow('http://example.com'), renderingMocks.getWindowObject());
     });
-    
+
     afterEach(function() {
       writeHtmlSpy.resetHistory();
       sendRequestSpy.resetHistory();
+      triggerPixelSpy.resetHistory();
     });
 
     after(function() {
       writeHtmlSpy.restore();
       sendRequestSpy.restore();
+      triggerPixelSpy.restore();
     });
 
     const env = {
@@ -164,7 +174,7 @@ describe('renderingManager', function() {
       isAmp: () => true,
       isSafeFrame: () => true
     };
-    
+
     it('should render amp creative', function() {
       const renderObject = newRenderingManager(mockWin, env);
 
@@ -177,7 +187,7 @@ describe('renderingManager', function() {
         winurl: 'https://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
         winbidid: 'AAAA-BBBB-CCCC-DDDD'
       };
-        
+
       renderObject.renderAd(mockWin.document, ucTagData);
 
       let response = {
@@ -189,20 +199,24 @@ describe('renderingManager', function() {
       requests[0].respond(200, {}, JSON.stringify(response));
       expect(writeHtmlSpy.args[0][0]).to.equal('<!--Creative 123 served by Prebid.js Header Bidding-->ad-markup10.00');
       expect(sendRequestSpy.args[0][0]).to.equal('https://example.com/path?uuid=123');
+      expect(triggerPixelSpy.args[0][0]).to.equal('https://prebid-server.rubiconproject.com/event?t=win&b=AAAA-BBBB-CCCC-DDDD&f=i');
     });
   });
-  
+
   describe('cross domain creative', function() {
     let parseStub;
     let iframeStub;
+    let triggerPixelSpy;
     beforeEach(function(){
       parseStub = sinon.stub(utils, 'parseUrl');
       iframeStub = sinon.stub(domHelper, 'getEmptyIframe');
+      triggerPixelSpy = sinon.stub(utils, 'triggerPixel');
     });
 
     after(function() {
       parseStub.restore();
       iframeStub.restore();
+      triggerPixelSpy.restore();
     });
 
     it('should render cross domain creative', function() {
@@ -241,9 +255,10 @@ describe('renderingManager', function() {
           height: 250
         })
       };
-      
+
       mockWin.postMessage(ev);
       expect(mockIframe.contentDocument.write.args[0][0]).to.equal("ad");
+      expect(triggerPixelSpy.args[0][0]).to.equal('https://prebid-server.rubiconproject.com/event?t=win&b=AAAA-BBBB-CCCC-DDDD&f=i');
     });
   });
 
@@ -260,7 +275,7 @@ describe('renderingManager', function() {
       let ucTagData = {
         adId: '123'
       };
-        
+
       renderObject.renderAd(mockWin.document, ucTagData);
       expect(mockWin.parent.$$PREBID_GLOBAL$$.renderAd.callCount).to.equal(1);
     });
