@@ -99,7 +99,7 @@ describe('renderingManager', function() {
         uuid: '123',
         size: '300x250',
         winurl: 'https://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
-        bidid: 'AAAA-BBBB-CCCC-DDDD'
+        winbidid: 'AAAA-BBBB-CCCC-DDDD'
       };
       
       renderObject.renderAd(mockWin.document, ucTagData);
@@ -121,7 +121,7 @@ describe('renderingManager', function() {
         uuid: '123',
         size: '300x250',
         winurl: 'https://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
-        bidid: 'AAAA-BBBB-CCCC-DDDD'
+        winbidid: 'AAAA-BBBB-CCCC-DDDD'
       };
       
       renderObject.renderAd(mockWin.document, ucTagData);
@@ -175,7 +175,7 @@ describe('renderingManager', function() {
         size: '300x250',
         hbPb: '10.00',
         winurl: 'https://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
-        bidid: 'AAAA-BBBB-CCCC-DDDD'
+        winbidid: 'AAAA-BBBB-CCCC-DDDD'
       };
         
       renderObject.renderAd(mockWin.document, ucTagData);
@@ -224,7 +224,7 @@ describe('renderingManager', function() {
         adServerDomain: 'mypub.com',
         pubUrl: 'http://example.com',
         winurl: 'https://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
-        bidid: 'AAAA-BBBB-CCCC-DDDD'
+        winbidid: 'AAAA-BBBB-CCCC-DDDD'
       };
 
       renderObject.renderAd(mockWin.document, ucTagData);

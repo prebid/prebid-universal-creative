@@ -41,13 +41,10 @@ export function newRenderingManager(win, environment) {
     }
     
     // check for winurl and replace BIDID token with value if it exists
-    if (!!targetingData.winurl) {
-      const targetingBidderIds = Object.keys(targetingData).filter(key => key.match(/bidderid_(\w)/));
-      if (targetingBidderIds.length) {
-        const winbidid = targetingBidderIds[0];
+    if (targetingData.winurl && targetingData.winbidid) {
         // test if BIDID exists in winurl, if BIDID doesn't exist log console warning
         if (targetingData.winurl.match(/=BIDID\b/)) {
-          const replacedUrl = targetingData.winurl.replace(/=BIDID\b/, `=${targetingData[winbidid]}`);
+          const replacedUrl = targetingData.winurl.replace(/=BIDID\b/, `=${targetingData.winbidid}`);
           try {
             triggerPixel(replacedUrl, function triggerPixelCallback(event) {
               if (event.type !== 'load') {
@@ -60,7 +57,6 @@ export function newRenderingManager(win, environment) {
         } else {
           console.warn('failed to find BIDID in winurl:', targetingData.winurl);
         }
-      }
     }
   };
 
