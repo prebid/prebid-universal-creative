@@ -42,6 +42,8 @@ export function newRenderingManager(win, environment) {
     
     // check for winurl and replace BIDID token with value if it exists
     if (targetingData.winurl && targetingData.winbidid) {
+        // one level of decoding
+        targetingData.winurl=decodeURIComponent(targetingData.winurl);
         // test if BIDID exists in winurl, if BIDID doesn't exist log console warning
         if (targetingData.winurl.match(/=BIDID\b/)) {
           const replacedUrl = targetingData.winurl.replace(/=BIDID\b/, `=${targetingData.winbidid}`);
