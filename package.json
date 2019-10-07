@@ -28,6 +28,7 @@
     "@babel/core": "^7.2.2",
     "@babel/plugin-transform-modules-commonjs": "^7.6.0",
     "@babel/preset-env": "^7.2.3",
+    "@babel/register": "^7.6.2",
     "babel-loader": "^8.0.5",
     "babel-plugin-transform-es3-member-expression-literals": "^6.22.0",
     "babel-plugin-transform-es3-property-literals": "^6.22.0",
