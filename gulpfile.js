@@ -3,18 +3,17 @@
 const _ = require('lodash');
 const gulp = require('gulp');
 const argv = require('yargs').argv;
-const webserver = require('gulp-webserver');
+const opens = require('opn');
 const header = require('gulp-header');
+const connect = require('gulp-connect');
 const creative = require('./package.json');
 const uglify = require('gulp-uglify');
-const clean = require('gulp-clean');
+const gulpClean = require('gulp-clean');
 const webpackStream = require('webpack-stream');
-const webpack = require('webpack');
 const webpackConfig = require('./webpack.conf');
 const inject = require('gulp-inject');
 const rename = require('gulp-rename');
 const KarmaServer = require('karma').Server;
-const opens = require('open');
 const karmaConfMaker = require('./karma.conf.maker');
 const execa = require('execa');
 const path = require('path');
@@ -31,7 +30,7 @@ gulp.task('clean', () => {
   return gulp.src(['dist/', 'build/'], {
     read: false
   })
-    .pipe(clean());
+    .pipe(gulpClean());
 });
 
 gulp.task('build-dev', () => {
@@ -120,14 +119,13 @@ gulp.task('build-cookie-sync', () => {
 });
 
 gulp.task('connect', () => {
-  return gulp.src(".").
-    pipe(webserver({
-      livereload: true,
-      port,
-      directoryListing: true,
-      open: true,
-      https: argv.https
-    }));
+  connect.server({
+    livereload: true,
+    port,
+    https: argv.https,
+    root: './'
+  });
+  opens(`${(argv.https) ? 'https' : 'http'}://localhost:${port}`);
 });
 
 gulp.task('watch', () => {
@@ -180,19 +178,20 @@ gulp.task('serve-e2e', () => {
   }
 });
 
-gulp.task('set-test-node-env', () => {
-  return process.env.NODE_ENV = 'test';
-});
-
-gulp.task('test-coverage', ['set-test-node-env'], (done) => {
+gulp.task('test-coverage', ['clean'], (done) => {
   new KarmaServer(karmaConfMaker(true, false, false), newKarmaCallback(done)).start();
 })
 
-gulp.task('view-coverage', () => {
-  let coveragePort = 1999;
+gulp.task('view-coverage', (done) => {
+  const coveragePort = 1999;
+  const localhost = (argv.host) ? argv.host : 'localhost';
 
-  return gulp.src("./coverage/").pipe(webserver({
+  connect.server({
     port: coveragePort,
-    open: true
-  }));
+    root: 'build/coverage/karma_html',
+    livereload: false
+  });
+
+  opens('http://' + localhost + ':' + coveragePort);
+  done();
 });

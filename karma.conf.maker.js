@@ -1,6 +1,7 @@
-var _ = require('lodash');
-var webpackConf = require('./webpack.conf');
-var karmaConstants = require('karma').constants;
+const _ = require('lodash');
+const webpackConf = require('./webpack.conf');
+const karmaConstants = require('karma').constants;
+const path = require('path');
 
 function setBrowsers(karmaConf, browserstack, watchMode) {
   if (browserstack) {
@@ -27,33 +28,49 @@ function setReporters(karmaConf, codeCoverage, browserstack) {
       suppressPassed: true
     };
   }
+  
   if (codeCoverage) {
-    karmaConf.reporters = ['progress', 'coverage'],
-    karmaConf.coverageReporter = {
-      reporters:[
-        {
-          type : 'html',
-          dir : 'coverage/',
-          subdir: '.'
-        }, 
-        {
-          type: 'text-summary'
+    karmaConf.reporters.push('coverage-istanbul');
+    karmaConf.coverageIstanbulReporter = {
+      reports: ['html', 'lcovonly', 'text-summary'],
+      dir: path.join(__dirname, 'build', 'coverage'),
+      'report-config': {
+        html: {
+          subdir: 'karma_html',
+          urlFriendlyName: true, // simply replaces spaces with _ for files/dirs
         }
-      ]
-    }
+      }
+    }  
   }
 }
 
-module.exports = function(codeCoverage, browserstack, watchMode) {
-  let webpackConfig = _.cloneDeep(webpackConf);
+function newWebpackConfig(codeCoverage) {
+  const webpackConfig = _.cloneDeep(webpackConf);
   webpackConfig.devtool = 'inline-source-map';
 
-  let files = ['test/test_index.js'];
+  if (codeCoverage) {
+    webpackConfig.module.rules.push({
+      test: /\.js$/,
+      enforce: 'post',
+      use: {
+        loader: 'istanbul-instrumenter-loader',
+        options: { esModules: true }
+      },
+      exclude: /(node_modules)|(test)|(resources)|(template)|(testpages)/
+    });
+  }
+  return webpackConfig;
+}
+
+module.exports = function(codeCoverage, browserstack, watchMode) {
+  const webpackConfig = newWebpackConfig(codeCoverage);
+  const files = ['test/test_index.js'];
+
   if (watchMode) {
     files.push('test/helpers/karma-init.js');
   }
 
-  let config = {
+  const config = {
     // base path that will be used to resolve all patterns (eg. files, exclude)
     basePath: './',
 
@@ -67,7 +84,8 @@ module.exports = function(codeCoverage, browserstack, watchMode) {
       'karma-coverage',
       'karma-browserstack-launcher',
       'karma-spec-reporter',
-      'karma-mocha-reporter'
+      'karma-mocha-reporter',
+      'karma-coverage-istanbul-reporter'
     ],
     webpack: webpackConfig,
     webpackMiddleware: {
