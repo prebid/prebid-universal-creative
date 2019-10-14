@@ -23,6 +23,13 @@ export function newNativeTrackerManager(win) {
     return adId || '';
   }
 
+  function readAdIdFromSingleElement(adElement) {
+    let adId =  adElement.attributes &&
+      adElement.attributes[AD_DATA_ADID_ATTRIBUTE] &&
+      adElement.attributes[AD_DATA_ADID_ATTRIBUTE].value;
+    return adId || '';
+  }
+
   function readAdIdFromEvent(event) {
     let adId =
       event &&
@@ -40,8 +47,10 @@ export function newNativeTrackerManager(win) {
   }
 
   function loadImpTrackers(adElements) {
-    let adId = readAdIdFromElement(adElements);
-    fireTracker(adId, 'impression');
+      for(var i = 0; i < adElements.length; i++){
+          let adId = readAdIdFromSingleElement(adElements[i]);
+          fireTracker(adId, 'impression');
+      }
   }
 
   function attachClickListeners(adElements) {
