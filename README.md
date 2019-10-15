@@ -38,6 +38,17 @@ You can find a detailed explanations on the [Prebid Universal Creative](http://p
     $ cd prebid-universal-creative
     $ npm install
 
+*Note:* You need to have `NodeJS` 8.9.x or greater installed.
+
+*Note:* We have upgraded from Gulp v3.9.1 to Gulp v4.0.2. In accordance with the change, you need to have `gulp-cli` installed globally. This won't impact any other project using `gulp`.
+
+If you have a version of `gulp` installed globally, you may need to uninstall it to continue. You can run `gulp -v` and check the version of the `CLI` field to see if it's installed. If the major version is `2`, you already have `gulp-cli` installed and can run `gulp` commands. If the `CLI` version is same as the `Local` version, you need to uninstall `gulp` globally.
+
+To uninstall the old package globally, run the command: `npm uninstall -g gulp`. <br />
+To install `gulp-cli` globally, run the command: `npm install -g gulp-cli`.
+
+Run `gulp -v` just to make sure that the `CLI` major version is `2`. You're now good to run `gulp` commands.
+
 ## Build for development
 
     $ gulp serve
