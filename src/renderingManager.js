@@ -118,11 +118,13 @@ export function newRenderingManager(win, environment) {
         if (adObject.mediaType === 'video') {
           console.log('Error trying to write ad.');
         } else if (ad) {
-          const iframe =  domHelper.getEmptyIframe(adObject.height, adObject.width);
+          const iframe =  domHelper.getEmptyIframe(height, width);
           body.appendChild(iframe);
           iframe.contentDocument.open();
           iframe.contentDocument.write(ad);
           iframe.contentDocument.close();
+          
+          resizeIframe(width, height);
         } else if (url) {
           const iframe = domHelper.getEmptyIframe(height, width);
           iframe.style.display = 'inline';
@@ -130,6 +132,8 @@ export function newRenderingManager(win, environment) {
           iframe.src = url;
 
           domHelper.insertElement(iframe, doc, 'body');
+
+          resizeIframe(width, height);
         } else {
           console.log(`Error trying to write ad. No ad for bid response id: ${id}`);
         }
@@ -301,6 +305,8 @@ export function newRenderingManager(win, environment) {
           width: width,
           height: height
         }, '*');
+        
+        resize();
       }
     }
   }
