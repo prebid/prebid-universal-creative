@@ -129,7 +129,7 @@ export function newRenderingManager(win, environment) {
           iframe.style.overflow = 'hidden';
           iframe.src = url;
 
-          domHelper.insertElement(iframe, doc, 'body');
+          domHelper.insertElement(iframe, document, 'body');
         } else {
           console.log(`Error trying to write ad. No ad for bid response id: ${id}`);
         }
