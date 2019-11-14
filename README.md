@@ -94,7 +94,7 @@ We like to test a lot before releasing newer versions.
    - Set `test.localhost` in your hosts file. 
    
    ```
-   gulp test --e2e --https
+   gulp e2e-test
    ``` 
 
    Reason to add specific host to your host file is
