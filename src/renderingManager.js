@@ -162,7 +162,7 @@ export function newRenderingManager(win, environment) {
     let host = (typeof cacheHost === 'undefined' || cacheHost === "") ? DEFAULT_CACHE_HOST : cacheHost;
     let path = (typeof cachePath === 'undefined' || cachePath === "") ? DEFAULT_CACHE_PATH : cachePath;
 
-    return `${window.location.protocol}//${host}${path}`;
+    return `https://${host}${path}`;
   }
 
   /**
