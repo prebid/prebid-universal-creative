@@ -127,9 +127,9 @@ export function newNativeAssetManager(win) {
   function requestAssetsFromCache(tagData) {
     let ajaxCallback = function(response) {
       let bidResponse = parseResponse(response);
-      if (bidResponse.adm) {
+      if (bidResponse && bidResponse.adm) {
         let markup = parseResponse(bidResponse.adm);
-        if (markup.assets) {
+        if (markup && markup.assets) {
           let data = transformToPrebidKeys(markup);
           const body = win.document.body.innerHTML;
           const newHtml = replace(body, data);
