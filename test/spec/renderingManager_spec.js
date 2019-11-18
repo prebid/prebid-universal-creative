@@ -102,7 +102,7 @@ describe('renderingManager', function() {
         cachePath: '/path',
         uuid: '123',
         size: '300x250',
-        winurl: 'https://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
+        winurl: 'http://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
         winbidid: 'AAAA-BBBB-CCCC-DDDD'
       };
 
@@ -117,7 +117,7 @@ describe('renderingManager', function() {
       requests[0].respond(200, {}, JSON.stringify(response));
       expect(writeHtmlSpy.callCount).to.equal(1);
       expect(sendRequestSpy.args[0][0]).to.equal('https://example.com/path?uuid=123');
-      expect(triggerPixelSpy.args[0][0]).to.equal('https://prebid-server.rubiconproject.com/event?t=win&b=AAAA-BBBB-CCCC-DDDD&f=i');
+      expect(triggerPixelSpy.args[0][0]).to.equal('http://prebid-server.rubiconproject.com/event?t=win&b=AAAA-BBBB-CCCC-DDDD&f=i');
     });
 
     it('should render mobile app creative using default cacheHost and cachePath', function() {
@@ -125,7 +125,7 @@ describe('renderingManager', function() {
       let ucTagData = {
         uuid: '123',
         size: '300x250',
-        winurl: 'https://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
+        winurl: 'http://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
         winbidid: 'AAAA-BBBB-CCCC-DDDD'
       };
 
@@ -140,7 +140,7 @@ describe('renderingManager', function() {
       requests[0].respond(200, {}, JSON.stringify(response));
       expect(writeHtmlSpy.callCount).to.equal(1);
       expect(sendRequestSpy.args[0][0]).to.equal('https://prebid.adnxs.com/pbc/v1/cache?uuid=123');
-      expect(triggerPixelSpy.args[0][0]).to.equal('https://prebid-server.rubiconproject.com/event?t=win&b=AAAA-BBBB-CCCC-DDDD&f=i');
+      expect(triggerPixelSpy.args[0][0]).to.equal('http://prebid-server.rubiconproject.com/event?t=win&b=AAAA-BBBB-CCCC-DDDD&f=i');
     });
   });
 
@@ -184,7 +184,7 @@ describe('renderingManager', function() {
         uuid: '123',
         size: '300x250',
         hbPb: '10.00',
-        winurl: 'https://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
+        winurl: 'http://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
         winbidid: 'AAAA-BBBB-CCCC-DDDD'
       };
 
@@ -199,7 +199,7 @@ describe('renderingManager', function() {
       requests[0].respond(200, {}, JSON.stringify(response));
       expect(writeHtmlSpy.args[0][0]).to.equal('<!--Creative 123 served by Prebid.js Header Bidding-->ad-markup10.00');
       expect(sendRequestSpy.args[0][0]).to.equal('https://example.com/path?uuid=123');
-      expect(triggerPixelSpy.args[0][0]).to.equal('https://prebid-server.rubiconproject.com/event?t=win&b=AAAA-BBBB-CCCC-DDDD&f=i');
+      expect(triggerPixelSpy.args[0][0]).to.equal('http://prebid-server.rubiconproject.com/event?t=win&b=AAAA-BBBB-CCCC-DDDD&f=i');
     });
   });
 

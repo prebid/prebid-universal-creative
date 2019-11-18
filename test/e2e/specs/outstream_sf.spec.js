@@ -3,7 +3,7 @@ const assert = require('assert');
 describe('outstream', function() {
   it('should load outstream safeframe creative', function() {
     browser
-      .url('https://test.localhost:9990/testpages/outstream_sf.html')
+      .url('http://test.localhost:9990/testpages/outstream_sf.html')
       .scroll(0, 300)
       .pause(6000);
 
