@@ -3,12 +3,12 @@
 const _ = require('lodash');
 const gulp = require('gulp');
 const argv = require('yargs').argv;
-const connect = require('gulp-connect');
-const open = require('open');
+const opens = require('opn');
 const header = require('gulp-header');
+const connect = require('gulp-connect');
 const creative = require('./package.json');
 const uglify = require('gulp-uglify');
-const del = require('del');
+const gulpClean = require('gulp-clean');
 const webpackStream = require('webpack-stream');
 const webpackConfig = require('./webpack.conf');
 const inject = require('gulp-inject');
@@ -22,29 +22,30 @@ const dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
 const banner = '/* <%= creative.name %> v<%= creative.version %>\n' + dateString + ' */\n';
 const port = 9990;
 
-gulp.task('clean', () => {
-  return del([
-    'build/',
-    'dist/'
-  ]);
-});
+function clean() {
+  return gulp.src(['dist/', 'build/'], {
+    read: false,
+    allowEmpty: true
+  })
+    .pipe(gulpClean());
+}
 
-gulp.task('build-dev', () => {
+function buildDev() {
   return gulp.src(['src/creative.js'])
     .pipe(webpackStream(webpackConfig))
     .pipe(gulp.dest('build'));
-});
+}
 
-gulp.task('build-native-dev', () => {
+function buildNativeDev() {
   var cloned = _.cloneDeep(webpackConfig);
   cloned.output.filename = 'native-trk.js';
 
   return gulp.src(['src/nativeTrackers.js'])
     .pipe(webpackStream(cloned))
     .pipe(gulp.dest('build'));
-});
+}
 
-gulp.task('build-cookie-sync', () => {
+function buildCookieSync() {
   let cloned = _.cloneDeep(webpackConfig);
   delete cloned.devtool;
 
@@ -61,9 +62,9 @@ gulp.task('build-cookie-sync', () => {
     }
   }))
     .pipe(gulp.dest('dist'));
-});
+}
 
-gulp.task('build-uid-dev', () => {
+function buildUidDev() {
   var cloned = _.cloneDeep(webpackConfig);
   delete cloned.devtool;
   cloned.output.filename = 'uid.js';
@@ -71,27 +72,9 @@ gulp.task('build-uid-dev', () => {
   return gulp.src(['src/ssp-userids/uid.js'])
     .pipe(webpackStream(cloned))
     .pipe(gulp.dest('build'));
-});
+}
 
-gulp.task('connect', (done) => {
-  const host = argv.host ? argv.host : 'localhost';
-
-  connect.server({
-    https: argv.https,
-    port: port,
-    root: './',
-    livereload: true
-  });
-
-  open(`http://${host}:${port}`)
-    .then(() => done())
-    .catch((err) => {
-        console.error(`some error occurred, can't open: http://${host}:${port}. ERR:: ${err}`);
-        done();
-    });
-});
-
-gulp.task('build-prod', gulp.series('clean', () => {
+function buildProd() {
   let cloned = _.cloneDeep(webpackConfig);
   delete cloned.devtool;
 
@@ -106,9 +89,9 @@ gulp.task('build-prod', gulp.series('clean', () => {
       extname: '.js'
     }))
     .pipe(gulp.dest('dist'));
-}));
+}
 
-gulp.task('build-native', () => {
+function buildNative() {
   var cloned = _.cloneDeep(webpackConfig);
   delete cloned.devtool;
   cloned.output.filename = 'native-trk.js';
@@ -118,27 +101,19 @@ gulp.task('build-native', () => {
     .pipe(uglify())
     .pipe(header('/* v<%= creative.version %>\n' + dateString + ' */\n', { creative: creative }))
     .pipe(gulp.dest('dist'));
-});
+}
 
-gulp.task('build-uid', () => {
+function buildUid() {
   var cloned = _.cloneDeep(webpackConfig);
   delete cloned.devtool;
   cloned.output.filename = 'uid.js';
 
   return gulp.src(['src/ssp-userids/uid.js'])
-    .pipe(webpackStream(cloned))
+  .pipe(webpackStream(cloned))
     .pipe(uglify())
     .pipe(header('/* v<%= creative.version %>\n' + dateString + ' */\n', { creative: creative }))
     .pipe(gulp.dest('dist'));
-});
-
-gulp.task('serve-e2e', (done) => {
-  if (argv.e2e) {
-    gulp.series('serve');
-    done();
-  }
-  done();
-});
+}
 
 // Run the unit tests.
 //
@@ -161,16 +136,6 @@ function test(done) {
     new KarmaServer(karmaConf, newKarmaCallback(done)).start();
   }
 }
-gulp.task('test', gulp.series('serve-e2e', test));
-
-gulp.task('watch', (done) => {
-  gulp.watch(['src/**/*.js', 'test/**/*.js'], gulp.series('clean', gulp.parallel('test', 'build-dev', 'build-native-dev', 'build-cookie-sync', 'build-uid-dev')));
-  done();
-});
-
-gulp.task('serve', gulp.series('clean', gulp.parallel('test', 'build-dev', 'build-native-dev', 'build-cookie-sync', 'build-uid-dev'), 'connect', 'watch'));
-
-gulp.task('build', gulp.parallel('build-prod', 'build-cookie-sync', 'build-native', 'build-uid'));
 
 function newKarmaCallback(done) {
   return function(exitCode) {
@@ -188,29 +153,54 @@ function newKarmaCallback(done) {
   } 
 }
 
-gulp.task('set-test-node-env', (done) => {
-  process.env.NODE_ENV = 'test';
+function setupE2E(done) {
+  argv.e2e = true;
   done();
-});
+}
 
-gulp.task('test-coverage', gulp.series('set-test-node-env', (done) => {
+gulp.task('test', gulp.series(clean, test));
+
+gulp.task('e2e-test', gulp.series(clean, setupE2E, gulp.parallel(buildDev, buildCookieSync, buildNativeDev, buildUidDev, watch), test));
+
+function watch(done) {
+  const mainWatcher = gulp.watch([
+    'src/**/*.js',
+    'test/**/*.js'
+  ]);
+
+  connect.server({
+    https: argv.https,
+    livereload: true,
+    port,
+    root: './'
+  });
+  
+  mainWatcher.on('all', gulp.series(clean, gulp.parallel(buildDev, buildNativeDev, buildCookieSync, buildUidDev), test));
+  done();
+}
+
+function openWebPage() {
+  return opens(`${(argv.https) ? 'https' : 'http'}://localhost:${port}`);
+}
+
+gulp.task('serve', gulp.series(clean, gulp.parallel(buildDev, buildNativeDev, buildCookieSync, buildUidDev, watch, test), openWebPage));
+
+gulp.task('build', gulp.parallel(buildProd, buildCookieSync, buildNative, buildUid));
+
+gulp.task('test-coverage', (done) => {
   new KarmaServer(karmaConfMaker(true, false, false), newKarmaCallback(done)).start();
-}));
+});
 
 gulp.task('view-coverage', (done) => {
   const coveragePort = 1999;
-  const host = argv.host ? argv.host : 'localhost';
+  const localhost = (argv.host) ? argv.host : 'localhost';
 
   connect.server({
     port: coveragePort,
-    root: './coverage',
+    root: 'build/coverage/karma_html',
     livereload: false
   });
 
-  open(`http://${host}:${coveragePort}`)
-    .then(() => done())
-    .catch((err) => {
-        console.error(`some error occurred, can't open: http://${host}:${coveragePort}. ERR:: ${err}`);
-        done();
-    });
+  opens('http://' + localhost + ':' + coveragePort);
+  done();
 });

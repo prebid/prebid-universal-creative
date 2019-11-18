@@ -30,6 +30,8 @@ You can find a detailed explanations on the [Prebid Universal Creative](http://p
 </script>
 ```
 
+> Note: Some build tools make explicit use of Node features which have been introduced in version *8.9.0*. Please make sure you're using the correct Node version (>8.9.0) before you proceed to create your own build using the commands listed below.
+
 ## Install
 
     $ git clone https://github.com/prebid/prebid-universal-creative.git
@@ -90,10 +92,9 @@ We like to test a lot before releasing newer versions.
 
    For End to End testing, 
    - Set `test.localhost` in your hosts file. 
-   - Use node version <=8.1.2 since gulp-connect is having a bug in ssl mode. More info here https://github.com/intesso/connect-livereload/issues/79
-
+   
    ```
-   gulp test --e2e --https
+   gulp e2e-test
    ``` 
 
    Reason to add specific host to your host file is

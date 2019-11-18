@@ -23,35 +23,35 @@
     "device": null,
     "os": "Windows"
   },
-  "bs_chrome_72_windows_10": {
+  "bs_chrome_76_windows_10": {
     "base": "BrowserStack",
     "os_version": "10",
     "browser": "chrome",
-    "browser_version": "72.0",
+    "browser_version": "76.0",
     "device": null,
     "os": "Windows"
   },
-  "bs_chrome_71_windows_10": {
+  "bs_chrome_77_windows_10": {
     "base": "BrowserStack",
     "os_version": "10",
     "browser": "chrome",
-    "browser_version": "71.0",
+    "browser_version": "77.0",
     "device": null,
     "os": "Windows"
   },
-  "bs_firefox_65_windows_10": {
+  "bs_firefox_68_windows_10": {
     "base": "BrowserStack",
     "os_version": "10",
     "browser": "firefox",
-    "browser_version": "65.0",
+    "browser_version": "68.0",
     "device": null,
     "os": "Windows"
   },
-  "bs_firefox_64_windows_10": {
+  "bs_firefox_69_windows_10": {
     "base": "BrowserStack",
     "os_version": "10",
     "browser": "firefox",
-    "browser_version": "64.0",
+    "browser_version": "69.0",
     "device": null,
     "os": "Windows"
   },
