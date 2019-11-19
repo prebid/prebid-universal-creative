@@ -55,6 +55,24 @@ describe('nativeTrackerManager', () => {
     expect(win.document.body.innerHTML).to.include('<h1>hb_native_title</h1>');
   });
 
+  it('replaces all occurrences of the placeholder if it appears more than once', () => {
+    win.document.body.innerHTML = `
+      <a href="hb_native_linkurl:${AD_ID}">Click Here</a>
+      <a href="hb_native_linkurl:${AD_ID}">Or Here</a>
+    `;
+    win.addEventListener = createResponder([{ key: 'clickUrl', value: 'http://www.example.com' }]);
+
+    const nativeAssetManager = newNativeAssetManager(win);
+    nativeAssetManager.loadAssets(AD_ID);
+
+    expect(win.document.body.innerHTML).to.include(`
+      <a href="http://www.example.com">Click Here</a>
+    `);
+    expect(win.document.body.innerHTML).to.include(`
+      <a href="http://www.example.com">Or Here</a>
+    `);
+  });
+
   it('attaches and removes message listeners', () => {
     win.document.body.innerHTML = `<h1>hb_native_title:${AD_ID}</h1>`;
     win.addEventListener = createResponder();
