@@ -245,7 +245,7 @@ export function newNativeAssetManager(win) {
 
     (assets || []).forEach(asset => {
       const searchString = (adId) ? `${NATIVE_KEYS[asset.key]}:${adId}` : `${NATIVE_KEYS[asset.key]}`;
-      const searchStringRegex = new RegExp(searchString, "g");
+      const searchStringRegex = new RegExp(searchString, 'g');
       html = html.replace(searchStringRegex, asset.value);
     });
 
