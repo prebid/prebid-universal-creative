@@ -221,7 +221,7 @@ export function parseUrl(url) {
     port: +parsed.port,
     pathname: parsed.pathname.replace(/^(?!\/)/, '/'),
     hash: (parsed.hash || '').replace(/^#/, ''),
-    host: parsed.host || window.location.host
+    host: (parsed.host || window.location.host).replace(/:(443|80)$/, '')
   };
 }
 
