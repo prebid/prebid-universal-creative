@@ -203,6 +203,12 @@ export function newRenderingManager(win, environment) {
       let ad = utils.getCreativeCommentMarkup(bidObject);
       let width = (bidObject.width) ? bidObject.width : bidObject.w;
       let height = (bidObject.height) ? bidObject.height : bidObject.h;
+
+      // When Prebid Universal Creative reads from Prebid Cache, we need to have it check for the existence of the wurl parameter. If it exists, hit it.
+      if (bidObject.wurl) {
+        utils.createTrackPixelHtml(bidObject.wurl);
+      }
+
       if (bidObject.adm) {
         if(hbPb) { // replace ${AUCTION_PRICE} macro with the hb_pb.
           bidObject.adm = bidObject.adm.replace('${AUCTION_PRICE}', hbPb);
