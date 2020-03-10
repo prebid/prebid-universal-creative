@@ -1,6 +1,6 @@
 import * as utils from './utils';
 import * as domHelper from './domHelper';
-import {triggerPixel} from "./utils";
+import {triggerPixel} from './utils';
 
 const GOOGLE_IFRAME_HOSTNAME = 'tpc.googlesyndication.com';
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
@@ -42,6 +42,8 @@ export function newRenderingManager(win, environment) {
     
     // check for winurl and replace BIDID token with value if it exists
     if (targetingData.winurl && targetingData.winbidid) {
+        // one level of decoding
+        targetingData.winurl=decodeURIComponent(targetingData.winurl);
         // test if BIDID exists in winurl, if BIDID doesn't exist log console warning
         if (targetingData.winurl.match(/=BIDID\b/)) {
           const replacedUrl = targetingData.winurl.replace(/=BIDID\b/, `=${targetingData.winbidid}`);
@@ -127,7 +129,7 @@ export function newRenderingManager(win, environment) {
           iframe.style.overflow = 'hidden';
           iframe.src = url;
 
-          domHelper.insertElement(iframe, doc, 'body');
+          domHelper.insertElement(iframe, document, 'body');
         } else {
           console.log(`Error trying to write ad. No ad for bid response id: ${id}`);
         }
@@ -206,7 +208,7 @@ export function newRenderingManager(win, environment) {
 
       // When Prebid Universal Creative reads from Prebid Cache, we need to have it check for the existence of the wurl parameter. If it exists, hit it.
       if (bidObject.wurl) {
-        utils.createTrackPixelHtml(bidObject.wurl);
+        triggerPixel(decodeURIComponent(bidObject.wurl));
       }
 
       if (bidObject.adm) {
