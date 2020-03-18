@@ -29,6 +29,7 @@ export function newRenderingManager(win, environment) {
    */
   let renderAd = function(doc, dataObject) {
     const targetingData = utils.transformAuctionTargetingData(dataObject);
+    utils.logInfo('renderAd function called with targeting keys:', targetingData.targetingMap);
     
     if(environment.isMobileApp(targetingData.env)) {
       renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb, true);
@@ -50,14 +51,14 @@ export function newRenderingManager(win, environment) {
           try {
             triggerPixel(replacedUrl, function triggerPixelCallback(event) {
               if (event.type !== 'load') {
-                console.warn('failed to load pixel for winurl:', replacedUrl);
+                utils.logWarn('failed to load pixel for winurl:', replacedUrl);
               }
             });
           } catch (e) {
-            console.warn('failed to get pixel for winurl:', replacedUrl);
+            utils.logWarn('failed to get pixel for winurl:', replacedUrl);
           }
         } else {
-          console.warn('failed to find BIDID in winurl:', targetingData.winurl);
+          utils.logWarn('failed to find BIDID in winurl:', targetingData.winurl);
         }
     }
   };
@@ -116,7 +117,7 @@ export function newRenderingManager(win, environment) {
         let height = adObject.height;
 
         if (adObject.mediaType === 'video') {
-          console.log('Error trying to write ad.');
+          utils.logError('Error trying to write ad.');
         } else if (ad) {
           const iframe =  domHelper.getEmptyIframe(adObject.height, adObject.width);
           body.appendChild(iframe);
@@ -131,7 +132,7 @@ export function newRenderingManager(win, environment) {
 
           domHelper.insertElement(iframe, document, 'body');
         } else {
-          console.log(`Error trying to write ad. No ad for bid response id: ${id}`);
+          utils.logError(`Error trying to write ad. No ad for bid response id: ${id}`);
         }
       }
     }
@@ -142,6 +143,7 @@ export function newRenderingManager(win, environment) {
         adId: adId,
         adServerDomain: fullAdServerDomain
       });
+      utils.logInfo(`rendering add in cross domain with bid response id= ${adId}`);
       win.parent.postMessage(message, publisherDomain);
     }
 
@@ -187,7 +189,7 @@ export function newRenderingManager(win, environment) {
         let sizeArr = size.split('x').map(Number);
         resizeIframe(sizeArr[0], sizeArr[1]);
       } else {
-        console.log('Targeting key hb_size not found to resize creative');
+        utils.logError('Targeting key hb_size not found to resize creative');
       }
       utils.sendRequest(adUrl, responseCallback(isMobileApp, hbPb));
     }
@@ -257,7 +259,7 @@ export function newRenderingManager(win, environment) {
     try {
       bidObject = JSON.parse(response);
     } catch (error) {
-      console.log(`Error parsing response from cache host: ${error}`);
+      utils.logError(`Error parsing response from cache host: ${error}`);
     }
     return bidObject;
   }
@@ -283,6 +285,7 @@ export function newRenderingManager(win, environment) {
    */
   function resizeIframe(width, height) {
     if (environment.isSafeFrame()) {
+      utils.logInfo('rendering add for safe frame');
       const iframeWidth = win.innerWidth;
       const iframeHeight = win.innerHeight;
 

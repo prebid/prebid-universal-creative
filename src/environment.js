@@ -9,8 +9,23 @@
  *  CrossDomain: An iframe that can't get to the top window
  *  Mobile App: function to detect mobile app environment
  */
-
-
+function parseQS(query) {
+  return !query ? {} : query
+    .replace(/^\?/, '')
+    .split('&')
+    .reduce((acc, criteria) => {
+      let [k, v] = criteria.split('=');
+      if (/\[\]$/.test(k)) {
+        k = k.replace('[]', '');
+        acc[k] = acc[k] || [];
+        acc[k].push(v);
+      } else {
+        acc[k] = v || '';
+      }
+      return acc;
+    }, {});
+}
+const DEFAULT_DEBUG = (parseQS(window.location.search)['puc_debug'] || '').toUpperCase() === 'TRUE';
 export function newEnvironment(win) {
   /**
    * @param {String} uuid key value from auction, contains the cache id of the winning bid stored in prebid cache
@@ -76,4 +91,6 @@ export function newEnvironment(win) {
   }
 }
 
-
+export function getConfig(val) {
+  return DEFAULT_DEBUG;
+}

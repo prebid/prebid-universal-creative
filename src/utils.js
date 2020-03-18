@@ -1,5 +1,11 @@
 const postscribe = require('postscribe');
 import * as domHelper from './domHelper';
+import {getConfig} from './environment'
+let consoleExists = Boolean(window.console);
+let consoleLogExists = Boolean(consoleExists && window.console.log);
+let consoleInfoExists = Boolean(consoleExists && window.console.info);
+let consoleWarnExists = Boolean(consoleExists && window.console.warn);
+let consoleErrorExists = Boolean(consoleExists && window.console.error);
 
 /**
  * Inserts an image pixel with the specified `url` for cookie sync
@@ -236,3 +242,39 @@ function isPlainObject(object) {
 function isStr(object) {
   return isA(object, 'String');
 };
+
+export function debugTurnedOn() {
+  return !!getConfig('debug');
+}
+
+function decorateLog(args, prefix) {
+  args = [].slice.call(args);
+  prefix && args.unshift(prefix);
+  args.unshift('display: inline-block; color: #fff; background: #3b88c3; padding: 1px 4px; border-radius: 3px;');
+  args.unshift('%cPUC');
+  return args;
+}
+
+export function logMessage() {
+  if (debugTurnedOn() && consoleLogExists) {
+    console.log.apply(console, decorateLog(arguments, 'MESSAGE:'));
+  }
+}
+
+export function logInfo() {
+  if (debugTurnedOn() && consoleInfoExists) {
+    console.info.apply(console, decorateLog(arguments, 'INFO:'));
+  }
+}
+
+export function logWarn() {
+  if (debugTurnedOn() && consoleWarnExists) {
+    console.warn.apply(console, decorateLog(arguments, 'WARNING:'));
+  }
+}
+
+export function logError() {
+  if (debugTurnedOn() && consoleErrorExists) {
+    console.error.apply(console, decorateLog(arguments, 'ERROR:'));
+  }
+}
