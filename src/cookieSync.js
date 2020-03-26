@@ -9,6 +9,7 @@
  *   endpoint (optional): The endpoint to handle bidder sync. If present, this should be a defined property in VALID_ENDPOINTS.
  */
 import * as domHelper from './domHelper';
+import * as utils from './utils';
 
 const VALID_ENDPOINTS = {
   rubicon: 'https://prebid-server.rubiconproject.com/cookie_sync',
@@ -27,16 +28,16 @@ const isValidUrl =  new RegExp(/^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(
 
 function doBidderSync(type, url, bidder, done) {
   if (!url || !isValidUrl.test(url)) {
-    console.log(`No valid sync url for bidder "${bidder}": ${url}`);
+    utils.logWarn(`No valid sync url for bidder "${bidder}": ${url}`);
     done();
   } else if (type === 'image' || type === 'redirect') {
-    console.log(`Invoking image pixel user sync for bidder: "${bidder}"`);
+    utils.logInfo(`Invoking image pixel user sync for bidder: "${bidder}"`);
     triggerPixel(url, done);
   } else if (type == 'iframe') {
-    console.log(`Invoking iframe pixel user sync for bidder: "${bidder}"`);
+    utils.logInfo(`Invoking iframe pixel user sync for bidder: "${bidder}"`);
     triggerIframeLoad(url, bidder, done);
   } else {
-    console.log(`User sync type "${type}" not supported for bidder: "${bidder}"`);
+    utils.logInfo(`User sync type "${type}" not supported for bidder: "${bidder}"`);
     done();
   }
 }
@@ -91,10 +92,10 @@ function ajax(url, callback, data, options = {}) {
 
     let callbacks = typeof callback === 'object' ? callback : {
       success: function() {
-        console.log('xhr success');
+        utils.logMessage('xhr success');
       },
       error: function(e) {
-        console.log('xhr error', null, e);
+        utils.logError('xhr error', null, e);
       }
     };
 
@@ -114,7 +115,7 @@ function ajax(url, callback, data, options = {}) {
       }
     };
     x.ontimeout = function () {
-      console.log('xhr timeout after ', x.timeout, 'ms');
+      utils.logError('xhr timeout after ', x.timeout, 'ms');
     };
 
     if (method === 'GET' && data) {
@@ -141,7 +142,7 @@ function ajax(url, callback, data, options = {}) {
       x.send();
     }
   } catch (error) {
-    console.log('xhr construction', error);
+    utils.logError('xhr construction', error);
   }
 }
 
@@ -199,7 +200,7 @@ function sanitizeGdpr(value) {
   if (value === 0 || value === 1) {
     return value;
   }
-  console.log('Ignoring gdpr param, it should be 1 or 0')
+  utils.logMessage('Ignoring gdpr param, it should be 1 or 0')
 }
 
 /**
@@ -210,7 +211,7 @@ function sanitizeGdprConsent(value) {
   if (value) {
     return value;
   }
-  console.log('Ignoring gdpr_consent param, it should be a non empty value')
+  utils.logMessage('Ignoring gdpr_consent param, it should be a non empty value')
 }
 
 // Request MAX_SYNC_COUNT cookie syncs from prebid server.

@@ -244,7 +244,7 @@ function isStr(object) {
 };
 
 export function debugTurnedOn() {
-  return !!getConfig('debug');
+  return !!getConfig('puc_debug');
 }
 
 function decorateLog(args, prefix) {

@@ -3,7 +3,7 @@
  * values in native creative templates.
  */
 
-import { sendRequest } from './utils';
+import * as utils from './utils';
 
 /*
  * Native asset->key mapping from Prebid.js/src/constants.json
@@ -71,7 +71,7 @@ export function newNativeAssetManager(win) {
     try {
       bidObject = JSON.parse(response);
     } catch (error) {
-      console.log(`Error parsing response from cache host: ${error}`);
+      utils.logError(`Error parsing response from cache host: ${error}`);
     }
     return bidObject;
   }
@@ -88,7 +88,7 @@ export function newNativeAssetManager(win) {
             'value' : asset.img.url
           })
         } else {
-          console.log('ERROR: Invalid image type for image asset');
+          utils.logError('ERROR: Invalid image type for image asset');
         }
       } else if (asset.data) {
         if (assetTypeMapping['data'][asset.data.type]) {
@@ -97,7 +97,7 @@ export function newNativeAssetManager(win) {
             'value' : asset.data.value
           })
         } else {
-          console.log('ERROR: Invalid data type for data asset');
+          utils.logError('ERROR: Invalid data type for data asset');
         }
       } else if (asset.title) {
         assets.push({
@@ -146,7 +146,8 @@ export function newNativeAssetManager(win) {
     }
     let uuid = tagData.uuid;
     let adUrl = `${getCacheEndpoint(tagData.cacheHost, tagData.cachePath)}?uuid=${uuid}`;
-    sendRequest(adUrl, ajaxCallback);
+    utils.logInfo('Add request for mobile app made to cache endpoint ', adUrl);
+    utils.sendRequest(adUrl, ajaxCallback);
   }
 
   function loadMobileAssets(tagData, cb) {
@@ -196,6 +197,7 @@ export function newNativeAssetManager(win) {
    */
   function requestAssets(adId, assets) {
     win.addEventListener('message', replaceAssets, false);
+    utils.logInfo('Native request posted to prebid.js for addId:', adId);
 
     const message = {
       message: 'Prebid Native',

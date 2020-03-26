@@ -29,7 +29,7 @@ export function newRenderingManager(win, environment) {
    */
   let renderAd = function(doc, dataObject) {
     const targetingData = utils.transformAuctionTargetingData(dataObject);
-    utils.logInfo('renderAd function called with targeting keys:', targetingData.targetingMap);
+    utils.logInfo('renderAd function called with targeting keys:', targetingData);
     
     if(environment.isMobileApp(targetingData.env)) {
       renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb, true);

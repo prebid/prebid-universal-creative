@@ -3,6 +3,7 @@
  */
 import { parseUrl, triggerPixel, transformAuctionTargetingData } from './utils';
 import { newNativeAssetManager } from './nativeAssetManager';
+import * as utils from './utils';
 
 const AD_ANCHOR_CLASS_NAME = 'pb-click';
 const AD_DATA_ADID_ATTRIBUTE = 'pbAdId';
@@ -37,7 +38,6 @@ export function newNativeTrackerManager(win) {
       event.target.attributes &&
       event.target.attributes[AD_DATA_ADID_ATTRIBUTE] &&
       event.target.attributes[AD_DATA_ADID_ATTRIBUTE].value;
-
     return adId || '';
   }
 
@@ -63,7 +63,7 @@ export function newNativeTrackerManager(win) {
 
   function fireTracker(adId, action) {
     if (adId === '') {
-      console.warn('Prebid tracking event was missing \'adId\'.  Was adId macro set in the HTML attribute ' + AD_DATA_ADID_ATTRIBUTE + 'on the ad\'s anchor element');
+      utils.logWarn('Prebid tracking event was missing \'adId\'.  Was adId macro set in the HTML attribute ' + AD_DATA_ADID_ATTRIBUTE + 'on the ad\'s anchor element');
     } else {
       let message = { message: 'Prebid Native', adId: adId };
 
@@ -73,6 +73,7 @@ export function newNativeTrackerManager(win) {
       }
 
       win.parent.postMessage(JSON.stringify(message), publisherDomain);
+      utils.logInfo('message posted:', message);
     }
   }
 
