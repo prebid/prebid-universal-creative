@@ -256,9 +256,7 @@ describe('renderingManager', function() {
       let ucTagData = {
         adId: '123',
         adServerDomain: 'mypub.com',
-        pubUrl: 'http://example.com',
-        winurl: 'https://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
-        winbidid: 'AAAA-BBBB-CCCC-DDDD'
+        pubUrl: 'http://example.com'
       };
 
       renderObject.renderAd(mockWin.document, ucTagData);
