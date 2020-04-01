@@ -39,27 +39,6 @@ export function newRenderingManager(win, environment) {
     } else {
       renderLegacy(doc, targetingData.adId);
     }
-    
-    // check for winurl and replace BIDID token with value if it exists
-    if (targetingData.winurl && targetingData.winbidid) {
-        // one level of decoding
-        targetingData.winurl=decodeURIComponent(targetingData.winurl);
-        // test if BIDID exists in winurl, if BIDID doesn't exist log console warning
-        if (targetingData.winurl.match(/=BIDID\b/)) {
-          const replacedUrl = targetingData.winurl.replace(/=BIDID\b/, `=${targetingData.winbidid}`);
-          try {
-            triggerPixel(replacedUrl, function triggerPixelCallback(event) {
-              if (event.type !== 'load') {
-                console.warn('failed to load pixel for winurl:', replacedUrl);
-              }
-            });
-          } catch (e) {
-            console.warn('failed to get pixel for winurl:', replacedUrl);
-          }
-        } else {
-          console.warn('failed to find BIDID in winurl:', targetingData.winurl);
-        }
-    }
   };
 
   /**
