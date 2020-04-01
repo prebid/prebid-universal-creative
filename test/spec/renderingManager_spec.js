@@ -118,8 +118,6 @@ describe('renderingManager', function() {
       requests[0].respond(200, {}, JSON.stringify(response));
       expect(writeHtmlSpy.callCount).to.equal(1);
       expect(sendRequestSpy.args[0][0]).to.equal('https://example.com/path?uuid=123');
-      expect(triggerPixelSpy.args[0][0]).to.equal('http://prebid-server.rubiconproject.com/event?t=win&b=AAAA-BBBB-CCCC-DDDD&f=i');
-      expect(triggerPixelSpy.args[1][0]).to.equal('https://test.prebidcache.wurl');
     });
 
     it('should render mobile app creative with missing cache wurl', function() {
@@ -215,11 +213,14 @@ describe('renderingManager', function() {
         width: 300,
         height: 250,
         crid: 123,
-        adm: 'ad-markup${AUCTION_PRICE}'
+        adm: 'ad-markup${AUCTION_PRICE}',
+        wurl: 'https://test.prebidcache.wurl'
       };
       requests[0].respond(200, {}, JSON.stringify(response));
       expect(writeHtmlSpy.args[0][0]).to.equal('<!--Creative 123 served by Prebid.js Header Bidding-->ad-markup10.00');
       expect(sendRequestSpy.args[0][0]).to.equal('https://example.com/path?uuid=123');
+      expect(triggerPixelSpy.args[0][0]).to.equal('http://prebid-server.rubiconproject.com/event?t=win&b=AAAA-BBBB-CCCC-DDDD&f=i');
+      expect(triggerPixelSpy.args[1][0]).to.equal('https://test.prebidcache.wurl');
     });
   });
 
@@ -278,6 +279,7 @@ describe('renderingManager', function() {
 
       mockWin.postMessage(ev);
       expect(mockIframe.contentDocument.write.args[0][0]).to.equal("ad");
+      expect(triggerPixelSpy.args[0][0]).to.equal('https://prebid-server.rubiconproject.com/event?t=win&b=AAAA-BBBB-CCCC-DDDD&f=i');
     });
   });
 
