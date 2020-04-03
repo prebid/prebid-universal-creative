@@ -101,9 +101,7 @@ describe('renderingManager', function() {
         cacheHost: 'example.com',
         cachePath: '/path',
         uuid: '123',
-        size: '300x250',
-        winurl: 'http://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
-        winbidid: 'AAAA-BBBB-CCCC-DDDD'
+        size: '300x250'
       };
 
       renderObject.renderAd(mockWin.document, ucTagData);
@@ -202,9 +200,7 @@ describe('renderingManager', function() {
         cachePath: '/path',
         uuid: '123',
         size: '300x250',
-        hbPb: '10.00',
-        winurl: 'http://prebid-server.rubiconproject.com/event?t=win&b=BIDID&f=i',
-        winbidid: 'AAAA-BBBB-CCCC-DDDD'
+        hbPb: '10.00'
       };
 
       renderObject.renderAd(mockWin.document, ucTagData);
