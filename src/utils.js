@@ -114,14 +114,12 @@ export function transformAuctionTargetingData(tagData) {
   // when the publisher uses their adserver's generic macro that provides all targeting keys (ie tagData.targetingMap), we need to convert the keys
   const auctionKeyMap = {
     hb_adid: 'adId',
-    hb_bidid: 'winbidid',
     hb_cache_host: 'cacheHost',
     hb_cache_path: 'cachePath',
     hb_cache_id: 'uuid',
     hb_format: 'mediaType',
     hb_env: 'env',
     hb_size: 'size',
-    hb_winurl: 'winurl',
     hb_pb: 'hbPb'
   };
 

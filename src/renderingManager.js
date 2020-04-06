@@ -1,6 +1,6 @@
 import * as utils from './utils';
 import * as domHelper from './domHelper';
-import {triggerPixel} from "./utils";
+import {triggerPixel} from './utils';
 
 const GOOGLE_IFRAME_HOSTNAME = 'tpc.googlesyndication.com';
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
@@ -30,7 +30,7 @@ export function newRenderingManager(win, environment) {
   let renderAd = function(doc, dataObject) {
     const targetingData = utils.transformAuctionTargetingData(dataObject);
     
-    if(environment.isMobileApp(targetingData.env)) {
+    if (environment.isMobileApp(targetingData.env)) {
       renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb, true);
     } else if (environment.isAmp(targetingData.uuid)) {
       renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb);
@@ -38,27 +38,6 @@ export function newRenderingManager(win, environment) {
       renderCrossDomain(targetingData.adId, targetingData.adServerDomain, targetingData.pubUrl);
     } else {
       renderLegacy(doc, targetingData.adId);
-    }
-    
-    // check for winurl and replace BIDID token with value if it exists
-    if (targetingData.winurl && targetingData.winbidid) {
-        // one level of decoding
-        targetingData.winurl=decodeURIComponent(targetingData.winurl);
-        // test if BIDID exists in winurl, if BIDID doesn't exist log console warning
-        if (targetingData.winurl.match(/=BIDID\b/)) {
-          const replacedUrl = targetingData.winurl.replace(/=BIDID\b/, `=${targetingData.winbidid}`);
-          try {
-            triggerPixel(replacedUrl, function triggerPixelCallback(event) {
-              if (event.type !== 'load') {
-                console.warn('failed to load pixel for winurl:', replacedUrl);
-              }
-            });
-          } catch (e) {
-            console.warn('failed to get pixel for winurl:', replacedUrl);
-          }
-        } else {
-          console.warn('failed to find BIDID in winurl:', targetingData.winurl);
-        }
     }
   };
 
@@ -205,6 +184,12 @@ export function newRenderingManager(win, environment) {
       let ad = utils.getCreativeCommentMarkup(bidObject);
       let width = (bidObject.width) ? bidObject.width : bidObject.w;
       let height = (bidObject.height) ? bidObject.height : bidObject.h;
+
+      // When Prebid Universal Creative reads from Prebid Cache, we need to have it check for the existence of the wurl parameter. If it exists, hit it.
+      if (bidObject.wurl) {
+        triggerPixel(decodeURIComponent(bidObject.wurl));
+      }
+
       if (bidObject.adm) {
         if(hbPb) { // replace ${AUCTION_PRICE} macro with the hb_pb.
           bidObject.adm = bidObject.adm.replace('${AUCTION_PRICE}', hbPb);
