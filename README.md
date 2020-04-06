@@ -6,12 +6,48 @@ Prebid Universal Creative is a javascript api to render multiple formats. This f
  - Mobile (Coming Soon)
  - AMP creatives
  - All safeFrame creatives
+ 
+## Usage
+
+You can find a detailed explanations on the [Prebid Universal Creative](http://prebid.org/overview/prebid-universal-creative.html) and [AdOps - Add Creative](http://prebid.org/adops/step-by-step.html#step-2-add-a-creative) pages.
+
+> **important:** If you’re using the `Send All Bids` scenario (where every bidder has a separate order), the creative and targeting will be different from the example shown here. See [Send All Bids](http://prebid.org/adops/send-all-bids-adops.html) for details.
+
+```html
+<script src = "https://cdn.jsdelivr.net/npm/prebid-universal-creative@latest/dist/creative.js"></script>
+<script>
+  var ucTagData = {};
+  ucTagData.adServerDomain = "";
+  ucTagData.pubUrl = "%%PATTERN:url%%";
+  ucTagData.targetingMap = %%PATTERN:TARGETINGMAP%%;
+  ucTagData.hbPb = "%%PATTERN:hb_pb%%";
+
+  try {
+    ucTag.renderAd(document, ucTagData);
+  } catch (e) {
+    console.log(e);
+  }
+</script>
+```
+
+> Note: Some build tools make explicit use of Node features which have been introduced in version *8.9.0*. Please make sure you're using the correct Node version (>8.9.0) before you proceed to create your own build using the commands listed below.
 
 ## Install
 
     $ git clone https://github.com/prebid/prebid-universal-creative.git
     $ cd prebid-universal-creative
     $ npm install
+
+*Note:* You need to have `NodeJS` 8.9.x or greater installed.
+
+*Note:* We have upgraded from Gulp v3.9.1 to Gulp v4.0.2. In accordance with the change, you need to have `gulp-cli` installed globally. This won't impact any other project using `gulp`.
+
+If you have a version of `gulp` installed globally, you may need to uninstall it to continue. You can run `gulp -v` and check the version of the `CLI` field to see if it's installed. If the major version is `2`, you already have `gulp-cli` installed and can run `gulp` commands. If the `CLI` version is same as the `Local` version, you need to uninstall `gulp` globally.
+
+To uninstall the old package globally, run the command: `npm uninstall -g gulp`. <br />
+To install `gulp-cli` globally, run the command: `npm install -g gulp-cli`.
+
+Run `gulp -v` just to make sure that the `CLI` major version is `2`. You're now good to run `gulp` commands.
 
 ## Build for development
 
@@ -56,10 +92,9 @@ We like to test a lot before releasing newer versions.
 
    For End to End testing, 
    - Set `test.localhost` in your hosts file. 
-   - Use node version <=8.1.2 since gulp-connect is having a bug in ssl mode. More info here https://github.com/intesso/connect-livereload/issues/79
-
+   
    ```
-   gulp test --e2e --https
+   gulp e2e-test
    ``` 
 
    Reason to add specific host to your host file is

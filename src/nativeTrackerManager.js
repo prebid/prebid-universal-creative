@@ -1,7 +1,7 @@
 /*
  * Script to handle firing impression and click trackers from native teamplates
  */
-import { parseUrl } from './utils';
+import { parseUrl, triggerPixel, transformAuctionTargetingData } from './utils';
 import { newNativeAssetManager } from './nativeAssetManager';
 
 const AD_ANCHOR_CLASS_NAME = 'pb-click';
@@ -23,6 +23,13 @@ export function newNativeTrackerManager(win) {
     return adId || '';
   }
 
+  function readAdIdFromSingleElement(adElement) {
+    let adId =  adElement.attributes &&
+      adElement.attributes[AD_DATA_ADID_ATTRIBUTE] &&
+      adElement.attributes[AD_DATA_ADID_ATTRIBUTE].value;
+    return adId || '';
+  }
+
   function readAdIdFromEvent(event) {
     let adId =
       event &&
@@ -40,15 +47,17 @@ export function newNativeTrackerManager(win) {
   }
 
   function loadImpTrackers(adElements) {
-    let adId = readAdIdFromElement(adElements);
-    fireTracker(adId, 'impression');
+      for(var i = 0; i < adElements.length; i++){
+          let adId = readAdIdFromSingleElement(adElements[i]);
+          fireTracker(adId, 'impression');
+      }
   }
 
-  function attachClickListeners(adElements) {
+  function attachClickListeners(adElements, listener = loadClickTrackers) {
     adElements = adElements || findAdElements(AD_ANCHOR_CLASS_NAME);
 
     for (let i = 0; i < adElements.length; i++) {
-      adElements[i].addEventListener('click', loadClickTrackers, true);
+      adElements[i].addEventListener('click', listener, true);
     }
   }
 
@@ -68,24 +77,38 @@ export function newNativeTrackerManager(win) {
   }
 
   // START OF MAIN CODE
-  let startTrackers = function (tagData) {
-    let parsedUrl = parseUrl(tagData && tagData.pubUrl);
-    publisherDomain = parsedUrl.protocol + '://' + parsedUrl.host;
-
-    let adElements = findAdElements(AD_ANCHOR_CLASS_NAME);
-
-    // look for and replace any found native placeholders
+  let startTrackers = function (dataObject) {
+    const targetingData = transformAuctionTargetingData(dataObject);
     const nativeAssetManager = newNativeAssetManager(window);
-    nativeAssetManager.loadAssets(
-      readAdIdFromElement(adElements),
-      attachClickListeners
-    );
 
-    attachClickListeners(adElements);
+    if (targetingData && targetingData.env === 'mobile-app') {
+      let cb = function({clickTrackers, impTrackers} = {}) {
+        function loadMobileClickTrackers(clickTrackers) {
+          (clickTrackers || []).forEach(triggerPixel);
+        }
+        const boundedLoadMobileClickTrackers = loadMobileClickTrackers.bind(null, clickTrackers);
+        attachClickListeners(false, boundedLoadMobileClickTrackers);
+        
+        (impTrackers || []).forEach(triggerPixel);
+      }
+      nativeAssetManager.loadMobileAssets(targetingData, cb);
+    } else {
+      let parsedUrl = parseUrl(targetingData && targetingData.pubUrl);
+      publisherDomain = parsedUrl.protocol + '://' + parsedUrl.host;
+  
+      let adElements = findAdElements(AD_ANCHOR_CLASS_NAME);
+      
+      nativeAssetManager.loadAssets(
+        readAdIdFromElement(adElements),
+        attachClickListeners
+      );
 
-    // fires native impressions on creative load
-    if (adElements.length > 0) {
-      loadImpTrackers(adElements);
+      attachClickListeners(adElements, loadClickTrackers);
+
+      // fires native impressions on creative load
+      if (adElements.length > 0) {
+        loadImpTrackers(adElements);
+      }
     }
   }
 

@@ -1,7 +1,6 @@
 var creative = require('./package.json');
 var StringReplacePlugin = require('string-replace-webpack-plugin');
 var path = require('path');
-var webpack = require('webpack');
 
 module.exports = {
   devtool: 'source-map',
@@ -23,7 +22,7 @@ module.exports = {
           {
             loader: 'babel-loader',
             options: {
-              presets: ['env']
+              presets: ['@babel/preset-env']
             }
           }
         ]

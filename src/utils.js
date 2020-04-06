@@ -15,7 +15,6 @@ export function triggerPixel(url, done) {
   img.src = url;
 }
 
-
 export function createTrackPixelHtml(url) {
   if (!url) {
     return '';
@@ -115,14 +114,13 @@ export function transformAuctionTargetingData(tagData) {
   // when the publisher uses their adserver's generic macro that provides all targeting keys (ie tagData.targetingMap), we need to convert the keys
   const auctionKeyMap = {
     hb_adid: 'adId',
-    hb_bidid: 'winbidid',
     hb_cache_host: 'cacheHost',
     hb_cache_path: 'cachePath',
     hb_cache_id: 'uuid',
     hb_format: 'mediaType',
     hb_env: 'env',
     hb_size: 'size',
-    hb_winurl: 'winurl'
+    hb_pb: 'hbPb'
   };
 
   /**
@@ -190,7 +188,6 @@ export function transformAuctionTargetingData(tagData) {
     }); 
   }
 
-
   let auctionData = {};
   let formattedKeyMap = {};
   
@@ -200,36 +197,13 @@ export function transformAuctionTargetingData(tagData) {
     formattedKeyMap = convertKeyPairStringToMap(tagData.targetingKeywords);
   }
   renameKnownAuctionKeys(formattedKeyMap);
-
-  // WINURL SUPPORT
-  if (tagData.winurl && tagData.winbidid) {
-    // replace BIDID query param values
-    const captureBidId = /([?&]?\w+=)(BIDID)\b/g;
-
-    // if param value BIDID exists in url, update winurl to replaced BIDID url
-    if (tagData.winurl.match(captureBidId)) {
-      tagData.winurl = tagData.winurl.replace(captureBidId, '$1' + tagData.winbidid);
-      try {
-        triggerPixel(tagData.winurl, function triggerPixelCallback(event) {
-          if (event.type !== 'load') {
-            console.warn('failed to load pixel for winurl :%s', tagData.winurl);
-          }
-        });
-      } catch (e) {
-        console.warn('failed to get pixel for winurl: %s', tagData.winurl);
-      }
-    } else {
-      console.warn('failed to replace BIDID in winurl: winurl:%s', tagData.winurl);
-    }
-  }
-
+  
   // set keys not in defined map macros (eg targetingMap) and/or the keys setup within a non-DFP adserver
   Object.keys(tagData).forEach(function (key) {
     if (key !== 'targetingMap' && key !== 'targetingKeywords' && isStr(tagData[key]) && tagData[key] !== '') {
       auctionData[key] = tagData[key];
     }
   });
-
   return auctionData;
 }
 
@@ -245,7 +219,7 @@ export function parseUrl(url) {
     port: +parsed.port,
     pathname: parsed.pathname.replace(/^(?!\/)/, '/'),
     hash: (parsed.hash || '').replace(/^#/, ''),
-    host: parsed.host || window.location.host
+    host: (parsed.host || window.location.host).replace(/:(443|80)$/, '')
   };
 }
 
