@@ -43,17 +43,19 @@ describe('environment module', function() {
     expect(env.isAmp('some-uuid')).to.equal(true);
 	});
 	
-	it('should detect crossDomain', function() {
-		let localWindow = {
-			top: {
-				location: {
-					toString: () => { throw new Error('error')}
-				}
-			}
-		}
+	it('should detect Prebid in higher window', function() {
+    let localWindow = {
+      parent: {
+        parent: {
+          pbjs: {
+            fakeFn: () => {}
+          }
+        }
+      }
+    };
     const mockWin = merge(mocks.createFakeWindow('http://appnexus.com'), envMocks.getWindowObject(), localWindow);
     const env = newEnvironment(mockWin);
-    expect(env.isCrossDomain()).to.equal(true);
+    expect(env.canLocatePrebid()).to.equal(true);
 	});
   
   it('should detect mobile app', function() {

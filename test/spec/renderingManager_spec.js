@@ -246,7 +246,7 @@ describe('renderingManager', function() {
       const env = {
         isMobileApp: () => false,
         isAmp: () => false,
-        isCrossDomain: () => true
+        canLocatePrebid: () => false
       };
       const renderObject = newRenderingManager(mockWin, env);
       let ucTagData = {
@@ -281,7 +281,7 @@ describe('renderingManager', function() {
       const env = {
         isMobileApp: () => false,
         isAmp: () => false,
-        isCrossDomain: () => false
+        canLocatePrebid: () => true
       };
       const renderObject = newRenderingManager(mockWin, env);
 
