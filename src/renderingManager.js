@@ -37,7 +37,7 @@ export function newRenderingManager(win, environment) {
       renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb, true);
     } else if (environment.isAmp(targetingData.uuid)) {
       renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb);
-    } else if (environment.isCrossDomain()) {
+    } else if (!environment.canLocatePrebid()) {
       renderCrossDomain(targetingData.adId, targetingData.adServerDomain, targetingData.pubUrl);
     } else {
       renderLegacy(doc, targetingData.adId);
