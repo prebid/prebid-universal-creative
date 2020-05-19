@@ -2,7 +2,6 @@ import * as utils from './utils';
 import * as domHelper from './domHelper';
 import {triggerPixel} from './utils';
 
-const GOOGLE_IFRAME_HOSTNAME = 'tpc.googlesyndication.com';
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
 
@@ -71,7 +70,7 @@ export function newRenderingManager(win, environment) {
     let windowLocation = window.location;
     let parsedUrl = utils.parseUrl(pubUrl);
     let publisherDomain = parsedUrl.protocol + '://' + parsedUrl.host;
-    let adServerDomain = pubAdServerDomain || GOOGLE_IFRAME_HOSTNAME;
+    let adServerDomain = pubAdServerDomain || win.location.hostname;
     let fullAdServerDomain = windowLocation.protocol + '//' + adServerDomain;
 
     function renderAd(ev) {
