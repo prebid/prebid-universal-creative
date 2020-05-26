@@ -67,7 +67,7 @@ export function newRenderingManager(win, environment) {
    * @param {string} pubUrl Url of publisher page
    */
   function renderCrossDomain(adId, pubAdServerDomain = '', pubUrl) {
-    let windowLocation = window.location;
+    let windowLocation = win.location;
     let parsedUrl = utils.parseUrl(pubUrl);
     let publisherDomain = parsedUrl.protocol + '://' + parsedUrl.host;
     let adServerDomain = pubAdServerDomain || win.location.hostname;
