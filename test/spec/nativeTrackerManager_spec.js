@@ -22,7 +22,7 @@ describe('nativeTrackerManager', function () {
   describe('load startTrackers', function () {
     let mockWin;
     let consoleWarn;
-    
+
     let tagData = {
       pubUrl: 'http://example.com'
     };
@@ -70,13 +70,6 @@ describe('nativeTrackerManager', function () {
         },
         addEventListener: ((type, listener, capture) => {
           listener({
-            target: {
-              attributes: {
-                pbAdId: {
-                  value: 'ad123'
-                }
-              }
-            }
           })
         })
       }];
@@ -96,16 +89,18 @@ describe('nativeTrackerManager', function () {
       expect(trimPort(postMessageTargetDomain)).to.equal(tagData.pubUrl);
     });
 
-    it('should verify the warning message was executed', function() { 
+    it('should verify 2 warning messages (one for impression, one for click) was executed', function() {
       mockWin.document.getElementsByClassName = () => [{
         addEventListener: ((type, listener, capture) => {
+          listener({
+          })
         })
       }];
 
       let nativeTracker = new newNativeTrackerManager(mockWin);
       nativeTracker.startTrackers(tagData);
 
-      expect(consoleWarn.callCount).to.equal(1);
+      expect(consoleWarn.callCount).to.equal(2);
     });
   });
 });
