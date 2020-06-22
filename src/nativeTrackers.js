@@ -4,3 +4,5 @@ window.pbNativeTag = (window.pbNativeTag || {});
 const nativeTrackerManager = newNativeTrackerManager(window);
 
 window.pbNativeTag.startTrackers = nativeTrackerManager.startTrackers;
+window.pbNativeTag.renderNativeAd = nativeTrackerManager.renderNativeAd;
+

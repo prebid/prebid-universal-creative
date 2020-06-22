@@ -27,6 +27,12 @@ describe('nativeTrackerManager', function () {
       pubUrl: 'http://example.com'
     };
 
+    let tagDataAlt = {
+      pubUrl: 'http://example.com',
+      adId: 'ad123',
+      assetsToReplace: ['image','hb_native_linkurl','body','title'],
+    };
+
     beforeEach(function () {
       mockWin = merge(mocks.createFakeWindow(tagData.pubUrl), renderingMocks.getWindowObject());
       consoleWarn = sinon.stub(console, 'warn');
@@ -87,6 +93,58 @@ describe('nativeTrackerManager', function () {
       expect(rawPostMessage.adId).to.exist.and.to.equal("ad123");
       expect(rawPostMessage.action).to.exist.and.to.equal('click');
       expect(trimPort(postMessageTargetDomain)).to.equal(tagData.pubUrl);
+    });
+
+    it('should verify the postMessage for impression trackers was executed', function() {
+      mockWin.document.getElementsByClassName = () => [{
+        attributes: {
+          pbAdId: {
+            value: 'ad123'
+          }
+        },
+        addEventListener: (type, listener, capture) => {
+        },
+      }];
+      let nativeTracker = new newNativeTrackerManager(mockWin);
+      nativeTracker.renderNativeAd(tagDataAlt);
+
+      expect(mockWin.parent.postMessage.callCount).to.equal(1);
+      let postMessageTargetDomain = mockWin.parent.postMessage.args[0][1];
+      let postMessageContents = mockWin.parent.postMessage.args[0][0];
+      let rawPostMessage = JSON.parse(postMessageContents);
+
+      expect(rawPostMessage.message).to.exist.and.to.equal("Prebid Native");
+      expect(rawPostMessage.adId).to.exist.and.to.equal("ad123");
+      expect(rawPostMessage.action).to.not.exist;
+      expect(trimPort(postMessageTargetDomain)).to.equal(tagDataAlt.pubUrl);
+    });
+
+    it('should verify the postMessages for the impression and click trackers were executed', function() {
+      mockWin.document.getElementsByClassName = () => [{
+        attributes: {
+          pbAdId: {
+            value: 'ad123'
+          }
+        },
+        addEventListener: ((type, listener, capture) => {
+          listener({
+          })
+        })
+      }];
+
+      let nativeTracker = new newNativeTrackerManager(mockWin);
+      nativeTracker.renderNativeAd(tagDataAlt);
+
+      expect(mockWin.parent.postMessage.callCount).to.equal(2);
+
+      let postMessageTargetDomain = mockWin.parent.postMessage.args[0][1];
+      let postMessageContents = mockWin.parent.postMessage.args[0][0];
+      let rawPostMessage = JSON.parse(postMessageContents);
+
+      expect(rawPostMessage.message).to.exist.and.to.equal("Prebid Native");
+      expect(rawPostMessage.adId).to.exist.and.to.equal("ad123");
+      expect(rawPostMessage.action).to.exist.and.to.equal('click');
+      expect(trimPort(postMessageTargetDomain)).to.equal(tagDataAlt.pubUrl);
     });
 
     it('should verify 2 warning messages (one for impression, one for click) was executed', function() {

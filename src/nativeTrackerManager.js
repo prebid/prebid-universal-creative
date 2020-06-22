@@ -10,6 +10,7 @@ const AD_DATA_ADID_ATTRIBUTE = 'pbAdId';
 export function newNativeTrackerManager(win) {
   let publisherDomain;
 
+
   function findAdElements(className) {
     let adElements = win.document.getElementsByClassName(className);
     return adElements || [];
@@ -67,6 +68,24 @@ export function newNativeTrackerManager(win) {
     }
   }
 
+  function fireNativeImpTracker(adId){
+    let parsedUrl = parseUrl(window.pbNativeData.pubUrl);
+    publisherDomain = parsedUrl.protocol + '://' + parsedUrl.host;
+    fireTracker(adId, 'impression');
+  }
+
+  function fireNativeCallback(){
+    let parsedUrl = parseUrl(window.pbNativeData.pubUrl);
+    publisherDomain = parsedUrl.protocol + '://' + parsedUrl.host;
+
+    const adElements = findAdElements(AD_ANCHOR_CLASS_NAME);
+    for (let i = 0; i < adElements.length; i++) {
+      adElements[i].addEventListener('click', function(event) {
+        loadClickTrackers(event, window.pbNativeData.adId);
+      }, true);
+    }
+  }
+
   // START OF MAIN CODE
   let startTrackers = function (dataObject) {
     const targetingData = transformAuctionTargetingData(dataObject);
@@ -103,7 +122,30 @@ export function newNativeTrackerManager(win) {
     }
   }
 
+  //Native Render Ad Function
+  let renderNativeAd = function(nativeTag){
+    window.pbNativeData = nativeTag;
+    const nativeAssetManager = newNativeAssetManager(window);
+
+    if(nativeTag.hasOwnProperty('adId')) {
+      if(nativeTag.hasOwnProperty('rendererUrl') && !nativeTag.rendererUrl.match(/##.*##/i)){
+        const scr = document.createElement('SCRIPT');
+        scr.src = nativeTag.rendererUrl,
+        scr.id = 'pb-native-renderer';
+        document.body.appendChild(scr);
+      }
+      nativeAssetManager.loadAssets(nativeTag.adId,fireNativeCallback);
+      fireNativeCallback();
+      fireNativeImpTracker(nativeTag.adId);
+    }else{
+      console.warn('Prebid Native Tag object was missing \'adId\'.');
+    }
+
+    
+  }
+
   return {
-    startTrackers
+    startTrackers,
+    renderNativeAd
   }
 }
