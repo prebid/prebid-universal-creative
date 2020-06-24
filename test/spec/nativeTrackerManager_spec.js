@@ -95,7 +95,7 @@ describe('nativeTrackerManager', function () {
       expect(trimPort(postMessageTargetDomain)).to.equal(tagData.pubUrl);
     });
 
-    it('should verify the postMessage for impression trackers was executed', function() {
+    /*it('should verify the postMessage for impression trackers was executed', function() {
       mockWin.document.getElementsByClassName = () => [{
         attributes: {
           pbAdId: {
@@ -145,7 +145,7 @@ describe('nativeTrackerManager', function () {
       expect(rawPostMessage.adId).to.exist.and.to.equal("ad123");
       expect(rawPostMessage.action).to.exist.and.to.equal('click');
       expect(trimPort(postMessageTargetDomain)).to.equal(tagDataAlt.pubUrl);
-    });
+    });*/
 
     it('should verify 2 warning messages (one for impression, one for click) was executed', function() {
       mockWin.document.getElementsByClassName = () => [{
