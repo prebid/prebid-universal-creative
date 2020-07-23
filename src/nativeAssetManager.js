@@ -168,17 +168,17 @@ export function newNativeAssetManager(win) {
   function loadAssets(adId, cb) {
     const placeholders = scanForPlaceholders(adId), flag = (typeof win.pbNativeData !== 'undefined');
 
-    if(flag && win.pbNativeData.hasOwnProperty('assetsToReplace')) {
+    if (flag && win.pbNativeData.hasOwnProperty('assetsToReplace')) {
         win.pbNativeData.assetsToReplace.forEach((asset) => {
           const key = (asset.match(/hb_native_/i)) ? asset : NATIVE_KEYS[asset];
-          if(key) {placeholders.push(key);}
+          if (key) {placeholders.push(key);}
         });
     }
 
     if (placeholders.length > 0) {
       callback = cb;
       requestAssets(adId, placeholders);
-    }else if(flag && win.pbNativeData.hasOwnProperty('requestAllAssets') && win.pbNativeData.requestAllAssets) {
+    }else if (flag && win.pbNativeData.hasOwnProperty('requestAllAssets') && win.pbNativeData.requestAllAssets) {
       callback = cb;
       requestAllAssets(adId);
     }
@@ -273,13 +273,13 @@ export function newNativeAssetManager(win) {
     if (data.message === 'assetResponse') {
       const body = win.document.body.innerHTML,flag = (typeof win.pbNativeData !== 'undefined');
 
-      if((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (flag && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
-        if(win.renderAd){
+      if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (flag && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
+        if (win.renderAd) {
           const newHtml = (win.renderAd && win.renderAd(data.assets)) || '';
           win.document.body.innerHTML = body + newHtml;
           callback && callback();
           win.removeEventListener('message', replaceAssets);
-        } else if(document.getElementById('pb-native-renderer')) {
+        } else if (document.getElementById('pb-native-renderer')) {
           document.getElementById('pb-native-renderer').addEventListener('load', function() {
             const newHtml = (win.renderAd && win.renderAd(data.assets)) || '';
             win.document.body.innerHTML = body + newHtml;
@@ -287,14 +287,14 @@ export function newNativeAssetManager(win) {
             win.removeEventListener('message', replaceAssets);
           });
         } else {
-          loadScript(win, ((flag && win.pbNativeData.hasOwnProperty('rendererUrl') && win.pbNativeData.rendererUrl) || data.rendererUrl), function(){
+          loadScript(win, ((flag && win.pbNativeData.hasOwnProperty('rendererUrl') && win.pbNativeData.rendererUrl) || data.rendererUrl), function() {
             const newHtml = (win.renderAd && win.renderAd(data.assets)) || '';
             win.document.body.innerHTML = body + newHtml;
             callback && callback();
             win.removeEventListener('message', replaceAssets);
           })
         }
-      } else if((data.hasOwnProperty('adTemplate') && data.adTemplate)||(flag && win.pbNativeData.hasOwnProperty('adTemplate'))) {
+      } else if ((data.hasOwnProperty('adTemplate') && data.adTemplate)||(flag && win.pbNativeData.hasOwnProperty('adTemplate'))) {
         const template =  (flag && win.pbNativeData.hasOwnProperty('adTemplate') && win.pbNativeData.adTemplate) || data.adTemplate;
         const newHtml = replace(template, data);
 

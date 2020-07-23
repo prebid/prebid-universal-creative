@@ -10,7 +10,6 @@ const AD_DATA_ADID_ATTRIBUTE = 'pbAdId';
 export function newNativeTrackerManager(win) {
   let publisherDomain;
 
-
   function findAdElements(className) {
     let adElements = win.document.getElementsByClassName(className);
     return adElements || [];

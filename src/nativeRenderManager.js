@@ -35,11 +35,11 @@ export function newNativeRenderManager(win) {
     }
   }
 
-  function fireNativeImpTracker(adId){
+  function fireNativeImpTracker(adId) {
     fireTracker(adId, 'impression');
   }
 
-  function fireNativeCallback(){
+  function fireNativeCallback() {
     const adElements = findAdElements(AD_ANCHOR_CLASS_NAME);
     for (let i = 0; i < adElements.length; i++) {
       adElements[i].addEventListener('click', function(event) {
@@ -49,16 +49,16 @@ export function newNativeRenderManager(win) {
   }
 
   // START OF MAIN CODE
-  let renderNativeAd = function(nativeTag){
+  let renderNativeAd = function(nativeTag) {
     window.pbNativeData = nativeTag;
     const targetingData = transformAuctionTargetingData(nativeTag);
     const nativeAssetManager = newNativeAssetManager(window);
 
-    if(nativeTag.hasOwnProperty('adId')) {
+    if (nativeTag.hasOwnProperty('adId')) {
       let parsedUrl = parseUrl(window.pbNativeData.pubUrl);
       publisherDomain = parsedUrl.protocol + '://' + parsedUrl.host;
 
-      if(nativeTag.hasOwnProperty('rendererUrl') && !nativeTag.rendererUrl.match(/##.*##/i)){
+      if (nativeTag.hasOwnProperty('rendererUrl') && !nativeTag.rendererUrl.match(/##.*##/i)) {
         const scr = document.createElement('SCRIPT');
         scr.src = nativeTag.rendererUrl,
         scr.id = 'pb-native-renderer';
