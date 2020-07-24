@@ -19,7 +19,6 @@ export function newRenderingManager(win, environment) {
    * @property {string} uuid - ID to fetch the value from prebid cache
    * @property {string} mediaType - Creative media type, It can be banner, native or video
    * @property {string} pubUrl - Publisher url
-   *
    * @property {string} winurl
    * @property {string} winbidid
    */
