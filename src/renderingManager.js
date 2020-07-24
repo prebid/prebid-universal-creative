@@ -159,7 +159,14 @@ export function newRenderingManager(win, environment) {
     // For MoPub, creative is stored in localStorage via SDK.
     let search = 'Prebid_';
     if(uuid.substr(0, search.length) === search) {
-      loadFromLocalCache(uuid)
+      loadFromLocalCache(uuid);
+      //register creative right away to not miss initial geom-update
+      if (typeof size !== 'undefined' && size !== "") {
+        let sizeArr = size.split('x').map(Number);
+        resizeIframe(sizeArr[0], sizeArr[1]);
+      } else {
+        console.log('Targeting key hb_size not found to resize creative');
+      }
     } else {
       let adUrl = `${getCacheEndpoint(cacheHost, cachePath)}?uuid=${uuid}`;
 
