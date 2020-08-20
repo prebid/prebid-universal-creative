@@ -144,6 +144,19 @@ export function newRenderingManager(win, environment) {
 
     return `https://${host}${path}`;
   }
+  
+  /**
+   * update iframe by using size string to resize
+   * @param {string} size
+   */
+  function updateIframe(size) {
+    if (size) {
+      const sizeArr = size.split('x').map(Number);
+      resizeIframe(sizeArr[0], sizeArr[1]);
+    } else {
+      console.log('Targeting key hb_size not found to resize creative');
+    }
+  }
 
   /**
    * Render mobile or amp ad
@@ -160,22 +173,11 @@ export function newRenderingManager(win, environment) {
     if(uuid.substr(0, search.length) === search) {
       loadFromLocalCache(uuid);
       //register creative right away to not miss initial geom-update
-      if (typeof size !== 'undefined' && size !== "") {
-        let sizeArr = size.split('x').map(Number);
-        resizeIframe(sizeArr[0], sizeArr[1]);
-      } else {
-        console.log('Targeting key hb_size not found to resize creative');
-      }
+      updateIframe(size);
     } else {
       let adUrl = `${getCacheEndpoint(cacheHost, cachePath)}?uuid=${uuid}`;
-
       //register creative right away to not miss initial geom-update
-      if (typeof size !== 'undefined' && size !== "") {
-        let sizeArr = size.split('x').map(Number);
-        resizeIframe(sizeArr[0], sizeArr[1]);
-      } else {
-        console.log('Targeting key hb_size not found to resize creative');
-      }
+      updateIframe(size);
       utils.sendRequest(adUrl, responseCallback(isMobileApp, hbPb));
     }
   }
