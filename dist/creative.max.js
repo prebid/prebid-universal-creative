@@ -246,9 +246,9 @@ function newRenderingManager(win, environment) {
     for (var i = 0; i < 10; i++) {
       w = w.parent;
 
-      if (w.pbjs) {
+      if (w.fsprebid) {
         try {
-          w.pbjs.renderAd(doc, adId);
+          w.fsprebid.renderAd(doc, adId);
           break;
         } catch (e) {
           continue;
