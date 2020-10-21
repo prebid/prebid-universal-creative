@@ -67,7 +67,7 @@ export function newNativeRenderManager(win) {
       nativeAssetManager.loadAssets(nativeTag.adId,fireNativeCallback);
       fireNativeCallback();
       fireNativeImpTracker(nativeTag.adId);
-    }else{
+    } else {
       console.warn('Prebid Native Tag object was missing \'adId\'.');
     }
   }

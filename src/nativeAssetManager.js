@@ -178,7 +178,7 @@ export function newNativeAssetManager(win) {
     if (placeholders.length > 0) {
       callback = cb;
       requestAssets(adId, placeholders);
-    }else if (flag && win.pbNativeData.hasOwnProperty('requestAllAssets') && win.pbNativeData.requestAllAssets) {
+    } else if (flag && win.pbNativeData.hasOwnProperty('requestAllAssets') && win.pbNativeData.requestAllAssets) {
       callback = cb;
       requestAllAssets(adId);
     }
@@ -202,19 +202,6 @@ export function newNativeAssetManager(win) {
     });
 
     return placeholders;
-  }
-
-  /*
-   * Searches the DOM for existence passed string
-   */
-  function scanForString(str) {
-    const strIndex = win.document.body.innerHTML.indexOf(str);
-
-    if (~strIndex) {
-      return true;
-    }
-
-    return false;
   }
 
   /*
@@ -271,9 +258,10 @@ export function newNativeAssetManager(win) {
     }
 
     if (data.message === 'assetResponse') {
-      const body = win.document.body.innerHTML,flag = (typeof win.pbNativeData !== 'undefined');
+      const body = win.document.body.innerHTML;
+      const flag = (typeof win.pbNativeData !== 'undefined');
 
-      if (flag && data.adId != win.pbNativeData.adId) return;
+      if (flag && data.adId !== win.pbNativeData.adId) return;
 
       if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (flag && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
         if (win.renderAd) {
