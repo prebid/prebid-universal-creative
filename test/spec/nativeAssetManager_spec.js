@@ -5,6 +5,7 @@ import { mocks } from 'test/helpers/mocks';
 import * as utils from 'src/utils';
 
 const AD_ID = 'abc123';
+const AD_ID2 = 'def456';
 const NATIVE_KEYS = {
   title: 'hb_native_title',
   body: 'hb_native_body',
@@ -52,6 +53,16 @@ function createAllResponder(assets,url,template) {
     if (type !== 'message') { return; }
 
     const data = { message: 'assetResponse', adId: AD_ID, assets, adTemplate:template, rendererUrl:url };
+    listener({ data: JSON.stringify(data) });
+  };
+}
+
+// creates mock postmessage response from prebid's native.js:getAssetMessage using alternative id
+function createAltAllResponder(assets,url,template) {
+  return function(type, listener) {
+    if (type !== 'message') { return; }
+
+    const data = { message: 'assetResponse', adId: AD_ID2, assets, adTemplate:template, rendererUrl:url };
     listener({ data: JSON.stringify(data) });
   };
 }
@@ -185,6 +196,93 @@ describe('nativeTrackerManager', () => {
 
     const nativeAssetManager = newNativeAssetManager(win);
     nativeAssetManager.loadAssets(AD_ID);
+
+    expect(win.document.body.innerHTML).to.include(`<a href="http://www.example.com" target="_blank" class="pb-click">new value</a>`);
+    expect(win.document.body.innerHTML).to.include(`<img class="pb-icon" src="http://www.image.com/picture.jpg" alt="icon" height="150" width="50">`);
+    expect(win.document.body.innerHTML).to.include(`<p>Body content</p>`);
+  });
+
+  it('adId does not match, so assets are not replaced', () => {
+    const html = `<script>
+              let nativeTag = {};
+              nativeTag.pubUrl = "https://www.url.com";
+              nativeTag.adId = "OTHERID123";
+              nativeTag.requestAllAssets = true;
+              window.pbNativeTag.renderNativeAd(nativeTag);
+      </script>`;
+    win.pbNativeData = {
+      pubUrl : 'https://www.url.com',
+      adId : 'OTHERID123',
+      rendererUrl : 'https://www.renderer.com/render.js',
+      requestAllAssets : true
+    };
+
+    win.document.body.innerHTML = html;
+    win.renderAd = generateRenderer;
+
+    win.addEventListener = createAllResponder([
+      { key: 'body', value: 'Body content' },
+      { key: 'title', value: 'new value' },
+      { key: 'clickUrl', value: 'http://www.example.com' },
+      { key: 'image', value: 'http://www.image.com/picture.jpg' },
+    ],null,null);
+
+    const nativeAssetManager = newNativeAssetManager(win);
+    nativeAssetManager.loadAssets(AD_ID);
+
+    expect(win.document.body.innerHTML).to.equal(`<script>
+              let nativeTag = {};
+              nativeTag.pubUrl = "https://www.url.com";
+              nativeTag.adId = "OTHERID123";
+              nativeTag.requestAllAssets = true;
+              window.pbNativeTag.renderNativeAd(nativeTag);
+      </script>`);
+  });
+
+  it('adId does not match on first response, so assets are not replaced until match on second response', () => {
+    const html = `<script>
+              let nativeTag = {};
+              nativeTag.pubUrl = "https://www.url.com";
+              nativeTag.adId = "def456";
+              nativeTag.requestAllAssets = true;
+              window.pbNativeTag.renderNativeAd(nativeTag);
+      </script>`;
+    win.pbNativeData = {
+      pubUrl : 'https://www.url.com',
+      adId : 'def456',
+      rendererUrl : 'https://www.renderer.com/render.js',
+      requestAllAssets : true
+    };
+
+    win.document.body.innerHTML = html;
+    win.renderAd = generateRenderer;
+
+    win.addEventListener = createAllResponder([
+      { key: 'body', value: 'Body No Replace' },
+      { key: 'title', value: 'new value no replace' },
+      { key: 'clickUrl', value: 'http://www.example.com/noreplace' },
+      { key: 'image', value: 'http://www.image.com/picture.jpg?noreplace=true' },
+    ],null,null);
+
+    const nativeAssetManager = newNativeAssetManager(win);
+    nativeAssetManager.loadAssets(AD_ID2);
+
+    expect(win.document.body.innerHTML).to.equal(`<script>
+              let nativeTag = {};
+              nativeTag.pubUrl = "https://www.url.com";
+              nativeTag.adId = "def456";
+              nativeTag.requestAllAssets = true;
+              window.pbNativeTag.renderNativeAd(nativeTag);
+      </script>`);
+
+    win.addEventListener = createAltAllResponder([
+      { key: 'body', value: 'Body content' },
+      { key: 'title', value: 'new value' },
+      { key: 'clickUrl', value: 'http://www.example.com' },
+      { key: 'image', value: 'http://www.image.com/picture.jpg' },
+    ],null,null);
+
+    nativeAssetManager.loadAssets(AD_ID2);
 
     expect(win.document.body.innerHTML).to.include(`<a href="http://www.example.com" target="_blank" class="pb-click">new value</a>`);
     expect(win.document.body.innerHTML).to.include(`<img class="pb-icon" src="http://www.image.com/picture.jpg" alt="icon" height="150" width="50">`);
