@@ -273,6 +273,8 @@ export function newNativeAssetManager(win) {
     if (data.message === 'assetResponse') {
       const body = win.document.body.innerHTML,flag = (typeof win.pbNativeData !== 'undefined');
 
+      if (flag && data.adId != win.pbNativeData.adId) return;
+
       if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (flag && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
         if (win.renderAd) {
           const newHtml = (win.renderAd && win.renderAd(data.assets)) || '';
