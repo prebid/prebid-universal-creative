@@ -18,7 +18,7 @@ const ENDPOINT = sanitizeEndpoint(parseQueryParam('endpoint', window.location.se
 const ENDPOINT_ARGS = sanitizeEndpointArgs(parseQueryParam('args', window.location.search));
 const maxSyncCountParam = parseQueryParam('max_sync_count', window.location.search);
 const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt((maxSyncCountParam) ? maxSyncCountParam : 10, 10));
-const TIMEOUT = sanitizeTimeout(parseInt(parseQueryParam('timeout', window.location.search), 10)) || 10000;
+const TIMEOUT = sanitizeTimeout(parseInt(parseQueryParam('timeout', window.location.search), 10));
 const DEFAULT_GDPR_SCOPE = sanitizeScope(parseInt(parseQueryParam('defaultGdprScope', window.location.search), 10));
 
 let consent = {};
@@ -197,7 +197,7 @@ function sanitizeSyncCount(value) {
 
 /**
  * If the value is 0 or 1 return it.
- * Otherwise it will return undefined.
+ * Otherwise it will return default 1.
  */
 function sanitizeScope(value) {
     if (value === 0 || value === 1) {
@@ -208,12 +208,13 @@ function sanitizeScope(value) {
 
 /**
  * If the value is 0 or 1 return it.
- * Otherwise it will return undefined.
+ * Otherwise it will return 10000.
  */
 function sanitizeTimeout(value) {
     if (!isNaN(value) && value === parseInt(value, 10)) {
         return value;
     }
+    return 10000;
 }
 
 /**
