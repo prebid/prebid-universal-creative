@@ -194,7 +194,7 @@ export function newNativeAssetManager(win) {
     Object.keys(NATIVE_KEYS).forEach(key => {
       const placeholderKey = NATIVE_KEYS[key];
       const placeholder = (adId && !flag) ? `${placeholderKey}:${adId}` : `${placeholderKey}`;
-      const placeholderIndex = win.document.body.innerHTML.indexOf(placeholder);
+      const placeholderIndex = win.document.body.innerHTML.indexOf(placeholder)||win.document.head.innerHTML.indexOf(placeholder);
 
       if (~placeholderIndex) {
         placeholders.push(placeholderKey);
@@ -259,19 +259,24 @@ export function newNativeAssetManager(win) {
 
     if (data.message === 'assetResponse') {
       const body = win.document.body.innerHTML;
+      const head = win.document.head.innerHTML;
       const flag = (typeof win.pbNativeData !== 'undefined');
 
       if (flag && data.adId !== win.pbNativeData.adId) return;
 
+      if (head) win.document.head.innerHTML = replace(head, data);
+
       if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (flag && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
         if (win.renderAd) {
           const newHtml = (win.renderAd && win.renderAd(data.assets)) || '';
+
           win.document.body.innerHTML = body + newHtml;
           callback && callback();
           win.removeEventListener('message', replaceAssets);
         } else if (document.getElementById('pb-native-renderer')) {
           document.getElementById('pb-native-renderer').addEventListener('load', function() {
             const newHtml = (win.renderAd && win.renderAd(data.assets)) || '';
+
             win.document.body.innerHTML = body + newHtml;
             callback && callback();
             win.removeEventListener('message', replaceAssets);
@@ -279,6 +284,7 @@ export function newNativeAssetManager(win) {
         } else {
           loadScript(win, ((flag && win.pbNativeData.hasOwnProperty('rendererUrl') && win.pbNativeData.rendererUrl) || data.rendererUrl), function() {
             const newHtml = (win.renderAd && win.renderAd(data.assets)) || '';
+
             win.document.body.innerHTML = body + newHtml;
             callback && callback();
             win.removeEventListener('message', replaceAssets);
