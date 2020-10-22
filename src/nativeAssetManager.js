@@ -189,18 +189,19 @@ export function newNativeAssetManager(win) {
    */
   function scanForPlaceholders(adId) {
     let placeholders = [];
+    const doc = win.document;
     const flag = (typeof win.pbNativeData !== 'undefined');
 
     Object.keys(NATIVE_KEYS).forEach(key => {
       const placeholderKey = NATIVE_KEYS[key];
       const placeholder = (adId && !flag) ? `${placeholderKey}:${adId}` : `${placeholderKey}`;
-      const placeholderIndex = win.document.body.innerHTML.indexOf(placeholder)||win.document.head.innerHTML.indexOf(placeholder);
-
+      const placeholderIndex = (~doc.body.innerHTML.indexOf(placeholder)) ? doc.body.innerHTML.indexOf(placeholder) : (doc.head.innerHTML && doc.head.innerHTML.indexOf(placeholder));
+      
       if (~placeholderIndex) {
         placeholders.push(placeholderKey);
       }
     });
-
+    
     return placeholders;
   }
 
