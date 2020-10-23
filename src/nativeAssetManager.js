@@ -175,13 +175,13 @@ export function newNativeAssetManager(win) {
         });
     }
 
-    if (placeholders.length > 0) {
-      callback = cb;
-      requestAssets(adId, placeholders);
-    } else if (flag && win.pbNativeData.hasOwnProperty('requestAllAssets') && win.pbNativeData.requestAllAssets) {
+    if (flag && win.pbNativeData.hasOwnProperty('requestAllAssets') && win.pbNativeData.requestAllAssets) {
       callback = cb;
       requestAllAssets(adId);
-    }
+    } else if (placeholders.length > 0) {
+      callback = cb;
+      requestAssets(adId, placeholders);
+    } 
   }
 
   /*
