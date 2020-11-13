@@ -240,6 +240,20 @@ export function newNativeAssetManager(win) {
   }
 
   /*
+   * Sends postmessage to Prebid for native resize
+   */
+  function requestHeightResize(adId, height) {
+    const message = {
+      message: 'Prebid Native',
+      action: 'resizeNativeHeight',
+      adId,
+      height,
+    };
+
+    win.parent.postMessage(JSON.stringify(message), '*');
+  }
+
+  /*
    * Postmessage listener for when Prebid responds with requested native assets.
    */
   function replaceAssets(event) {
@@ -291,13 +305,14 @@ export function newNativeAssetManager(win) {
             win.removeEventListener('message', replaceAssets);
           })
         }
+        requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
       } else if ((data.hasOwnProperty('adTemplate') && data.adTemplate)||(flag && win.pbNativeData.hasOwnProperty('adTemplate'))) {
         const template =  (flag && win.pbNativeData.hasOwnProperty('adTemplate') && win.pbNativeData.adTemplate) || data.adTemplate;
         const newHtml = replace(template, data);
-
         win.document.body.innerHTML = body + newHtml;
         callback && callback();
         win.removeEventListener('message', replaceAssets);
+        requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
       } else {
         const newHtml = replace(body, data);
 
