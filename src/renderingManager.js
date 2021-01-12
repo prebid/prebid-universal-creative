@@ -6,10 +6,10 @@ const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
 
 /**
- * 
+ *
  * @param {Object} win Window object
  * @param {Object} environment Environment object
- * @returns {Object} 
+ * @returns {Object}
  */
 export function newRenderingManager(win, environment) {
   /**
@@ -19,6 +19,8 @@ export function newRenderingManager(win, environment) {
    * @property {string} uuid - ID to fetch the value from prebid cache
    * @property {string} mediaType - Creative media type, It can be banner, native or video
    * @property {string} pubUrl - Publisher url
+   * @property {string} winurl
+   * @property {string} winbidid
    */
 
   /**
@@ -28,7 +30,7 @@ export function newRenderingManager(win, environment) {
    */
   let renderAd = function(doc, dataObject) {
     const targetingData = utils.transformAuctionTargetingData(dataObject);
-    
+
     if (environment.isMobileApp(targetingData.env)) {
       renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb, true);
     } else if (environment.isAmp(targetingData.uuid)) {
@@ -142,6 +144,19 @@ export function newRenderingManager(win, environment) {
 
     return `https://${host}${path}`;
   }
+  
+  /**
+   * update iframe by using size string to resize
+   * @param {string} size
+   */
+  function updateIframe(size) {
+    if (size) {
+      const sizeArr = size.split('x').map(Number);
+      resizeIframe(sizeArr[0], sizeArr[1]);
+    } else {
+      console.log('Targeting key hb_size not found to resize creative');
+    }
+  }
 
   /**
    * Render mobile or amp ad
@@ -156,17 +171,13 @@ export function newRenderingManager(win, environment) {
     // For MoPub, creative is stored in localStorage via SDK.
     let search = 'Prebid_';
     if(uuid.substr(0, search.length) === search) {
-      loadFromLocalCache(uuid)
+      loadFromLocalCache(uuid);
+      //register creative right away to not miss initial geom-update
+      updateIframe(size);
     } else {
       let adUrl = `${getCacheEndpoint(cacheHost, cachePath)}?uuid=${uuid}`;
-
       //register creative right away to not miss initial geom-update
-      if (typeof size !== 'undefined' && size !== "") {
-        let sizeArr = size.split('x').map(Number);
-        resizeIframe(sizeArr[0], sizeArr[1]);
-      } else {
-        console.log('Targeting key hb_size not found to resize creative');
-      }
+      updateIframe(size);
       utils.sendRequest(adUrl, responseCallback(isMobileApp, hbPb));
     }
   }
@@ -223,7 +234,7 @@ export function newRenderingManager(win, environment) {
 
   /**
    * Load response from localStorage. In case of MoPub, sdk caches response
-   * @param {string} cacheId 
+   * @param {string} cacheId
    */
   function loadFromLocalCache(cacheId) {
     let bid = win.localStorage.getItem(cacheId);
@@ -233,7 +244,7 @@ export function newRenderingManager(win, environment) {
 
   /**
    * Parse response
-   * @param {string} response 
+   * @param {string} response
    * @returns {Object} bidObject parsed response
    */
   function parseResponse(response) {
@@ -256,7 +267,7 @@ export function newRenderingManager(win, environment) {
   function constructMarkup(ad, width, height) {
     let id = utils.getUUID();
     return `<div id="${id}" style="border-style: none; position: absolute; width:100%; height:100%;">
-      <div id="${id}_inner" style="margin: 0 auto; width:${width}; height:${height}; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">${ad}</div>
+      <div id="${id}_inner" style="margin: 0 auto; width:${width}px; height:${height}px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">${ad}</div>
       </div>`;
   }
 
