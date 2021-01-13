@@ -1,4 +1,4 @@
-import { newNativeTrackerManager } from 'src/nativeTrackerManager';
+import { newNativeRenderManager } from 'src/nativeRenderManager';
 import { expect } from 'chai';
 import { mocks } from 'test/helpers/mocks';
 import { merge } from 'lodash';
@@ -18,16 +18,12 @@ function trimPort(url) {
   return ((/:\d+/).test(url)) ? url.substring(0, url.lastIndexOf(':')) : url;
 }
 
-describe('nativeTrackerManager', function () {
-  describe('load startTrackers', function () {
+describe('nativeRenderManager', function () {
+  describe('load renderNativeAd', function () {
     let mockWin;
     let consoleWarn;
 
     let tagData = {
-      pubUrl: 'http://example.com'
-    };
-
-    let tagDataAlt = {
       pubUrl: 'http://example.com',
       adId: 'ad123',
       assetsToReplace: ['image','hb_native_linkurl','body','title'],
@@ -52,9 +48,8 @@ describe('nativeTrackerManager', function () {
         addEventListener: (type, listener, capture) => {
         },
       }];
-
-      let nativeTracker = new newNativeTrackerManager(mockWin);
-      nativeTracker.startTrackers(tagData);
+      let nativeTracker = new newNativeRenderManager(mockWin);
+      nativeTracker.renderNativeAd(tagData);
 
       expect(mockWin.parent.postMessage.callCount).to.equal(1);
       let postMessageTargetDomain = mockWin.parent.postMessage.args[0][1];
@@ -80,8 +75,8 @@ describe('nativeTrackerManager', function () {
         })
       }];
 
-      let nativeTracker = new newNativeTrackerManager(mockWin);
-      nativeTracker.startTrackers(tagData);
+      let nativeTracker = new newNativeRenderManager(mockWin);
+      nativeTracker.renderNativeAd(tagData);
 
       expect(mockWin.parent.postMessage.callCount).to.equal(2);
 
@@ -93,20 +88,6 @@ describe('nativeTrackerManager', function () {
       expect(rawPostMessage.adId).to.exist.and.to.equal("ad123");
       expect(rawPostMessage.action).to.exist.and.to.equal('click');
       expect(trimPort(postMessageTargetDomain)).to.equal(tagData.pubUrl);
-    });
-
-    it('should verify 2 warning messages (one for impression, one for click) was executed', function() {
-      mockWin.document.getElementsByClassName = () => [{
-        addEventListener: ((type, listener, capture) => {
-          listener({
-          })
-        })
-      }];
-
-      let nativeTracker = new newNativeTrackerManager(mockWin);
-      nativeTracker.startTrackers(tagData);
-
-      expect(consoleWarn.callCount).to.equal(2);
     });
   });
 });
