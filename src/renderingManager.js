@@ -227,7 +227,7 @@ export function newRenderingManager(win, environment) {
         }
       }
       if (bidObject.burl) {
-        utils.triggerBurl(bidObject.burl);
+        utils.triggerPixel(bidObject.burl);
       }
     }
   };
