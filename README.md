@@ -30,7 +30,7 @@ You can find a detailed explanations on the [Prebid Universal Creative](http://p
 </script>
 ```
 
-> Note: Some build tools make explicit use of Node features which have been introduced in version *8.9.0*. Please make sure you're using the correct Node version (>8.9.0) before you proceed to create your own build using the commands listed below.
+> Note: Some build tools make explicit use of Node features which have been introduced in version *12.x.x*. Please make sure you're using the correct Node version (>12.x.x) before you proceed to create your own build using the commands listed below.
 
 ## Install
 
@@ -38,7 +38,7 @@ You can find a detailed explanations on the [Prebid Universal Creative](http://p
     $ cd prebid-universal-creative
     $ npm install
 
-*Note:* You need to have `NodeJS` 8.9.x or greater installed.
+*Note:* You need to have `NodeJS` 12.x.x or greater installed.
 
 *Note:* We have upgraded from Gulp v3.9.1 to Gulp v4.0.2. In accordance with the change, you need to have `gulp-cli` installed globally. This won't impact any other project using `gulp`.
 
