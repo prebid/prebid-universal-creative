@@ -220,13 +220,13 @@ export function newRenderingManager(win, environment) {
               function() { // Success loading MRAID
                 let result = registerMRAIDViewableEvent(triggerBurl);
                 if (!result) {
-                  triggerBurl();
+                  triggerBurl(); // Error registering event
                 }
               },
               triggerBurl // Error loading MRAID
               );
           } else {
-            triggerBurl();
+            triggerBurl(); // Not a mobile app
           }
         }
         utils.writeAdHtml(ad);
@@ -329,25 +329,32 @@ export function newRenderingManager(win, environment) {
       }
     }
 
-    function readyListener() {
-      mraid.removeEventListener('ready', readyListener);
-      if (mraid.isViewable()) {
-        callback()
-      } else {
-        mraid.addEventListener('viewableChange', viewableChangeListener);
+    function registerViewableChecks() {
+      if (win.MRAID_ENV && parseFloat(win.MRAID_ENV.version) >= 3) {
+        mraid.addEventListener('exposureChange', exposureChangeListener);
+      } else if(win.MRAID_ENV && parseFloat(win.MRAID_ENV.version) < 3) {
+        if (mraid.isViewable()) {
+          callback();
+        } else {
+          mraid.addEventListener('viewableChange', viewableChangeListener);
+        }
       }
     }
 
-    if (win.mraid) {
-      if (win.MRAID_ENV && parseFloat(win.MRAID_ENV.version) >= 3) {
-        mraid.addEventListener('exposureChange', exposureChangeListener);
-        return true;
-      } else if(win.MRAID_ENV && parseFloat(win.MRAID_ENV.version) < 3) {
+    function readyListener() {
+      mraid.removeEventListener('ready', readyListener);
+      registerViewableChecks();
+    }
+
+    if (win.mraid && win.MRAID_ENV) {
+      if (mraid.getState() == 'loading') {
         mraid.addEventListener('ready', readyListener);
-        return true;
       } else {
-        return false;
+        registerViewableChecks();
       }
+      return true;
+    } else {
+      return false;
     }
   }
 
