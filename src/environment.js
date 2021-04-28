@@ -34,31 +34,48 @@ export function newEnvironment(win) {
     * @returns true if the environment is a Cross Domain
     */
   function isCrossDomain() {
-		return win.top !== win && !canInspectWindow(win);
-	}
-		
-	/**
-	 * Returns true if win's properties can be accessed and win is defined.
-	 * This functioned is used to determine if a window is cross-domained
-	 * from the perspective of the current window.
-	 * @param {!Window} win
-	 * @return {boolean}
-	 */
-	function canInspectWindow(win) {
-		try {
-			// force an exception in x-domain environments. #1509
-			win.top.location.toString();
-			let currentWindow;
-			do {
-				currentWindow = currentWindow ? currentWindow.parent : win;
-			}
-			while (currentWindow !== win.top);
-			return true;
-		} catch (e) {
-			return false;
-		}
-	}
-		
+    return win.top !== win && !canInspectWindow(win);
+  }
+
+  /**
+   * Returns true if win's properties can be accessed and win is defined.
+   * This functioned is used to determine if a window is cross-domained
+   * from the perspective of the current window.
+   * @param {!Window} win
+   * @return {boolean}
+   */
+  function canInspectWindow(win) {
+    try {
+      // force an exception in x-domain environments. #1509
+      win.top.location.toString();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * Returns true if we can find the prebid global object (eg pbjs) as we
+   * climb the accessible windows.  Return false if it's not found.
+   * @returns {boolean}
+   */
+  function canLocatePrebid() {
+    let result = false;
+    let currentWindow = win;
+    
+    while (!result) {
+      try {
+        if (currentWindow.$$PREBID_GLOBAL$$) {
+          result = true;
+          break;
+        }
+      } catch (e) { }
+      if (currentWindow === window.top) break;
+      
+      currentWindow = currentWindow.parent;
+    }
+    return result;
+  }
 
   /**
    * @param {String} env key value from auction, indicates the environment where tag is served
@@ -72,7 +89,8 @@ export function newEnvironment(win) {
     isMobileApp,
     isCrossDomain,
     isSafeFrame,
-    isAmp
+    isAmp,
+    canLocatePrebid
   }
 }
 

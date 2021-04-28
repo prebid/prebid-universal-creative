@@ -17,6 +17,7 @@ const VALID_ENDPOINTS = {
 };
 const ENDPOINT = sanitizeEndpoint(parseQueryParam('endpoint', window.location.search));
 const ENDPOINT_ARGS = sanitizeEndpointArgs(parseQueryParam('args', window.location.search));
+const BIDDER_ARGS = sanitizeBidders(parseQueryParam('bidders', window.location.search));
 const maxSyncCountParam = parseQueryParam('max_sync_count', window.location.search);
 const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt((maxSyncCountParam) ? maxSyncCountParam : 10, 10));
 const GDPR = sanitizeGdpr(parseInt(parseQueryParam('gdpr', window.location.search), 10));
@@ -214,6 +215,22 @@ function sanitizeGdprConsent(value) {
   console.log('Ignoring gdpr_consent param, it should be a non empty value')
 }
 
+/**
+ * If the value is a non empty string return it.
+ * Otherwise it will return undefined.
+ */
+function sanitizeBidders(value) {
+  if (value) {
+    var arr = value.split(',');
+    var filtered = arr.filter(function (el) {
+      return (el) ? true : false;
+    });
+    if(filtered.length > 0){
+      return filtered;
+    }
+  }
+}
+
 // Request MAX_SYNC_COUNT cookie syncs from prebid server.
 // In next phase we will read placement id's from query param and will only get cookie sync status of bidders participating in auction
 
@@ -223,6 +240,7 @@ function getStringifiedData(endPointArgs) {
 
   if(GDPR) data.gdpr = GDPR;
   if(GDPR_CONSENT) data.gdpr_consent = GDPR_CONSENT;
+  if(BIDDER_ARGS) data.bidders = BIDDER_ARGS;
 
   return JSON.stringify(data);
 }
