@@ -173,14 +173,13 @@ function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return 
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
-var GOOGLE_IFRAME_HOSTNAME = 'tpc.googlesyndication.com';
 var DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 var DEFAULT_CACHE_PATH = '/pbc/v1/cache';
 /**
- * 
+ *
  * @param {Object} win Window object
  * @param {Object} environment Environment object
- * @returns {Object} 
+ * @returns {Object}
  */
 
 function newRenderingManager(win, environment) {
@@ -191,6 +190,8 @@ function newRenderingManager(win, environment) {
    * @property {string} uuid - ID to fetch the value from prebid cache
    * @property {string} mediaType - Creative media type, It can be banner, native or video
    * @property {string} pubUrl - Publisher url
+   * @property {string} winurl
+   * @property {string} winbidid
    */
 
   /**
@@ -205,32 +206,10 @@ function newRenderingManager(win, environment) {
       renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb, true);
     } else if (environment.isAmp(targetingData.uuid)) {
       renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb);
-    } else if (environment.isCrossDomain()) {
+    } else if (!environment.canLocatePrebid()) {
       renderCrossDomain(targetingData.adId, targetingData.adServerDomain, targetingData.pubUrl);
     } else {
       renderLegacy(doc, targetingData.adId);
-    } // check for winurl and replace BIDID token with value if it exists
-
-
-    if (targetingData.winurl && targetingData.winbidid) {
-      // one level of decoding
-      targetingData.winurl = decodeURIComponent(targetingData.winurl); // test if BIDID exists in winurl, if BIDID doesn't exist log console warning
-
-      if (targetingData.winurl.match(/=BIDID\b/)) {
-        var replacedUrl = targetingData.winurl.replace(/=BIDID\b/, "=".concat(targetingData.winbidid));
-
-        try {
-          (0, utils.triggerPixel)(replacedUrl, function triggerPixelCallback(event) {
-            if (event.type !== 'load') {
-              console.warn('failed to load pixel for winurl:', replacedUrl);
-            }
-          });
-        } catch (e) {
-          console.warn('failed to get pixel for winurl:', replacedUrl);
-        }
-      } else {
-        console.warn('failed to find BIDID in winurl:', targetingData.winurl);
-      }
     }
   };
   /**
@@ -267,10 +246,10 @@ function newRenderingManager(win, environment) {
   function renderCrossDomain(adId) {
     var pubAdServerDomain = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
     var pubUrl = arguments.length > 2 ? arguments[2] : undefined;
-    var windowLocation = window.location;
+    var windowLocation = win.location;
     var parsedUrl = utils.parseUrl(pubUrl);
     var publisherDomain = parsedUrl.protocol + '://' + parsedUrl.host;
-    var adServerDomain = pubAdServerDomain || GOOGLE_IFRAME_HOSTNAME;
+    var adServerDomain = pubAdServerDomain || win.location.hostname;
     var fullAdServerDomain = windowLocation.protocol + '//' + adServerDomain;
 
     function renderAd(ev) {
@@ -342,6 +321,20 @@ function newRenderingManager(win, environment) {
     return "https://".concat(host).concat(path);
   }
   /**
+   * update iframe by using size string to resize
+   * @param {string} size
+   */
+
+
+  function updateIframe(size) {
+    if (size) {
+      var sizeArr = size.split('x').map(Number);
+      resizeIframe(sizeArr[0], sizeArr[1]);
+    } else {
+      console.log('Targeting key hb_size not found to resize creative');
+    }
+  }
+  /**
    * Render mobile or amp ad
    * @param {string} cacheHost Cache host
    * @param {string} cachePath Cache path
@@ -361,17 +354,13 @@ function newRenderingManager(win, environment) {
     var search = 'Prebid_';
 
     if (uuid.substr(0, search.length) === search) {
-      loadFromLocalCache(uuid);
+      loadFromLocalCache(uuid); //register creative right away to not miss initial geom-update
+
+      updateIframe(size);
     } else {
       var adUrl = "".concat(getCacheEndpoint(cacheHost, cachePath), "?uuid=").concat(uuid); //register creative right away to not miss initial geom-update
 
-      if (typeof size !== 'undefined' && size !== "") {
-        var sizeArr = size.split('x').map(Number);
-        resizeIframe(sizeArr[0], sizeArr[1]);
-      } else {
-        console.log('Targeting key hb_size not found to resize creative');
-      }
-
+      updateIframe(size);
       utils.sendRequest(adUrl, responseCallback(isMobileApp, hbPb));
     }
   }
@@ -388,7 +377,11 @@ function newRenderingManager(win, environment) {
       var bidObject = parseResponse(response);
       var ad = utils.getCreativeCommentMarkup(bidObject);
       var width = bidObject.width ? bidObject.width : bidObject.w;
-      var height = bidObject.height ? bidObject.height : bidObject.h;
+      var height = bidObject.height ? bidObject.height : bidObject.h; // When Prebid Universal Creative reads from Prebid Cache, we need to have it check for the existence of the wurl parameter. If it exists, hit it.
+
+      if (bidObject.wurl) {
+        (0, utils.triggerPixel)(decodeURIComponent(bidObject.wurl));
+      }
 
       if (bidObject.adm) {
         if (hbPb) {
@@ -422,7 +415,7 @@ function newRenderingManager(win, environment) {
       }
 
       if (bidObject.burl) {
-        utils.triggerBurl(bidObject.burl);
+        utils.triggerPixel(bidObject.burl);
       }
     };
   }
@@ -430,7 +423,7 @@ function newRenderingManager(win, environment) {
   ;
   /**
    * Load response from localStorage. In case of MoPub, sdk caches response
-   * @param {string} cacheId 
+   * @param {string} cacheId
    */
 
   function loadFromLocalCache(cacheId) {
@@ -440,7 +433,7 @@ function newRenderingManager(win, environment) {
   }
   /**
    * Parse response
-   * @param {string} response 
+   * @param {string} response
    * @returns {Object} bidObject parsed response
    */
 
@@ -467,7 +460,7 @@ function newRenderingManager(win, environment) {
 
   function constructMarkup(ad, width, height) {
     var id = utils.getUUID();
-    return "<div id=\"".concat(id, "\" style=\"border-style: none; position: absolute; width:100%; height:100%;\">\n      <div id=\"").concat(id, "_inner\" style=\"margin: 0 auto; width:").concat(width, "; height:").concat(height, "; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);\">").concat(ad, "</div>\n      </div>");
+    return "<div id=\"".concat(id, "\" style=\"border-style: none; position: absolute; width:100%; height:100%;\">\n      <div id=\"").concat(id, "_inner\" style=\"margin: 0 auto; width:").concat(width, "px; height:").concat(height, "px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);\">").concat(ad, "</div>\n      </div>");
   }
   /**
    * Resize container iframe
@@ -658,14 +651,12 @@ function transformAuctionTargetingData(tagData) {
   // when the publisher uses their adserver's generic macro that provides all targeting keys (ie tagData.targetingMap), we need to convert the keys
   var auctionKeyMap = {
     hb_adid: 'adId',
-    hb_bidid: 'winbidid',
     hb_cache_host: 'cacheHost',
     hb_cache_path: 'cachePath',
     hb_cache_id: 'uuid',
     hb_format: 'mediaType',
     hb_env: 'env',
     hb_size: 'size',
-    hb_winurl: 'winurl',
     hb_pb: 'hbPb'
   };
   /**
@@ -2938,16 +2929,35 @@ function newEnvironment(win) {
     try {
       // force an exception in x-domain environments. #1509
       win.top.location.toString();
-      var currentWindow;
-
-      do {
-        currentWindow = currentWindow ? currentWindow.parent : win;
-      } while (currentWindow !== win.top);
-
       return true;
     } catch (e) {
       return false;
     }
+  }
+  /**
+   * Returns true if we can find the prebid global object (eg pbjs) as we
+   * climb the accessible windows.  Return false if it's not found.
+   * @returns {boolean}
+   */
+
+
+  function canLocatePrebid() {
+    var result = false;
+    var currentWindow = win;
+
+    while (!result) {
+      try {
+        if (currentWindow.fsprebid) {
+          result = true;
+          break;
+        }
+      } catch (e) {}
+
+      if (currentWindow === window.top) break;
+      currentWindow = currentWindow.parent;
+    }
+
+    return result;
   }
   /**
    * @param {String} env key value from auction, indicates the environment where tag is served
@@ -2963,7 +2973,8 @@ function newEnvironment(win) {
     isMobileApp: isMobileApp,
     isCrossDomain: isCrossDomain,
     isSafeFrame: isSafeFrame,
-    isAmp: isAmp
+    isAmp: isAmp,
+    canLocatePrebid: canLocatePrebid
   };
 }
 

@@ -14,7 +14,7 @@ const envMocks = {
 }
 
 describe('environment module', function() {
-  
+
   it('should return env object with proper public api', function() {
     const mockWin = merge(mocks.createFakeWindow('http://appnexus.com'), envMocks.getWindowObject());
     const env = newEnvironment(mockWin);
@@ -42,12 +42,12 @@ describe('environment module', function() {
     const env = newEnvironment(mockWin);
     expect(env.isAmp('some-uuid')).to.equal(true);
 	});
-	
+
 	it('should detect Prebid in higher window', function() {
     let localWindow = {
       parent: {
         parent: {
-          pbjs: {
+          fsprebid: {
             fakeFn: () => {}
           }
         }
@@ -57,7 +57,7 @@ describe('environment module', function() {
     const env = newEnvironment(mockWin);
     expect(env.canLocatePrebid()).to.equal(true);
 	});
-  
+
   it('should detect mobile app', function() {
     const mockWin = merge(mocks.createFakeWindow('http://appnexus.com'), envMocks.getWindowObject());
     const env = newEnvironment(mockWin);
