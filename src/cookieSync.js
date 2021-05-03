@@ -17,6 +17,7 @@ const VALID_ENDPOINTS = {
 const ENDPOINT = sanitizeEndpoint(parseQueryParam('endpoint', window.location.search));
 const ENDPOINT_ARGS = sanitizeEndpointArgs(parseQueryParam('args', window.location.search));
 const BIDDER_ARGS = sanitizeBidders(parseQueryParam('bidders', window.location.search));
+const IS_AMP = sanitizeSource(parseQueryParam('source', window.location.search));
 const maxSyncCountParam = parseQueryParam('max_sync_count', window.location.search);
 const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt((maxSyncCountParam) ? maxSyncCountParam : 10, 10));
 const GDPR = sanitizeGdpr(parseInt(parseQueryParam('gdpr', window.location.search), 10));
@@ -182,6 +183,15 @@ function sanitizeEndpointArgs(value) {
 }
 
 /**
+ * Function to return if source set to amp
+ * @param {string} query param defining name of source
+ * @return {Boolean} returns if source is equal to amp
+ */
+function sanitizeSource(value) {
+  return (value && value.toLowerCase() === 'amp');
+}
+
+/**
  * If the value is a valid sync count (0 or a positive number), return it.
  * Otherwise return a really big integer (equivalent to "no sync").
  */
@@ -239,6 +249,12 @@ function getStringifiedData(endPointArgs) {
 
   if(GDPR) data.gdpr = GDPR;
   if(GDPR_CONSENT) data.gdpr_consent = GDPR_CONSENT;
+  if(IS_AMP) data.filterSettings = {
+    iframe: {
+      bidders: '*',
+      filter: 'exclude'
+    }
+  };
   if(BIDDER_ARGS) data.bidders = BIDDER_ARGS;
 
   return JSON.stringify(data);
