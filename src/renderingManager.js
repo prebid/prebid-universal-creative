@@ -191,6 +191,7 @@ export function newRenderingManager(win, environment) {
   function responseCallback(isMobileApp, hbPb) {
     return function(response) {
       let bidObject = parseResponse(response);
+      let auctionPrice = bidObject.price || hbPb;
       let ad = utils.getCreativeCommentMarkup(bidObject);
       let width = (bidObject.width) ? bidObject.width : bidObject.w;
       let height = (bidObject.height) ? bidObject.height : bidObject.h;
@@ -201,8 +202,8 @@ export function newRenderingManager(win, environment) {
       }
 
       if (bidObject.adm) {
-        if(hbPb) { // replace ${AUCTION_PRICE} macro with the hb_pb.
-          bidObject.adm = bidObject.adm.replace('${AUCTION_PRICE}', hbPb);
+        if(auctionPrice) { // replace ${AUCTION_PRICE} macro with the hb_pb.
+          bidObject.adm = bidObject.adm.replace('${AUCTION_PRICE}', auctionPrice);
         } else {
           /*
             From OpenRTB spec 2.5: If the source value is an optional parameter that was not specified, the macro will simply be removed (i.e., replaced with a zero-length string).
