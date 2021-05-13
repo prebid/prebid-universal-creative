@@ -202,7 +202,7 @@ export function newRenderingManager(win, environment) {
       }
 
       if (bidObject.adm) {
-        if(auctionPrice) { // replace ${AUCTION_PRICE} macro with the hb_pb.
+        if(auctionPrice) { // replace ${AUCTION_PRICE} macro with the bidObject.price or hb_pb.
           bidObject.adm = bidObject.adm.replace('${AUCTION_PRICE}', auctionPrice);
         } else {
           /*
