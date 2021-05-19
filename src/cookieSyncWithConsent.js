@@ -16,6 +16,8 @@ const VALID_ENDPOINTS = {
 };
 const ENDPOINT = sanitizeEndpoint(parseQueryParam('endpoint', window.location.search));
 const ENDPOINT_ARGS = sanitizeEndpointArgs(parseQueryParam('args', window.location.search));
+const IS_AMP = sanitizeSource(parseQueryParam('source', window.location.search));
+const BIDDER_ARGS = sanitizeBidders(parseQueryParam('bidders', window.location.search));
 const maxSyncCountParam = parseQueryParam('max_sync_count', window.location.search);
 const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt((maxSyncCountParam) ? maxSyncCountParam : 10, 10));
 const TIMEOUT = sanitizeTimeout(parseInt(parseQueryParam('timeout', window.location.search), 10));
@@ -192,6 +194,15 @@ function sanitizeEndpointArgs(value) {
 }
 
 /**
+ * Function to return if source set to amp
+ * @param {string} query param defining name of source
+ * @return {Boolean} returns if source is equal to amp
+ */
+function sanitizeSource(value) {
+  return (value && value.toLowerCase() === 'amp');
+}
+
+/**
  * If the value is a valid sync count (0 or a positive number), return it.
  * Otherwise return a really big integer (equivalent to "no sync").
  */
@@ -200,6 +211,22 @@ function sanitizeSyncCount(value) {
         return 9007199254740991 // Number.MAX_SAFE_INTEGER isn't supported in IE
     }
     return value;
+}
+
+/**
+ * If the value is a non empty string return it.
+ * Otherwise it will return undefined.
+ */
+function sanitizeBidders(value) {
+  if (value) {
+    var arr = value.split(',');
+    var filtered = arr.filter(function (el) {
+      return (el) ? true : false;
+    });
+    if(filtered.length > 0){
+      return filtered;
+    }
+  }
 }
 
 /**
@@ -246,6 +273,14 @@ function attachConsent(data) {
 function getStringifiedData(endPointArgs) {
     var data = (endPointArgs && typeof endPointArgs === 'object') ? endPointArgs : {}
     data['limit'] = MAX_SYNC_COUNT;
+
+    if(IS_AMP) data.filterSettings = {
+        iframe: {
+            bidders: '*',
+            filter: 'exclude'
+        }
+    };
+    if(BIDDER_ARGS) data.bidders = BIDDER_ARGS;
 
     data = attachConsent(data);
 
