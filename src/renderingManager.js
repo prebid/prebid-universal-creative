@@ -214,6 +214,22 @@ export function newRenderingManager(win, environment) {
         if (bidObject.nurl) {
           ad += utils.createTrackPixelHtml(decodeURIComponent(bidObject.nurl));
         }
+        if (bidObject.burl) {
+          let triggerBurl = function(){ utils.triggerPixel(bidObject.burl); };
+          if(isMobileApp) {
+            let mraidScript = utils.loadScript(win, 'mraid.js',
+              function() { // Success loading MRAID
+                let result = registerMRAIDViewableEvent(triggerBurl);
+                if (!result) {
+                  triggerBurl(); // Error registering event
+                }
+              },
+              triggerBurl // Error loading MRAID
+              );
+          } else {
+            triggerBurl(); // Not a mobile app
+          }
+        }
         utils.writeAdHtml(ad);
       } else if (bidObject.nurl) {
         if(isMobileApp) {
@@ -226,9 +242,6 @@ export function newRenderingManager(win, environment) {
           domHelper.insertElement(commentElm, document, 'body');
           utils.writeAdUrl(nurl, width, height);
         }
-      }
-      if (bidObject.burl) {
-        utils.triggerPixel(bidObject.burl);
       }
     }
   };
@@ -298,6 +311,51 @@ export function newRenderingManager(win, environment) {
           height: height
         }, '*');
       }
+    }
+  }
+
+  function registerMRAIDViewableEvent(callback) {
+
+    function exposureChangeListener(exposure) {
+      if (exposure > 0) {
+        mraid.removeEventListener('exposureChange', exposureChangeListener);
+        callback();
+      }
+    }
+
+    function viewableChangeListener(viewable) {
+      if (viewable) {
+        mraid.removeEventListener('viewableChange', viewableChangeListener);
+        callback();
+      }
+    }
+
+    function registerViewableChecks() {
+      if (win.MRAID_ENV && parseFloat(win.MRAID_ENV.version) >= 3) {
+        mraid.addEventListener('exposureChange', exposureChangeListener);
+      } else if(win.MRAID_ENV && parseFloat(win.MRAID_ENV.version) < 3) {
+        if (mraid.isViewable()) {
+          callback();
+        } else {
+          mraid.addEventListener('viewableChange', viewableChangeListener);
+        }
+      }
+    }
+
+    function readyListener() {
+      mraid.removeEventListener('ready', readyListener);
+      registerViewableChecks();
+    }
+
+    if (win.mraid && win.MRAID_ENV) {
+      if (mraid.getState() == 'loading') {
+        mraid.addEventListener('ready', readyListener);
+      } else {
+        registerViewableChecks();
+      }
+      return true;
+    } else {
+      return false;
     }
   }
 
