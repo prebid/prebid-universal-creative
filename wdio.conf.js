@@ -27,10 +27,13 @@ exports.config = {
   specs: [
     './test/e2e/specs/*.js'
   ],
-  services: ['browserstack'],
+  services: [
+    ['browserstack', {
+        browserstackLocal: true
+    }]
+  ],
   user: process.env.BROWSERSTACK_USERNAME,
   key: process.env.BROWSERSTACK_ACCESS_KEY,
-  browserstackLocal: true,
   // Do not increase this, since we have only 5 parallel tests in browserstack account
   maxInstances: 5,
   capabilities: getCapabilities(),
