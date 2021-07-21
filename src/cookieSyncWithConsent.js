@@ -16,6 +16,8 @@ const VALID_ENDPOINTS = {
 };
 const ENDPOINT = sanitizeEndpoint(parseQueryParam('endpoint', window.location.search));
 const ENDPOINT_ARGS = sanitizeEndpointArgs(parseQueryParam('args', window.location.search));
+const IS_AMP = sanitizeSource(parseQueryParam('source', window.location.search));
+const BIDDER_ARGS = sanitizeBidders(parseQueryParam('bidders', window.location.search));
 const maxSyncCountParam = parseQueryParam('max_sync_count', window.location.search);
 const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt((maxSyncCountParam) ? maxSyncCountParam : 10, 10));
 const TIMEOUT = sanitizeTimeout(parseInt(parseQueryParam('timeout', window.location.search), 10));
@@ -23,14 +25,17 @@ const DEFAULT_GDPR_SCOPE = sanitizeScope(parseInt(parseQueryParam('defaultGdprSc
 
 let consent = {};
 let syncRan = false;
+
 /**
  * checks to make sure URL is valid. Regex from https://validatejs.org/#validators-url, https://gist.github.com/dperini/729294
  */
-const isValidUrl = new RegExp(/^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z0-9\u00a1-\uffff][a-z0-9\u00a1-\uffff_-]{0,62})?[a-z0-9\u00a1-\uffff]\.)+(?:[a-z\u00a1-\uffff]{2,}\.?))(?::\d{2,5})?(?:[/?#]\S*)?$/i);
-
+function isValidUrl(url) {
+  let regex = new RegExp(/^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z0-9\u00a1-\uffff][a-z0-9\u00a1-\uffff_-]{0,62})?[a-z0-9\u00a1-\uffff]\.)+(?:[a-z\u00a1-\uffff]{2,}\.?))(?::\d{2,5})?(?:[/?#]\S*)?$/i);
+  return regex.test(url);
+}
 
 function doBidderSync(type, url, bidder, done) {
-    if (!url || !isValidUrl.test(url)) {
+    if (!url || !isValidUrl(url)) {
         console.log(`No valid sync url for bidder "${bidder}": ${url}`);
         done();
     } else if (type === 'image' || type === 'redirect') {
@@ -168,7 +173,11 @@ function parseQueryParam(name, urlSearch) {
  * Otherwise it will return a default value
  */
 function sanitizeEndpoint(value) {
-    return (value && VALID_ENDPOINTS.hasOwnProperty(value)) ? VALID_ENDPOINTS[value] : 'https://prebid.adnxs.com/pbs/v1/cookie_sync';
+  let defaultUrl = 'https://prebid.adnxs.com/pbs/v1/cookie_sync';
+  if (!value) return defaultUrl;
+
+  let url = VALID_ENDPOINTS[value] || decodeURIComponent(value) || '';
+  return (isValidUrl(url)) ? url : defaultUrl;
 }
 
 function sanitizeEndpointArgs(value) {
@@ -185,6 +194,15 @@ function sanitizeEndpointArgs(value) {
 }
 
 /**
+ * Function to return if source set to amp
+ * @param {string} query param defining name of source
+ * @return {Boolean} returns if source is equal to amp
+ */
+function sanitizeSource(value) {
+  return (value && value.toLowerCase() === 'amp');
+}
+
+/**
  * If the value is a valid sync count (0 or a positive number), return it.
  * Otherwise return a really big integer (equivalent to "no sync").
  */
@@ -193,6 +211,22 @@ function sanitizeSyncCount(value) {
         return 9007199254740991 // Number.MAX_SAFE_INTEGER isn't supported in IE
     }
     return value;
+}
+
+/**
+ * If the value is a non empty string return it.
+ * Otherwise it will return undefined.
+ */
+function sanitizeBidders(value) {
+  if (value) {
+    var arr = value.split(',');
+    var filtered = arr.filter(function (el) {
+      return (el) ? true : false;
+    });
+    if(filtered.length > 0){
+      return filtered;
+    }
+  }
 }
 
 /**
@@ -239,6 +273,14 @@ function attachConsent(data) {
 function getStringifiedData(endPointArgs) {
     var data = (endPointArgs && typeof endPointArgs === 'object') ? endPointArgs : {}
     data['limit'] = MAX_SYNC_COUNT;
+
+    if(IS_AMP) data.filterSettings = {
+        iframe: {
+            bidders: '*',
+            filter: 'exclude'
+        }
+    };
+    if(BIDDER_ARGS) data.bidders = BIDDER_ARGS;
 
     data = attachConsent(data);
 
