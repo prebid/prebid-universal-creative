@@ -28,10 +28,10 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo -e "${RED}*** DID YOU FORGET TO BUILD? ***${NC}"
     exit 1
   fi
-  FILE=$PARENT_DIRECTORY/build/creative.js
+  FILE=$PARENT_DIRECTORY/dist/creative.js
   echo -e "${GREEN}Built File ${FILE}"
-  gsutil mv $PARENT_DIRECTORY/build/creative.js gs://$DOMAIN/core/prebid-universal-creative.js
+  gsutil mv $PARENT_DIRECTORY/dist/creative.js gs://$DOMAIN/core/prebid-universal-creative.js
   echo -e "${GREEN}Setting permissions for $FILE...${NC}"
-  gsutil acl ch -u AllUsers:R gs://$DOMAIN/core/creative.js
+  gsutil acl ch -u AllUsers:R gs://$DOMAIN/core/prebid-universal-creative.js
 fi
 
