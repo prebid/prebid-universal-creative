@@ -1,6 +1,6 @@
 {
   "name": "prebid-universal-creative",
-  "version": "1.12.0",
+  "version": "1.13.0-pre",
   "description": "Universal creative for Prebid apps",
   "main": "dist/creative.js",
   "engines": {
