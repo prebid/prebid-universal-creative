@@ -18,17 +18,22 @@ const VALID_ENDPOINTS = {
 const ENDPOINT = sanitizeEndpoint(parseQueryParam('endpoint', window.location.search));
 const ENDPOINT_ARGS = sanitizeEndpointArgs(parseQueryParam('args', window.location.search));
 const BIDDER_ARGS = sanitizeBidders(parseQueryParam('bidders', window.location.search));
+const IS_AMP = sanitizeSource(parseQueryParam('source', window.location.search));
 const maxSyncCountParam = parseQueryParam('max_sync_count', window.location.search);
 const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt((maxSyncCountParam) ? maxSyncCountParam : 10, 10));
 const GDPR = sanitizeGdpr(parseInt(parseQueryParam('gdpr', window.location.search), 10));
 const GDPR_CONSENT = sanitizeGdprConsent(parseQueryParam('gdpr_consent', window.location.search));
+
 /**
  * checks to make sure URL is valid. Regex from https://validatejs.org/#validators-url, https://gist.github.com/dperini/729294
  */
-const isValidUrl =  new RegExp(/^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z0-9\u00a1-\uffff][a-z0-9\u00a1-\uffff_-]{0,62})?[a-z0-9\u00a1-\uffff]\.)+(?:[a-z\u00a1-\uffff]{2,}\.?))(?::\d{2,5})?(?:[/?#]\S*)?$/i);
+function isValidUrl(url) {
+  let regex = new RegExp(/^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z0-9\u00a1-\uffff][a-z0-9\u00a1-\uffff_-]{0,62})?[a-z0-9\u00a1-\uffff]\.)+(?:[a-z\u00a1-\uffff]{2,}\.?))(?::\d{2,5})?(?:[/?#]\S*)?$/i);
+  return regex.test(url);
+}
 
 function doBidderSync(type, url, bidder, done) {
-  if (!url || !isValidUrl.test(url)) {
+  if (!url || !isValidUrl(url)) {
     console.log(`No valid sync url for bidder "${bidder}": ${url}`);
     done();
   } else if (type === 'image' || type === 'redirect') {
@@ -166,7 +171,11 @@ function parseQueryParam(name, urlSearch) {
  * Otherwise it will return a default value
  */
 function sanitizeEndpoint(value) {
-  return (value && VALID_ENDPOINTS.hasOwnProperty(value)) ? VALID_ENDPOINTS[value] : 'https://prebid.adnxs.com/pbs/v1/cookie_sync';
+  let defaultUrl = 'https://prebid.adnxs.com/pbs/v1/cookie_sync';
+  if (!value) return defaultUrl;
+
+  let url = VALID_ENDPOINTS[value] || decodeURIComponent(value) || '';
+  return (isValidUrl(url)) ? url : defaultUrl;
 }
 
 function sanitizeEndpointArgs(value) {
@@ -180,6 +189,15 @@ function sanitizeEndpointArgs(value) {
     }, {});
     return (argProperties && Object.keys(argProperties).length) ? argProperties : undefined;
   } 
+}
+
+/**
+ * Function to return if source set to amp
+ * @param {string} query param defining name of source
+ * @return {Boolean} returns if source is equal to amp
+ */
+function sanitizeSource(value) {
+  return (value && value.toLowerCase() === 'amp');
 }
 
 /**
@@ -240,6 +258,12 @@ function getStringifiedData(endPointArgs) {
 
   if(GDPR) data.gdpr = GDPR;
   if(GDPR_CONSENT) data.gdpr_consent = GDPR_CONSENT;
+  if(IS_AMP) data.filterSettings = {
+    iframe: {
+      bidders: '*',
+      filter: 'exclude'
+    }
+  };
   if(BIDDER_ARGS) data.bidders = BIDDER_ARGS;
 
   return JSON.stringify(data);

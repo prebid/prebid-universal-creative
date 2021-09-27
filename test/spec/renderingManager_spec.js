@@ -217,6 +217,58 @@ describe('renderingManager', function() {
       expect(sendRequestSpy.args[0][0]).to.equal('https://example.com/path?uuid=123');
       expect(triggerPixelSpy.args[0][0]).to.equal('https://test.prebidcache.wurl');
     });
+
+    it('should replace AUCTION_PRICE with response.price over hbPb', function() {
+      const renderObject = newRenderingManager(mockWin, env);
+
+      let ucTagData = {
+        cacheHost: 'example.com',
+        cachePath: '/path',
+        uuid: '123',
+        size: '300x250',
+        hbPb: '10.00'
+      };
+
+      renderObject.renderAd(mockWin.document, ucTagData);
+
+      let response = {
+        width: 300,
+        height: 250,
+        crid: 123,
+        price: 12.50,
+        adm: 'ad-markup${AUCTION_PRICE}',
+        wurl: 'https://test.prebidcache.wurl'
+      };
+      requests[0].respond(200, {}, JSON.stringify(response));
+      expect(writeHtmlSpy.args[0][0]).to.equal('<!--Creative 123 served by Prebid.js Header Bidding-->ad-markup12.5');
+      expect(sendRequestSpy.args[0][0]).to.equal('https://example.com/path?uuid=123');
+      expect(triggerPixelSpy.args[0][0]).to.equal('https://test.prebidcache.wurl');
+    });
+
+    it('should replace AUCTION_PRICE with with empty value when neither price nor hbPb exist', function() {
+      const renderObject = newRenderingManager(mockWin, env);
+
+      let ucTagData = {
+        cacheHost: 'example.com',
+        cachePath: '/path',
+        uuid: '123',
+        size: '300x250'
+      };
+
+      renderObject.renderAd(mockWin.document, ucTagData);
+
+      let response = {
+        width: 300,
+        height: 250,
+        crid: 123,
+        adm: 'ad-markup${AUCTION_PRICE}',
+        wurl: 'https://test.prebidcache.wurl'
+      };
+      requests[0].respond(200, {}, JSON.stringify(response));
+      expect(writeHtmlSpy.args[0][0]).to.equal('<!--Creative 123 served by Prebid.js Header Bidding-->ad-markup');
+      expect(sendRequestSpy.args[0][0]).to.equal('https://example.com/path?uuid=123');
+      expect(triggerPixelSpy.args[0][0]).to.equal('https://test.prebidcache.wurl');
+    });
   });
 
   describe('cross domain creative', function() {

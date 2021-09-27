@@ -56,25 +56,32 @@ export function getUUID() {
   return uuid;
 };
 
-export function loadScript(currentWindow, tagSrc, callback) {
+export function loadScript(currentWindow, tagSrc, successCallback, errorCallback) {
   let doc = currentWindow.document;
   let scriptTag = doc.createElement('script');
   scriptTag.type = 'text/javascript';
 
-  // Execute a callback if necessary
-  if (callback && typeof callback === 'function') {
+  // Execute success callback if necessary
+  if (successCallback && typeof successCallback === 'function') {
     if (scriptTag.readyState) {
       scriptTag.onreadystatechange = function() {
         if (scriptTag.readyState === 'loaded' || scriptTag.readyState === 'complete') {
           scriptTag.onreadystatechange = null;
-          callback();
+          successCallback();
         }
       };
     } else {
       scriptTag.onload = function() {
-        callback();
+        successCallback();
       };
     }
+  }
+
+  // Execute error callback if necessary
+  if (errorCallback && typeof errorCallback === 'function') {
+    scriptTag.onerror = function() {
+      errorCallback();
+    };
   }
 
   scriptTag.src = tagSrc;

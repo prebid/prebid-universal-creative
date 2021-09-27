@@ -191,6 +191,7 @@ export function newRenderingManager(win, environment) {
   function responseCallback(isMobileApp, hbPb) {
     return function(response) {
       let bidObject = parseResponse(response);
+      let auctionPrice = bidObject.price || hbPb;
       let ad = utils.getCreativeCommentMarkup(bidObject);
       let width = (bidObject.width) ? bidObject.width : bidObject.w;
       let height = (bidObject.height) ? bidObject.height : bidObject.h;
@@ -201,8 +202,8 @@ export function newRenderingManager(win, environment) {
       }
 
       if (bidObject.adm) {
-        if(hbPb) { // replace ${AUCTION_PRICE} macro with the hb_pb.
-          bidObject.adm = bidObject.adm.replace('${AUCTION_PRICE}', hbPb);
+        if(auctionPrice) { // replace ${AUCTION_PRICE} macro with the bidObject.price or hb_pb.
+          bidObject.adm = bidObject.adm.replace('${AUCTION_PRICE}', auctionPrice);
         } else {
           /*
             From OpenRTB spec 2.5: If the source value is an optional parameter that was not specified, the macro will simply be removed (i.e., replaced with a zero-length string).
@@ -212,6 +213,22 @@ export function newRenderingManager(win, environment) {
         ad += (isMobileApp) ? constructMarkup(bidObject.adm, width, height) : bidObject.adm;
         if (bidObject.nurl) {
           ad += utils.createTrackPixelHtml(decodeURIComponent(bidObject.nurl));
+        }
+        if (bidObject.burl) {
+          let triggerBurl = function(){ utils.triggerPixel(bidObject.burl); };
+          if(isMobileApp) {
+            let mraidScript = utils.loadScript(win, 'mraid.js',
+              function() { // Success loading MRAID
+                let result = registerMRAIDViewableEvent(triggerBurl);
+                if (!result) {
+                  triggerBurl(); // Error registering event
+                }
+              },
+              triggerBurl // Error loading MRAID
+              );
+          } else {
+            triggerBurl(); // Not a mobile app
+          }
         }
         utils.writeAdHtml(ad);
       } else if (bidObject.nurl) {
@@ -225,9 +242,6 @@ export function newRenderingManager(win, environment) {
           domHelper.insertElement(commentElm, document, 'body');
           utils.writeAdUrl(nurl, width, height);
         }
-      }
-      if (bidObject.burl) {
-        utils.triggerPixel(bidObject.burl);
       }
     }
   };
@@ -297,6 +311,51 @@ export function newRenderingManager(win, environment) {
           height: height
         }, '*');
       }
+    }
+  }
+
+  function registerMRAIDViewableEvent(callback) {
+
+    function exposureChangeListener(exposure) {
+      if (exposure > 0) {
+        mraid.removeEventListener('exposureChange', exposureChangeListener);
+        callback();
+      }
+    }
+
+    function viewableChangeListener(viewable) {
+      if (viewable) {
+        mraid.removeEventListener('viewableChange', viewableChangeListener);
+        callback();
+      }
+    }
+
+    function registerViewableChecks() {
+      if (win.MRAID_ENV && parseFloat(win.MRAID_ENV.version) >= 3) {
+        mraid.addEventListener('exposureChange', exposureChangeListener);
+      } else if(win.MRAID_ENV && parseFloat(win.MRAID_ENV.version) < 3) {
+        if (mraid.isViewable()) {
+          callback();
+        } else {
+          mraid.addEventListener('viewableChange', viewableChangeListener);
+        }
+      }
+    }
+
+    function readyListener() {
+      mraid.removeEventListener('ready', readyListener);
+      registerViewableChecks();
+    }
+
+    if (win.mraid && win.MRAID_ENV) {
+      if (mraid.getState() == 'loading') {
+        mraid.addEventListener('ready', readyListener);
+      } else {
+        registerViewableChecks();
+      }
+      return true;
+    } else {
+      return false;
     }
   }
 
