@@ -1,4 +1,4 @@
-import { newRenderingManager } from 'src/renderingManager';
+import { renderCrossDomain, renderLegacy, renderAmpOrMobileAd } from 'src/renderingManager';
 import * as utils from 'src/utils';
 import * as domHelper from 'src/domHelper';
 import { expect } from 'chai';
@@ -95,13 +95,7 @@ describe('renderingManager', function() {
       triggerPixelSpy.restore();
     });
 
-    const env = {
-      isMobileApp: () => true,
-      isSafeFrame: () => false
-    };
-
     it('should render mobile app creative', function() {
-      const renderObject = newRenderingManager(mockWin, env);
       let ucTagData = {
         cacheHost: 'example.com',
         cachePath: '/path',
@@ -109,7 +103,7 @@ describe('renderingManager', function() {
         size: '300x250'
       };
 
-      renderObject.renderAd(mockWin.document, ucTagData);
+      renderAmpOrMobileAd(ucTagData, true);
 
       let response = {
         width: 300,
@@ -124,7 +118,6 @@ describe('renderingManager', function() {
     });
 
     it('should render mobile app creative with missing cache wurl', function() {
-      const renderObject = newRenderingManager(mockWin, env);
       let ucTagData = {
         cacheHost: 'example.com',
         cachePath: '/path',
@@ -132,7 +125,7 @@ describe('renderingManager', function() {
         size: '300x250'
       };
 
-      renderObject.renderAd(mockWin.document, ucTagData);
+      renderAmpOrMobileAd(ucTagData, true);
 
       let response = {
         width: 300,
@@ -146,13 +139,11 @@ describe('renderingManager', function() {
     });
 
     it('should render mobile app creative using default cacheHost and cachePath', function() {
-      const renderObject = newRenderingManager(mockWin, env);
       let ucTagData = {
         uuid: '123',
         size: '300x250'
       };
-
-      renderObject.renderAd(mockWin.document, ucTagData);
+      renderAmpOrMobileAd(ucTagData, true);
 
       let response = {
         width: 300,
@@ -165,36 +156,35 @@ describe('renderingManager', function() {
       expect(sendRequestSpy.args[0][0]).to.equal('https://prebid.adnxs.com/pbc/v1/cache?uuid=123');
     });
 
-    // it('should catch errors from creative', function (done) {
-    //   window.addEventListener('error', e => {
-    //     done(e.error);
-    //   });
+    it('should catch errors from creative', function (done) {
+      window.addEventListener('error', e => {
+        done(e.error);
+      });
 
-    //   const consoleErrorSpy = sinon.spy(console, 'error');
+      const consoleErrorSpy = sinon.spy(console, 'error');
 
-    //   const renderObject = newRenderingManager(mockWin, env);
-    //   let ucTagData = {
-    //     cacheHost: 'example.com',
-    //     cachePath: '/path',
-    //     uuid: '123',
-    //     size: '300x250'
-    //   };
+      let ucTagData = {
+        cacheHost: 'example.com',
+        cachePath: '/path',
+        uuid: '123',
+        size: '300x250'
+      };
 
-    //   renderObject.renderAd(mockWin.document, ucTagData);
+      renderAmpOrMobileAd(ucTagData, true);
 
-    //   let response = {
-    //     width: 300,
-    //     height: 250,
-    //     crid: 123,
-    //     adm: '<script src="notExistingScript.js"></script>'
-    //   };
-    //   requests[0].respond(200, {}, JSON.stringify(response));
+      let response = {
+        width: 300,
+        height: 250,
+        crid: 123,
+        adm: '<script src="notExistingScript.js"></script>'
+      };
+      requests[0].respond(200, {}, JSON.stringify(response));
 
-    //   setTimeout(()=>{
-    //     expect(consoleErrorSpy.callCount).to.equal(1);
-    //     done();
-    //   }, 10);
-    // });
+      setTimeout(()=>{
+        expect(consoleErrorSpy.callCount).to.equal(1);
+        done();
+      }, 10);
+    });
   });
 
   describe('amp creative', function() {
@@ -222,15 +212,7 @@ describe('renderingManager', function() {
       triggerPixelSpy.restore();
     });
 
-    const env = {
-      isMobileApp: () => false,
-      isAmp: () => true,
-      isSafeFrame: () => true
-    };
-
     it('should render amp creative', function() {
-      const renderObject = newRenderingManager(mockWin, env);
-
       let ucTagData = {
         cacheHost: 'example.com',
         cachePath: '/path',
@@ -239,7 +221,7 @@ describe('renderingManager', function() {
         hbPb: '10.00'
       };
 
-      renderObject.renderAd(mockWin.document, ucTagData);
+      renderAmpOrMobileAd(ucTagData);
 
       let response = {
         width: 300,
@@ -255,8 +237,6 @@ describe('renderingManager', function() {
     });
 
     it('should replace AUCTION_PRICE with response.price over hbPb', function() {
-      const renderObject = newRenderingManager(mockWin, env);
-
       let ucTagData = {
         cacheHost: 'example.com',
         cachePath: '/path',
@@ -265,7 +245,7 @@ describe('renderingManager', function() {
         hbPb: '10.00'
       };
 
-      renderObject.renderAd(mockWin.document, ucTagData);
+      renderAmpOrMobileAd(ucTagData);
 
       let response = {
         width: 300,
@@ -282,8 +262,6 @@ describe('renderingManager', function() {
     });
 
     it('should replace AUCTION_PRICE with with empty value when neither price nor hbPb exist', function() {
-      const renderObject = newRenderingManager(mockWin, env);
-
       let ucTagData = {
         cacheHost: 'example.com',
         cachePath: '/path',
@@ -291,7 +269,7 @@ describe('renderingManager', function() {
         size: '300x250'
       };
 
-      renderObject.renderAd(mockWin.document, ucTagData);
+      renderAmpOrMobileAd(ucTagData);
 
       let response = {
         width: 300,
@@ -313,8 +291,6 @@ describe('renderingManager', function() {
     let iframeStub;
     let triggerPixelSpy;
     let mockWin;
-    let env;
-    let renderObject;
     let ucTagData;
     let mockIframe;
     let eventSource;
@@ -328,19 +304,17 @@ describe('renderingManager', function() {
         protocol: 'http',
         host: 'example.com'
       });
-      mockWin = merge(mocks.createFakeWindow(ORIGIN), renderingMocks().getWindowObject());
-      env = {
-        isMobileApp: () => false,
-        isAmp: () => false,
-        canLocatePrebid: () => false
-      };
-      renderObject = newRenderingManager(mockWin, env);
+      iframeStub.returns(mockIframe);
+
+      mockWin = merge(mocks.createFakeWindow('http://example.com'), renderingMocks().getWindowObject());
       ucTagData = {
         adId: '123',
         adServerDomain: 'mypub.com',
         pubUrl: ORIGIN,
       };
-      renderObject.renderAd(mockWin.document, ucTagData);
+      eventSource = null;
+
+      renderCrossDomain(mockWin, ucTagData.adId, ucTagData.adServerDomain, ucTagData.pubUrl);
 
     });
 
@@ -452,18 +426,11 @@ describe('renderingManager', function() {
   describe('legacy creative', function() {
     it('should render legacy creative', function() {
       const mockWin = merge(mocks.createFakeWindow('http://example.com'), renderingMocks().getWindowObject());
-      const env = {
-        isMobileApp: () => false,
-        isAmp: () => false,
-        canLocatePrebid: () => true
-      };
-      const renderObject = newRenderingManager(mockWin, env);
-
       let ucTagData = {
         adId: '123'
       };
 
-      renderObject.renderAd(mockWin.document, ucTagData);
+      renderLegacy(mockWin.document, ucTagData.adId);
       expect(mockWin.parent.$$PREBID_GLOBAL$$.renderAd.callCount).to.equal(1);
     });
   });
