@@ -292,39 +292,32 @@ export function newNativeAssetManager(win, pubUrl) {
       if (head) win.document.head.innerHTML = replace(head, data);
 
       if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
+        let renderPayload = data.assets;
+        if (data.ortb2) {
+          renderPayload = data.ortb2;
+        }
         if (win.renderAd) {
-          const newHtml = (win.renderAd && win.renderAd(data.assets)) || '';
+          const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
 
-          win.document.body.innerHTML = body + newHtml;
-          callback && callback();
-          stopListening();
-          requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
+          renderAd(newHtml, data.adId);
         } else if (document.getElementById('pb-native-renderer')) {
           document.getElementById('pb-native-renderer').addEventListener('load', function() {
-            const newHtml = (win.renderAd && win.renderAd(data.assets)) || '';
+            const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
 
-            win.document.body.innerHTML = body + newHtml;
-            callback && callback();
-            stopListening();
-            requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
+            renderAd(newHtml, data.adId);
           });
         } else {
           loadScript(win, ((hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl') && win.pbNativeData.rendererUrl) || data.rendererUrl), function() {
-            const newHtml = (win.renderAd && win.renderAd(data.assets)) || '';
+            const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
 
-            win.document.body.innerHTML = body + newHtml;
-            callback && callback();
-            stopListening();
-            requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
+            renderAd(newHtml, data.adId);
           })
         }
       } else if ((data.hasOwnProperty('adTemplate') && data.adTemplate)||(hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate'))) {
         const template =  (hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate') && win.pbNativeData.adTemplate) || data.adTemplate;
         const newHtml = replace(template, data);
-        win.document.body.innerHTML = body + newHtml;
-        callback && callback();
-        stopListening();
-        requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
+        
+        renderAd(newHtml);
       } else {
         const newHtml = replace(body, data);
 
@@ -332,6 +325,18 @@ export function newNativeAssetManager(win, pubUrl) {
         callback && callback();
         stopListening();
       }
+    }
+  }
+
+  function renderAd(html, adId) {
+    win.document.body.innerHTML += html;
+    callback && callback();
+    win.removeEventListener('message', replaceAssets);
+    stopListening();
+    requestHeightResize(adId, (document.body.clientHeight || document.body.offsetHeight));
+
+    if (typeof window.postRenderAd === 'function') {
+      window.postRenderAd();
     }
   }
 
