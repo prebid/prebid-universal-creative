@@ -5,12 +5,10 @@
  * - mobile creatives
  */
 
- import { renderAmpOrMobileAd } from './renderingManager';
- import { transformAuctionTargetingData } from './utils';
- 
- window.ucTag = (window.ucTag || {});
- 
- window.ucTag.renderAd = (doc, dataObject) => {
+import { renderAmpOrMobileAd } from './mobileAndAmpRender';
+
+window.ucTag = (window.ucTag || {});
+
+window.ucTag.renderAd = (doc, dataObject) => {
     renderAmpOrMobileAd(dataObject, true);
 }
- 

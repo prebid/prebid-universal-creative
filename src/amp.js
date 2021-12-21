@@ -5,7 +5,7 @@
  * - AMP creatives
  */
 
-import { renderAmpOrMobileAd } from './renderingManager';
+import { renderAmpOrMobileAd } from './mobileAndAmpRender';
 
 window.ucTag = (window.ucTag || {});
 

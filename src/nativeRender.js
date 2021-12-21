@@ -1,7 +1,7 @@
 import { newNativeRenderManager } from './nativeRenderManager';
 
-window.pbNativeTag = (window.pbNativeTag || {});
 const nativeRenderManager = newNativeRenderManager(window);
 
-window.pbNativeTag.renderNativeAd = nativeRenderManager.renderNativeAd;
+window.ucTag = (window.ucTag || {});
 
+window.ucTag.renderAd = nativeRenderManager.renderNativeAd;
