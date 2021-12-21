@@ -14,13 +14,13 @@ You can find a detailed explanations on the [Prebid Universal Creative](http://p
 > **important:** If you’re using the `Send All Bids` scenario (where every bidder has a separate order), the creative and targeting will be different from the example shown here. See [Send All Bids](http://prebid.org/adops/send-all-bids-adops.html) for details.
 
 ```html
-<script src = "https://cdn.jsdelivr.net/npm/prebid-universal-creative@latest/dist/creative.js"></script>
+<script src = "https://cdn.jsdelivr.net/npm/prebid-universal-creative@latest/dist/%%PATTERN:hb_format%%.js"></script>
 <script>
   var ucTagData = {};
   ucTagData.adServerDomain = "";
   ucTagData.pubUrl = "%%PATTERN:url%%";
   ucTagData.targetingMap = %%PATTERN:TARGETINGMAP%%;
-  ucTagData.hbPb = "%%PATTERN:hb_pb%%";
+  ucTagData.requestAllAssets = true;
 
   try {
     ucTag.renderAd(document, ucTagData);
@@ -29,6 +29,16 @@ You can find a detailed explanations on the [Prebid Universal Creative](http://p
   }
 </script>
 ```
+
+Creative created like described above will work for all formats:
+- amp
+- banner
+- mobile
+- native
+- video (outstream video)
+
+Which means that the same creative code can be reused on all formats.  
+Universal creative library is loaded with `%%PATTERN:hb_format%%.js` path. Which means for each `hb_format` targeting key-value, separate `.js` library will be loaded.
 
 > Note: Some build tools make explicit use of Node features which have been introduced in version *8.9.0*. Please make sure you're using the correct Node version (>8.9.0) before you proceed to create your own build using the commands listed below.
 
@@ -66,8 +76,11 @@ When we run `npm publish`, prepublish script of package.json is executed. Script
 
 `gulp build` is executed before publish. It creates two files in dist directory
 
-+ `./dist/creative.js` - Minified creative.js source code
-+ `./dist/creative.max.js` - Unminified source code to help in debugging.
++ `./dist/amp.js` - Minified amp.js source code (responsible for rendering amp ads)
++ `./dist/banner.js` - Minified banner.js source code (responsible for rendering banner ads)
++ `./dist/mobile.js` - Minified mobile.js source code (responsible for rendering mobile ads)
++ `./dist/native.js` - Minified native.js source code (responsible for rendering native ads)
++ `./dist/video.js` - Minified video.js source code (responsible for rendering outstream video ads)
 
 [jsDelivr](https://www.jsdelivr.com/) – Open Source CDN is used to serve creative.js file.
 
