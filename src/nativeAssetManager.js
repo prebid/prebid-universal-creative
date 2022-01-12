@@ -292,37 +292,38 @@ export function newNativeAssetManager(win, pubUrl) {
 
       if (head) win.document.head.innerHTML = replace(head, data);
 
-      if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
-        let renderPayload = data.assets;
-        if (data.ortb) {
-          renderPayload = data.ortb;
-          callback = () => {
-            fireNativeImpressionTrackers(data.ortb);
-            fireNativeClickTrackers(data.ortb);
-          }
+      let renderPayload = data.assets;
+      if (data.ortb) {
+        renderPayload = data.ortb;
+        callback = () => {
+          fireNativeImpressionTrackers(data.ortb);
+          fireNativeClickTrackers(data.ortb);
         }
+      }
+
+      if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (hasPbNativeData()() && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
         if (win.renderAd) {
           const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
 
-          renderAd(newHtml, data.adId);
+          renderAd(newHtml, data);
         } else if (document.getElementById('pb-native-renderer')) {
           document.getElementById('pb-native-renderer').addEventListener('load', function() {
             const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
 
-            renderAd(newHtml, data.adId);
+            renderAd(newHtml, data);
           });
         } else {
           loadScript(win, ((hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl') && win.pbNativeData.rendererUrl) || data.rendererUrl), function() {
             const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
 
-            renderAd(newHtml, data.adId);
+            renderAd(newHtml, data);
           })
         }
       } else if ((data.hasOwnProperty('adTemplate') && data.adTemplate)||(hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate'))) {
         const template =  (hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate') && win.pbNativeData.adTemplate) || data.adTemplate;
         const newHtml = replace(template, data);
         
-        renderAd(newHtml);
+        renderAd(newHtml, data);
       } else {
         const newHtml = replace(body, data);
 
@@ -333,16 +334,50 @@ export function newNativeAssetManager(win, pubUrl) {
     }
   }
 
-  function renderAd(html, adId) {
+  function renderAd(html, bid) {
     win.document.body.innerHTML += html;
     callback && callback();
     win.removeEventListener('message', replaceAssets);
     stopListening();
-    requestHeightResize(adId, (document.body.clientHeight || document.body.offsetHeight));
+    requestHeightResize(bid.adId, (document.body.clientHeight || document.body.offsetHeight));
 
     if (typeof window.postRenderAd === 'function') {
-      window.postRenderAd();
+      window.postRenderAd(bid);
     }
+  }
+
+  function replaceORTBAssetsAndLinks(html, ortb) {
+    const getAssetValue = (asset) => {
+      if (asset.img) {
+        return asset.img.url;
+      }
+      if (asset.data) {
+        return asset.data.value;
+      }
+      if (asset.title) {
+        return asset.title.text;
+      }
+      if (asset.video) {
+        return asset.video.vasttag;
+      }
+    }
+
+    ortb.assets.forEach(asset => {
+      html = html.replace(`##hb_native_asset_id_${asset.id}##`, getAssetValue(asset));
+      if (asset.link && asset.link.url) {
+        html = html.replace(`##hb_native_asset_link_id_${asset.id}##`, asset.link.url);
+      }
+    });
+
+    if (ortb.privacy) {
+      html = html.replace("##hb_native_privacy##", ortb.privacy);
+    }
+
+    if (ortb.link) {
+      html = html.replaceAll("##hb_native_linkurl##", ortb.link.url);
+    }
+  
+    return html;
   }
 
   /**
@@ -350,7 +385,10 @@ export function newNativeAssetManager(win, pubUrl) {
    * in the given document.
    * If there's no actual value, the placeholder gets replaced by an empty string.
    */
-  function replace(html, { assets, adId }) {
+  function replace(html, { assets, ortb, adId }) {
+    if (data.ortb) {
+      return replaceORTBAssetsAndLinks(html, data.ortb);
+    }
     assets = assets || [];
 
     scanForPlaceHolders(adId, html).forEach(placeholder => {
