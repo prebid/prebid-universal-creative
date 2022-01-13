@@ -49,12 +49,13 @@ function createResponder(assets,url,template) {
 }
 
 // creates mock postmessage response from prebid's native.js:getAssetMessage
-function createAllResponder(assets,url,template) {
+function createAllResponder(nativePayload, url, template, key = 'assets') {
   return function(type, listener) {
     if (type !== 'message') { return; }
 
-    const data = { message: 'assetResponse', adId: AD_ID, assets, adTemplate:template, rendererUrl:url };
-    listener({ data: JSON.stringify(data), origin: ORIGIN});
+    const data = { message: 'assetResponse', adId: AD_ID, adTemplate:template, rendererUrl:url };
+    data[key] = nativePayload;
+    listener({ data: JSON.stringify(data), origin: ORIGIN });
   };
 }
 
@@ -300,14 +301,7 @@ describe('nativeAssetManager', () => {
   });
 
   it('no placeholders found but requests all assets flag set - rendererUrl', () => {
-    const html = `<script>
-              let nativeTag = {};
-              nativeTag.pubUrl = "https://www.url.com";
-              nativeTag.adId = "`+AD_ID+`";
-              nativeTag.requestAllAssets = true;
-              window.pbNativeTag.renderNativeAd(nativeTag);
-      </script>`,
-      url = 'https://www.renderer.com/render.js';
+    const url = 'https://www.renderer.com/render.js';
     win.pbNativeData = {
       pubUrl : 'https://www.url.com',
       adId : AD_ID,
@@ -315,7 +309,7 @@ describe('nativeAssetManager', () => {
       requestAllAssets : true
     };
 
-    win.document.body.innerHTML = html;
+    win.document.body.innerHTML = '';
     win.renderAd = generateRenderer;
 
     win.addEventListener = createAllResponder([
@@ -333,22 +327,73 @@ describe('nativeAssetManager', () => {
     expect(win.document.body.innerHTML).to.include(`<p>Body content</p>`);
   });
 
-  it('no placeholders found but requests all assets flag set - adTemplate', () => {
-    const html = `<script>
-              let nativeTag = {};
-              nativeTag.pubUrl = "https://www.url.com";
-              nativeTag.adId = "`+AD_ID+`";
-              nativeTag.requestAllAssets = true;
-              window.pbNativeTag.renderNativeAd(nativeTag);
-      </script>`,
-      template = '<div class=\"sponsored-post\">\r\n  <div class=\"thumbnail\"><\/div>\r\n  <div class=\"content\">\r\n  <h1>\r\n    <a href=\"##hb_native_linkurl##\" target=\"_blank\" class=\"pb-click\">##hb_native_title##<\/a>\r\n   <\/h1>\r\n    <p>##hb_native_body##<\/p>\r\n    \t<div class=\"attribution\">\r\n                   \t<img class=\"pb-icon\" src=\"##hb_native_image##\" alt=\"icon\" height=\"150\" width=\"50\">\r\n \t\r\n           \t<\/div>\r\n\t<\/div>\r\n<\/div>';
+  it('no placeholders found but requests all assets flag set - adTemplate - openRTB', () => {
+    const template = `
+<div class="sponsored-post">
+  <div class="thumbnail">
+  </div>
+  <div class="content">
+    <h1>
+      <a href="##hb_native_linkurl##" target="_blank" class="pb-click">##hb_native_asset_id_1##</a>
+    </h1>
+    <p>##hb_native_asset_id_2##</p>
+    <div class="attribution">
+      <img class="pb-icon" src="##hb_native_asset_id_3##" alt="icon" height="150" width="50">
+    </div>
+  </div>
+</div>
+`;
     win.pbNativeData = {
       pubUrl : 'https://www.url.com',
       adId : AD_ID,
       requestAllAssets : true
     };
 
-    win.document.body.innerHTML = html;
+    win.document.body.innerHTML = '';
+
+    win.addEventListener = createAllResponder({
+      assets: [{
+        id: 1,
+        title: {
+          text: "new value"
+        }
+      },
+      {
+        id: 2,
+        data: {
+          value: "Body content"
+        }
+      },
+      {
+        id: 3,
+        img: {
+          url: "http://www.image.com/picture.jpg"
+        }
+      }
+
+      ],
+      link: {
+        url: "http://www.example.com"
+      },
+    }, null, template, 'ortb');
+
+    const nativeAssetManager = newNativeAssetManager(win);
+    nativeAssetManager.loadAssets(AD_ID);
+
+    expect(win.document.body.innerHTML).to.include(`<a href="http://www.example.com" target="_blank" class="pb-click">new value</a>`);
+    expect(win.document.body.innerHTML).to.include(`<img class="pb-icon" src="http://www.image.com/picture.jpg" alt="icon" height="150" width="50">`);
+    expect(win.document.body.innerHTML).to.include(`<p>Body content</p>`);
+  });
+
+  it('no placeholders found but requests all assets flag set - adTemplate', () => {
+    const template = '<div class=\"sponsored-post\">\r\n  <div class=\"thumbnail\"><\/div>\r\n  <div class=\"content\">\r\n  <h1>\r\n    <a href=\"##hb_native_linkurl##\" target=\"_blank\" class=\"pb-click\">##hb_native_title##<\/a>\r\n   <\/h1>\r\n    <p>##hb_native_body##<\/p>\r\n    \t<div class=\"attribution\">\r\n                   \t<img class=\"pb-icon\" src=\"##hb_native_image##\" alt=\"icon\" height=\"150\" width=\"50\">\r\n \t\r\n           \t<\/div>\r\n\t<\/div>\r\n<\/div>';
+    win.pbNativeData = {
+      pubUrl : 'https://www.url.com',
+      adId : AD_ID,
+      requestAllAssets : true
+    };
+
+    win.document.body.innerHTML = '';
 
     win.addEventListener = createAllResponder([
       { key: 'body', value: 'Body content' },
@@ -366,21 +411,14 @@ describe('nativeAssetManager', () => {
   });
 
   it('no placeholders found but assets defined in nativeTag - adTemplate', () => {
-    const html = `<script>
-              let nativeTag = {};
-              nativeTag.pubUrl = "https://www.url.com";
-              nativeTag.adId = "`+AD_ID+`";
-              nativeTag.requestAllAssets = true;
-              window.pbNativeTag.renderNativeAd(nativeTag);
-      </script>`,
-      template = '<div class=\"sponsored-post\">\r\n  <div class=\"thumbnail\"><\/div>\r\n  <div class=\"content\">\r\n  <h1>\r\n    <a href=\"##hb_native_linkurl##\" target=\"_blank\" class=\"pb-click\">##hb_native_title##<\/a>\r\n   <\/h1>\r\n    <p>##hb_native_body##<\/p>\r\n    \t<div class=\"attribution\">\r\n                   \t<img class=\"pb-icon\" src=\"##hb_native_image##\" alt=\"icon\" height=\"150\" width=\"50\">\r\n \t\r\n           \t<\/div>\r\n\t<\/div>\r\n<\/div>';
+    const template = '<div class=\"sponsored-post\">\r\n  <div class=\"thumbnail\"><\/div>\r\n  <div class=\"content\">\r\n  <h1>\r\n    <a href=\"##hb_native_linkurl##\" target=\"_blank\" class=\"pb-click\">##hb_native_title##<\/a>\r\n   <\/h1>\r\n    <p>##hb_native_body##<\/p>\r\n    \t<div class=\"attribution\">\r\n                   \t<img class=\"pb-icon\" src=\"##hb_native_image##\" alt=\"icon\" height=\"150\" width=\"50\">\r\n \t\r\n           \t<\/div>\r\n\t<\/div>\r\n<\/div>';
     win.pbNativeData = {
       pubUrl : 'https://www.url.com',
       adId : AD_ID,
       assetsToReplace: ['image','hb_native_body','clickUrl','hb_native_title']
     };
 
-    win.document.body.innerHTML = html;
+    win.document.body.innerHTML = '';
 
     win.addEventListener = createAllResponder([
       { key: 'body', value: 'Body content' },

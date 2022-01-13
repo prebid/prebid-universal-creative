@@ -388,6 +388,8 @@ export function newNativeAssetManager(win, pubUrl) {
   function replace(html, { assets, ortb, adId }) {
     if (data.ortb) {
       return replaceORTBAssetsAndLinks(html, data.ortb);
+    } else if (!Array.isArray(data.assets)) {
+      return html;
     }
     assets = assets || [];
 
