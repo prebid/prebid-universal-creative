@@ -1,14 +1,14 @@
 /*
  * Script to handle firing impression and click trackers from native teamplates
  */
-import { parseUrl, triggerPixel, transformAuctionTargetingData } from './utils';
-import { newNativeAssetManager } from './nativeAssetManager';
+import {newNativeAssetManager} from './nativeAssetManager';
+import {prebidMessenger} from './messaging.js';
 
 const AD_ANCHOR_CLASS_NAME = 'pb-click';
 const AD_DATA_ADID_ATTRIBUTE = 'pbAdId';
 
 export function newNativeRenderManager(win) {
-  let publisherDomain;
+  let sendMessage;
 
 
   function findAdElements(className) {
@@ -30,8 +30,7 @@ export function newNativeRenderManager(win) {
       if (action === 'click') {
         message.action = 'click';
       }
-
-      win.parent.postMessage(JSON.stringify(message), publisherDomain);
+      sendMessage(message);
     }
   }
 
@@ -51,12 +50,10 @@ export function newNativeRenderManager(win) {
   // START OF MAIN CODE
   let renderNativeAd = function(nativeTag) {
     window.pbNativeData = nativeTag;
-    const targetingData = transformAuctionTargetingData(nativeTag);
-    const nativeAssetManager = newNativeAssetManager(window);
+    sendMessage = prebidMessenger(nativeTag.pubUrl, win);
+    const nativeAssetManager = newNativeAssetManager(window, nativeTag.pubUrl);
 
     if (nativeTag.hasOwnProperty('adId')) {
-      let parsedUrl = parseUrl(window.pbNativeData.pubUrl);
-      publisherDomain = parsedUrl.protocol + '://' + parsedUrl.host;
 
       if (nativeTag.hasOwnProperty('rendererUrl') && !nativeTag.rendererUrl.match(/##.*##/i)) {
         const scr = document.createElement('SCRIPT');

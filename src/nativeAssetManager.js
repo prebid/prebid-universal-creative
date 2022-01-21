@@ -4,6 +4,7 @@
  */
 
 import { sendRequest, loadScript } from './utils';
+import {prebidMessenger} from './messaging.js';
 
 /*
  * Native asset->key mapping from Prebid.js/src/constants.json
@@ -56,17 +57,28 @@ const assetTypeMapping = {
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
 
-export function newNativeAssetManager(win) {
+export function newNativeAssetManager(win, pubUrl) {
+  const sendMessage = prebidMessenger(pubUrl, win);
   let callback;
   let errorCountEscapeHatch = 0;
+  let cancelMessageListener;
+
+  function stopListening() {
+    if (cancelMessageListener != null) {
+      cancelMessageListener();
+      cancelMessageListener = null;
+    }
+  }
+
+
 
   function getCacheEndpoint(cacheHost, cachePath) {
     let host = (typeof cacheHost === 'undefined' || cacheHost === "") ? DEFAULT_CACHE_HOST : cacheHost;
     let path = (typeof cachePath === 'undefined' || cachePath === "") ? DEFAULT_CACHE_PATH : cachePath;
-  
+
     return `https://${host}${path}`;
   }
-  
+
   function parseResponse(response) {
     let bidObject;
     try {
@@ -76,7 +88,7 @@ export function newNativeAssetManager(win) {
     }
     return bidObject;
   }
-  
+
   function transformToPrebidKeys(adMarkup) {
     let assets = [];
     let clicktrackers;
@@ -105,7 +117,7 @@ export function newNativeAssetManager(win) {
           'key' : 'title',
           'value' : asset.title.text
         })
-      } 
+      }
     })
 
     if (adMarkup.link) {
@@ -137,7 +149,7 @@ export function newNativeAssetManager(win) {
           win.document.body.innerHTML = newHtml;
 
           callback && callback({
-            clickTrackers: data.clicktrackers, 
+            clickTrackers: data.clicktrackers,
             impTrackers: data.imptrackers
           });
         } else {
@@ -177,11 +189,11 @@ export function newNativeAssetManager(win) {
 
     if (flag && win.pbNativeData.hasOwnProperty('requestAllAssets') && win.pbNativeData.requestAllAssets) {
       callback = cb;
-      requestAllAssets(adId);
+      cancelMessageListener = requestAllAssets(adId);
     } else if (placeholders.length > 0) {
       callback = cb;
-      requestAssets(adId, placeholders);
-    } 
+      cancelMessageListener = requestAssets(adId, placeholders);
+    }
   }
 
   /*
@@ -196,12 +208,12 @@ export function newNativeAssetManager(win) {
       const placeholderKey = NATIVE_KEYS[key];
       const placeholder = (adId && !flag) ? `${placeholderKey}:${adId}` : `${placeholderKey}`;
       const placeholderIndex = (~doc.body.innerHTML.indexOf(placeholder)) ? doc.body.innerHTML.indexOf(placeholder) : (doc.head.innerHTML && doc.head.innerHTML.indexOf(placeholder));
-      
+
       if (~placeholderIndex) {
         placeholders.push(placeholderKey);
       }
     });
-    
+
     return placeholders;
   }
 
@@ -210,8 +222,6 @@ export function newNativeAssetManager(win) {
    * creative template, and setups up a listener for when Prebid responds.
    */
   function requestAssets(adId, assets) {
-    win.addEventListener('message', replaceAssets, false);
-
     const message = {
       message: 'Prebid Native',
       action: 'assetRequest',
@@ -219,8 +229,7 @@ export function newNativeAssetManager(win) {
       assets,
     };
 
-
-    win.parent.postMessage(JSON.stringify(message), '*');
+    return sendMessage(message, replaceAssets);
   }
 
   /*
@@ -228,15 +237,12 @@ export function newNativeAssetManager(win) {
    * creative template, and setups up a listener for when Prebid responds.
    */
   function requestAllAssets(adId) {
-    win.addEventListener('message', replaceAssets, false);
-
     const message = {
       message: 'Prebid Native',
       action: 'allAssetRequest',
       adId,
     };
-
-    win.parent.postMessage(JSON.stringify(message), '*');
+    return sendMessage(message, replaceAssets);
   }
 
   /*
@@ -249,8 +255,7 @@ export function newNativeAssetManager(win) {
       adId,
       height,
     };
-
-    win.parent.postMessage(JSON.stringify(message), '*');
+    sendMessage(message);
   }
 
   /*
@@ -267,7 +272,7 @@ export function newNativeAssetManager(win) {
          * if for some reason Prebid never responds with the native assets,
          * get rid of this listener because other messages won't stop coming
          */
-        win.removeEventListener('message', replaceAssets);
+        stopListening();
       }
       return;
     }
@@ -287,7 +292,7 @@ export function newNativeAssetManager(win) {
 
           win.document.body.innerHTML = body + newHtml;
           callback && callback();
-          win.removeEventListener('message', replaceAssets);
+          stopListening();
           requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
         } else if (document.getElementById('pb-native-renderer')) {
           document.getElementById('pb-native-renderer').addEventListener('load', function() {
@@ -295,7 +300,7 @@ export function newNativeAssetManager(win) {
 
             win.document.body.innerHTML = body + newHtml;
             callback && callback();
-            win.removeEventListener('message', replaceAssets);
+            stopListening();
             requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
           });
         } else {
@@ -304,7 +309,7 @@ export function newNativeAssetManager(win) {
 
             win.document.body.innerHTML = body + newHtml;
             callback && callback();
-            win.removeEventListener('message', replaceAssets);
+            stopListening();
             requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
           })
         }
@@ -313,14 +318,14 @@ export function newNativeAssetManager(win) {
         const newHtml = replace(template, data);
         win.document.body.innerHTML = body + newHtml;
         callback && callback();
-        win.removeEventListener('message', replaceAssets);
+        stopListening();
         requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
       } else {
         const newHtml = replace(body, data);
 
         win.document.body.innerHTML = newHtml;
         callback && callback();
-        win.removeEventListener('message', replaceAssets);
+        stopListening();
       }
     }
   }

@@ -5,9 +5,10 @@ import { expect } from 'chai';
 import { mocks } from 'test/helpers/mocks';
 import { merge } from 'lodash';
 
-const renderingMocks = {
-  messages: [],
-  getWindowObject: function() {
+function renderingMocks() {
+  return {
+    messages: [],
+        getWindowObject: function() {
     return {
       document: {
         body: {
@@ -37,6 +38,7 @@ const renderingMocks = {
       innerWidth: 300,
       innerHeight: 250
     }
+  }
   }
 }
 
@@ -78,7 +80,7 @@ describe('renderingManager', function() {
       writeHtmlSpy = sinon.spy(utils, 'writeAdHtml');
       sendRequestSpy = sinon.spy(utils, 'sendRequest');
       triggerPixelSpy = sinon.spy(utils, 'triggerPixel');
-      mockWin = merge(mocks.createFakeWindow('http://example.com'), renderingMocks.getWindowObject());
+      mockWin = merge(mocks.createFakeWindow('http://example.com'), renderingMocks().getWindowObject());
     });
 
     afterEach(function() {
@@ -205,7 +207,7 @@ describe('renderingManager', function() {
       writeHtmlSpy = sinon.spy(utils, 'writeAdHtml');
       sendRequestSpy = sinon.spy(utils, 'sendRequest');
       triggerPixelSpy = sinon.spy(utils, 'triggerPixel');
-      mockWin = merge(mocks.createFakeWindow('http://example.com'), renderingMocks.getWindowObject());
+      mockWin = merge(mocks.createFakeWindow('http://example.com'), renderingMocks().getWindowObject());
     });
 
     afterEach(function() {
@@ -326,7 +328,7 @@ describe('renderingManager', function() {
         protocol: 'http',
         host: 'example.com'
       });
-      mockWin = merge(mocks.createFakeWindow(ORIGIN), renderingMocks.getWindowObject());
+      mockWin = merge(mocks.createFakeWindow(ORIGIN), renderingMocks().getWindowObject());
       env = {
         isMobileApp: () => false,
         isAmp: () => false,
@@ -338,8 +340,6 @@ describe('renderingManager', function() {
         adServerDomain: 'mypub.com',
         pubUrl: ORIGIN,
       };
-      eventSource = null;
-
       renderObject.renderAd(mockWin.document, ucTagData);
 
     });
@@ -351,11 +351,7 @@ describe('renderingManager', function() {
     });
 
     function mockPrebidResponse(msg)  {
-      eventSource = {
-        postMessage: sinon.spy()
-      };
       mockWin.postMessage({
-        source: eventSource,
         origin: ORIGIN,
         message: JSON.stringify(Object.assign({message: 'Prebid Response'}, msg))
       });
@@ -377,7 +373,7 @@ describe('renderingManager', function() {
         RENDER_SUCCESS = 'adRenderSucceeded';
 
       function expectEventMessage(expected) {
-        const actual = JSON.parse(eventSource.postMessage.args[0][0]);
+        const actual = JSON.parse(mockWin.parent.postMessage.args[1][0]);
         sinon.assert.match(actual, Object.assign({message: 'Prebid Event'}, expected));
       }
 
@@ -455,7 +451,7 @@ describe('renderingManager', function() {
 
   describe('legacy creative', function() {
     it('should render legacy creative', function() {
-      const mockWin = merge(mocks.createFakeWindow('http://example.com'), renderingMocks.getWindowObject());
+      const mockWin = merge(mocks.createFakeWindow('http://example.com'), renderingMocks().getWindowObject());
       const env = {
         isMobileApp: () => false,
         isAmp: () => false,
