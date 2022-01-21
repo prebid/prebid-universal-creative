@@ -87,34 +87,61 @@ export function newRenderingManager(win, environment) {
       let origin = ev.origin || ev.originalEvent.origin;
       if (adObject.message && adObject.message === 'Prebid Response' &&
           publisherDomain === origin &&
-          adObject.adId === adId &&
-          (adObject.ad || adObject.adUrl)) {
-        let body = win.document.body;
-        let ad = adObject.ad;
-        let url = adObject.adUrl;
-        let width = adObject.width;
-        let height = adObject.height;
+          adObject.adId === adId) {
+        try {
+          let body = win.document.body;
+          let ad = adObject.ad;
+          let url = adObject.adUrl;
+          let width = adObject.width;
+          let height = adObject.height;
 
-        if (adObject.mediaType === 'video') {
-          console.log('Error trying to write ad.');
-        } else if (ad) {
-          const iframe =  domHelper.getEmptyIframe(adObject.height, adObject.width);
-          body.appendChild(iframe);
-          iframe.contentDocument.open();
-          iframe.contentDocument.write(ad);
-          iframe.contentDocument.close();
-        } else if (url) {
-          const iframe = domHelper.getEmptyIframe(height, width);
-          iframe.style.display = 'inline';
-          iframe.style.overflow = 'hidden';
-          iframe.src = url;
+          if (adObject.mediaType === 'video') {
+            signalRenderResult(false, {
+              reason: 'preventWritingOnMainDocument',
+              message: `Cannot render video ad ${adId}`
+            });
+            console.log('Error trying to write ad.');
+          } else if (ad) {
+            const iframe =  domHelper.getEmptyIframe(adObject.height, adObject.width);
+            body.appendChild(iframe);
+            iframe.contentDocument.open();
+            iframe.contentDocument.write(ad);
+            iframe.contentDocument.close();
+            signalRenderResult(true);
+          } else if (url) {
+            const iframe = domHelper.getEmptyIframe(height, width);
+            iframe.style.display = 'inline';
+            iframe.style.overflow = 'hidden';
+            iframe.src = url;
 
-          domHelper.insertElement(iframe, document, 'body');
-        } else {
-          console.log(`Error trying to write ad. No ad for bid response id: ${id}`);
+            domHelper.insertElement(iframe, document, 'body');
+            signalRenderResult(true);
+          } else {
+            signalRenderResult(false, {
+              reason: 'noAd',
+              message: `No ad for ${adId}`
+            });
+            console.log(`Error trying to write ad. No ad markup or adUrl for ${adId}`);
+          }
+        } catch (e) {
+          signalRenderResult(false, {reason: "exception", message: e.message});
+          console.log(`Error in rendering ad`, e);
         }
       }
+
+      function signalRenderResult(success, {reason, message} = {}) {
+        const payload = {
+          message: 'Prebid Event',
+          adId,
+          event: success ? 'adRenderSucceeded' : 'adRenderFailed',
+        }
+        if (!success) {
+          payload.info = {reason, message};
+        }
+        ev.source.postMessage(JSON.stringify(payload), publisherDomain);
+      }
     }
+
 
     function requestAdFromPrebid() {
       let message = JSON.stringify({
@@ -144,7 +171,7 @@ export function newRenderingManager(win, environment) {
 
     return `https://${host}${path}`;
   }
-  
+
   /**
    * update iframe by using size string to resize
    * @param {string} size
