@@ -70,9 +70,9 @@ export function newNativeTrackerManager(win) {
 
   // START OF MAIN CODE
   let startTrackers = function (dataObject) {
-    sendMessage = prebidMessenger(dataObject.pubUrl, win);
     const targetingData = transformAuctionTargetingData(dataObject);
-    const nativeAssetManager = newNativeAssetManager(window, dataObject.pubUrl);
+    sendMessage = prebidMessenger(targetingData.pubUrl, win);
+    const nativeAssetManager = newNativeAssetManager(window, targetingData.pubUrl);
 
     if (targetingData && targetingData.env === 'mobile-app') {
       let cb = function({clickTrackers, impTrackers} = {}) {
