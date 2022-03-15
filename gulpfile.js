@@ -166,6 +166,11 @@ function buildProd() {
     .pipe(gulp.dest('dist'));
 }
 
+function includeStaticVastXmlFile() {
+  let target = gulp.src('static/prebid-mobile-rewarded-vast.xml');
+  return target.pipe(gulp.dest('dist'));
+}
+
 function buildBanner() {
   let cloned = _.cloneDeep(webpackConfig);
   delete cloned.devtool;
@@ -343,7 +348,7 @@ function watch(done) {
     root: './'
   });
 
-  mainWatcher.on('all', gulp.series(clean, gulp.parallel(buildBannerDev, buildVideoDev, buildAmpDev, buildMobileDev, buildNativeDev, buildNativeRenderDev, buildCookieSync, buildCookieSyncWithConsent, includeStaticVastXmlFile, buildUidDev), test));
+  mainWatcher.on('all', gulp.series(clean, gulp.parallel(buildBannerDev, buildVideoDev, buildAmpDev, buildMobileDev, buildNativeDev, buildNativeRenderDev, buildCookieSync, buildCookieSyncWithConsent, buildUidDev, includeStaticVastXmlFile), test));
   done();
 }
 
