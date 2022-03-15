@@ -89,19 +89,19 @@ describe('renderingManager', function() {
         protocol: 'http',
         host: 'example.com'
       });
-      iframeStub.returns(mockIframe);
-
-      mockWin = merge(mocks.createFakeWindow('http://example.com'), renderingMocks().getWindowObject());
+      mockWin = merge(mocks.createFakeWindow(ORIGIN), renderingMocks().getWindowObject());
       ucTagData = {
         adId: '123',
         adServerDomain: 'mypub.com',
         pubUrl: ORIGIN,
       };
+      eventSource = null;
+
       renderCrossDomain(mockWin, ucTagData.adId, ucTagData.adServerDomain, ucTagData.pubUrl);
 
     });
 
-    afterEach(function() {
+    afterEach(function () {
       parseStub.restore();
       iframeStub.restore();
       triggerPixelSpy.restore();
@@ -110,7 +110,7 @@ describe('renderingManager', function() {
     function mockPrebidResponse(msg)  {
       mockWin.postMessage({
         origin: ORIGIN,
-        message: JSON.stringify(Object.assign({message: 'Prebid Response'}, msg))
+        message: JSON.stringify(Object.assign({ message: 'Prebid Response' }, msg))
       });
     }
 
@@ -147,13 +147,13 @@ describe('renderingManager', function() {
             info: {
               reason: 'preventWritingOnMainDocument'
             }
-          })
+          });
         });
 
         it('on ads that have no markup or adUrl', () => {
           mockPrebidResponse({
             adId: '123',
-          })
+          });
           expectEventMessage({
             adId: '123',
             event: RENDER_FAILED,
@@ -165,7 +165,7 @@ describe('renderingManager', function() {
 
         it('on exceptions', () => {
           iframeStub.callsFake(() => {
-            throw new Error()
+            throw new Error();
           });
           mockPrebidResponse({
             adId: '123',
@@ -179,7 +179,7 @@ describe('renderingManager', function() {
               reason: 'exception'
             }
           });
-        })
+        });
       });
       describe('should post AD_RENDER_SUCCEEDED', () => {
         it('on ad with markup', () => {
