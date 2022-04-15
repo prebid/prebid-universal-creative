@@ -32,7 +32,7 @@ export function writeAdUrl(adUrl, width, height) {
 }
 
 export function writeAdHtml(markup) {
-  markup = markup.replace(/<(?xml|(!DOCTYPE[^\>\[]+([[^\]]+)?))+[^>]+>/g, '');
+  markup = markup.replace(/\<(\?xml|(\!DOCTYPE[^\>\[]+(\[[^\]]+)?))+[^>]+\>/g, '');
   postscribe(document.body, markup, {
     error: console.error
   });
