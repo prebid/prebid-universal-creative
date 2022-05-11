@@ -30,75 +30,48 @@ function clean() {
     .pipe(gulpClean());
 }
 
-function buildDev() {
+/**
+ * This generic function will compile the file specified as inputFile and will
+ * generate an output file in the build directory. 
+ */
+function buildDev({ inputFile, outputFile }) {
   var cloned = _.cloneDeep(webpackConfig);
-  cloned.output.filename = 'creative.js';
-  return gulp.src(['src/legacy.js'])
+  cloned.output.filename = outputFile;
+  return gulp.src([inputFile])
     .pipe(webpackStream(cloned))
     .pipe(gulp.dest('build'));
+}
+
+function buildLegacyDev() {
+  return buildDev({ inputFile: 'src/legacy.js', outputFile: 'creative.js' });
 }
 
 function buildBannerDev() {
-  var cloned = _.cloneDeep(webpackConfig);
-  cloned.output.filename = 'banner.js';
-
-  return gulp.src(['src/creative.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(gulp.dest('build'));
+  return buildDev({ inputFile: 'src/creative.js', outputFile: 'banner.js' });
 }
 
 function buildVideoDev() {
-  var cloned = _.cloneDeep(webpackConfig);
-  cloned.output.filename = 'video.js';
-
-  return gulp.src(['src/creative.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(gulp.dest('build'));
+  return buildDev({ inputFile: 'src/creative.js', outputFile: 'video.js' });
 }
 
 function buildAmpDev() {
-  var cloned = _.cloneDeep(webpackConfig);
-  cloned.output.filename = 'amp.js';
-
-  return gulp.src(['src/ampOrMobile.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(gulp.dest('build'));
+  return buildDev({ inputFile: 'src/ampOrMobile.js', outputFile: 'amp.js' });
 }
 
 function buildMobileDev() {
-  var cloned = _.cloneDeep(webpackConfig);
-  cloned.output.filename = 'mobile.js';
-
-  return gulp.src(['src/ampOrMobile.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(gulp.dest('build'));
+  return buildDev({ inputFile: 'src/ampOrMobile.js', outputFile: 'mobile.js' });
 }
 
 function buildNativeDev() {
-  var cloned = _.cloneDeep(webpackConfig);
-  cloned.output.filename = 'native-trk.js';
-
-  return gulp.src(['src/nativeTrackers.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(gulp.dest('build'));
+  return buildDev({ inputFile: 'src/nativeTrackers.js', outputFile: 'native-trk.js' });
 }
 
 function buildNativeRenderDev() {
-  var cloned = _.cloneDeep(webpackConfig);
-  cloned.output.filename = 'native.js';
-
-  return gulp.src(['src/nativeRender.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(gulp.dest('build'));
+  return buildDev({ inputFile: 'src/nativeRender.js', outputFile: 'native.js' });
 }
 
 function buildNativeRenderLegacyDev() {
-  var cloned = _.cloneDeep(webpackConfig);
-  cloned.output.filename = 'native-render.js';
-
-  return gulp.src(['src/legacyNativeRender.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(gulp.dest('build'));
+  return buildDev({ inputFile: 'src/legacyNativeRender.js', outputFile: 'native-render.js' });
 }
 
 function buildCookieSync() {
@@ -140,16 +113,10 @@ function buildCookieSyncWithConsent() {
 }
 
 function buildUidDev() {
-  var cloned = _.cloneDeep(webpackConfig);
-  delete cloned.devtool;
-  cloned.output.filename = 'uid.js';
-
-  return gulp.src(['src/ssp-userids/uid.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(gulp.dest('build'));
+  return buildDev({ inputFile: 'src/ssp-userids/uid.js', outputFile: 'uid.js' });
 }
 
-function buildProd() {
+function buildProdLegacy() {
   let cloned = _.cloneDeep(webpackConfig);
   delete cloned.devtool;
 
@@ -171,104 +138,48 @@ function includeStaticVastXmlFile() {
   return target.pipe(gulp.dest('dist'));
 }
 
-function buildBanner() {
+function buildProd({ inputFile, outputFile }) {
   let cloned = _.cloneDeep(webpackConfig);
   delete cloned.devtool;
 
-  return gulp.src(['src/creative.js'])
+  return gulp.src([inputFile])
     .pipe(webpackStream(cloned))
     .pipe(gulp.dest('dist'))
     .pipe(uglify())
     .pipe(header(banner, { creative: creative }))
     .pipe(rename({
-      basename: 'banner',
-      extname: '.js'
+      basename: outputFile.split('.')[0],
+      extname: `.${outputFile.split('.')[1]}`
     }))
     .pipe(gulp.dest('dist'));
+}
+
+function buildBanner() {
+  return buildProd({ inputFile: 'src/creative.js', outputFile: 'banner.js' });
 }
 
 function buildVideo() {
-  let cloned = _.cloneDeep(webpackConfig);
-  delete cloned.devtool;
-
-  return gulp.src(['src/creative.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(gulp.dest('dist'))
-    .pipe(uglify())
-    .pipe(header(banner, { creative: creative }))
-    .pipe(rename({
-      basename: 'video',
-      extname: '.js'
-    }))
-    .pipe(gulp.dest('dist'));
+  return buildProd({ inputFile: 'src/creative.js', outputFile: 'video.js' });
 }
 
 function buildAmp() {
-  let cloned = _.cloneDeep(webpackConfig);
-  delete cloned.devtool;
-
-  return gulp.src(['src/ampOrMobile.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(gulp.dest('dist'))
-    .pipe(uglify())
-    .pipe(header(banner, { creative: creative }))
-    .pipe(rename({
-      basename: 'amp',
-      extname: '.js'
-    }))
-    .pipe(gulp.dest('dist'));
+  return buildProd({ inputFile: 'src/ampOrMobile.js', outputFile: 'amp.js' });
 }
 
 function buildMobile() {
-  let cloned = _.cloneDeep(webpackConfig);
-  delete cloned.devtool;
-
-  return gulp.src(['src/ampOrMobile.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(gulp.dest('dist'))
-    .pipe(uglify())
-    .pipe(header(banner, { creative: creative }))
-    .pipe(rename({
-      basename: 'mobile',
-      extname: '.js'
-    }))
-    .pipe(gulp.dest('dist'));
+  return buildProd({ inputFile: 'src/ampOrMobile.js', outputFile: 'mobile.js' });
 }
 
 function buildNative() {
-  var cloned = _.cloneDeep(webpackConfig);
-  delete cloned.devtool;
-  cloned.output.filename = 'native-trk.js';
-
-  return gulp.src(['src/nativeTrackers.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(uglify())
-    .pipe(header('/* v<%= creative.version %>\n' + dateString + ' */\n', { creative: creative }))
-    .pipe(gulp.dest('dist'));
+  return buildProd({ inputFile: 'src/nativeTrackers.js', outputFile: 'native-trk.js' });
 }
 
 function buildNativeRender() {
-  var cloned = _.cloneDeep(webpackConfig);
-  delete cloned.devtool;
-  cloned.output.filename = 'native.js';
-
-  return gulp.src(['src/nativeRender.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(uglify())
-    .pipe(header(banner, { creative: creative }))
-    .pipe(gulp.dest('dist'));
+  return buildProd({ inputFile: 'src/nativeRender.js', outputFile: 'native.js' });
 }
 
 function buildLegacyNativeRender() {
-  var cloned = _.cloneDeep(webpackConfig);
-  delete cloned.devtool;
-  cloned.output.filename = 'native-render.js';
-
-  return gulp.src(['src/legacyNativeRender.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(uglify())
-    .pipe(header(banner, { creative: creative }))
-    .pipe(gulp.dest('dist'));
+  return buildProd({ inputFile: 'src/legacyNativeRender.js', outputFile: 'native-render.js' });
 }
 
 function buildUid() {
@@ -356,9 +267,9 @@ function openWebPage() {
   return opens(`${(argv.https) ? 'https' : 'http'}://localhost:${port}`);
 }
 
-gulp.task('serve', gulp.series(clean, gulp.parallel(buildDev, buildBannerDev, buildVideoDev, buildAmpDev, buildMobileDev, buildNativeRenderLegacyDev, buildNativeDev, buildNativeRenderDev, buildCookieSync, buildCookieSyncWithConsent, buildUidDev, includeStaticVastXmlFile, watch, test), openWebPage));
+gulp.task('serve', gulp.series(clean, gulp.parallel(buildLegacyDev, buildBannerDev, buildVideoDev, buildAmpDev, buildMobileDev, buildNativeRenderLegacyDev, buildNativeDev, buildNativeRenderDev, buildCookieSync, buildCookieSyncWithConsent, buildUidDev, includeStaticVastXmlFile, watch, test), openWebPage));
 
-gulp.task('build', gulp.parallel(buildProd, buildLegacyNativeRender, buildBanner, buildVideo, buildCookieSync, buildCookieSyncWithConsent, buildNative, buildNativeRender, buildUid, buildAmp, buildMobile, includeStaticVastXmlFile));
+gulp.task('build', gulp.parallel(buildProdLegacy, buildLegacyNativeRender, buildBanner, buildVideo, buildCookieSync, buildCookieSyncWithConsent, buildNative, buildNativeRender, buildUid, buildAmp, buildMobile, includeStaticVastXmlFile));
 
 gulp.task('test-coverage', (done) => {
   new KarmaServer(karmaConfMaker(true, false, false), newKarmaCallback(done)).start();
