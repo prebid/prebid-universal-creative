@@ -327,7 +327,7 @@ describe('nativeAssetManager', () => {
     expect(win.document.body.innerHTML).to.include(`<p>Body content</p>`);
   });
 
-  it('no placeholders found but requests all assets flag set - adTemplate - openRTB', () => {
+  it("no placeholders found but requests all assets flag set - adTemplate - openRTB", () => {
     const template = `
 <div class="sponsored-post">
   <div class="thumbnail">
@@ -344,44 +344,53 @@ describe('nativeAssetManager', () => {
 </div>
 `;
     win.pbNativeData = {
-      pubUrl : 'https://www.url.com',
-      adId : AD_ID,
-      requestAllAssets : true
+      pubUrl: "https://www.url.com",
+      adId: AD_ID,
+      requestAllAssets: true,
     };
 
-    win.document.body.innerHTML = '';
+    win.document.body.innerHTML = "";
 
-    win.addEventListener = createAllResponder({
-      assets: [{
-        id: 1,
-        title: {
-          text: "new value"
-        }
-      },
+    win.addEventListener = createAllResponder(
       {
-        id: 2,
-        data: {
-          value: "Body content"
-        }
+        assets: [
+          {
+            id: 1,
+            title: {
+              text: "new value",
+            },
+          },
+          {
+            id: 2,
+            data: {
+              value: "Body content",
+            },
+          },
+          {
+            id: 3,
+            img: {
+              url: "http://www.image.com/picture.jpg",
+            },
+          },
+        ],
+        link: {
+          url: "http://www.example.com",
+        },
       },
-      {
-        id: 3,
-        img: {
-          url: "http://www.image.com/picture.jpg"
-        }
-      }
+      null,
+      template,
+      "ortb"
+    );
 
-      ],
-      link: {
-        url: "http://www.example.com"
-      },
-    }, null, template, 'ortb');
-
-    const nativeAssetManager = newNativeAssetManager(win);
+    const nativeAssetManager = makeManager();
     nativeAssetManager.loadAssets(AD_ID);
 
-    expect(win.document.body.innerHTML).to.include(`<a href="http://www.example.com" target="_blank" class="pb-click">new value</a>`);
-    expect(win.document.body.innerHTML).to.include(`<img class="pb-icon" src="http://www.image.com/picture.jpg" alt="icon" height="150" width="50">`);
+    expect(win.document.body.innerHTML).to.include(
+      `<a href="http://www.example.com" target="_blank" class="pb-click">new value</a>`
+    );
+    expect(win.document.body.innerHTML).to.include(
+      `<img class="pb-icon" src="http://www.image.com/picture.jpg" alt="icon" height="150" width="50">`
+    );
     expect(win.document.body.innerHTML).to.include(`<p>Body content</p>`);
   });
 
