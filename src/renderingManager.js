@@ -46,7 +46,7 @@ export function renderCrossDomain(win, adId, pubAdServerDomain = '', pubUrl) {
   const sendMessage = prebidMessenger(pubUrl, win);
 
   function renderAd(ev) {
-    let key = ev.message ? 'message' : 'data';
+    let key = ev.message ? "message" : "data";
     let adObject = {};
     try {
       adObject = JSON.parse(ev[key]);
@@ -54,8 +54,11 @@ export function renderCrossDomain(win, adId, pubAdServerDomain = '', pubUrl) {
       return;
     }
 
-    if (adObject.message && adObject.message === 'Prebid Response' &&
-      adObject.adId === adId) {
+    if (
+      adObject.message &&
+      adObject.message === "Prebid Response" &&
+      adObject.adId === adId
+    ) {
       try {
         let body = win.document.body;
         let ad = adObject.ad;
@@ -63,12 +66,12 @@ export function renderCrossDomain(win, adId, pubAdServerDomain = '', pubUrl) {
         let width = adObject.width;
         let height = adObject.height;
 
-        if (adObject.mediaType === 'video') {
+        if (adObject.mediaType === "video") {
           signalRenderResult(false, {
-            reason: 'preventWritingOnMainDocument',
-            message: `Cannot render video ad ${adId}`
+            reason: "preventWritingOnMainDocument",
+            message: `Cannot render video ad ${adId}`,
           });
-          console.log('Error trying to write ad.');
+          console.log("Error trying to write ad.");
         } else if (ad) {
           const iframe = getEmptyIframe(adObject.height, adObject.width);
           body.appendChild(iframe);
@@ -78,18 +81,20 @@ export function renderCrossDomain(win, adId, pubAdServerDomain = '', pubUrl) {
           signalRenderResult(true);
         } else if (url) {
           const iframe = getEmptyIframe(height, width);
-          iframe.style.display = 'inline';
-          iframe.style.overflow = 'hidden';
+          iframe.style.display = "inline";
+          iframe.style.overflow = "hidden";
           iframe.src = url;
 
-          insertElement(iframe, document, 'body');
+          insertElement(iframe, document, "body");
           signalRenderResult(true);
         } else {
           signalRenderResult(false, {
-            reason: 'noAd',
-            message: `No ad for ${adId}`
+            reason: "noAd",
+            message: `No ad for ${adId}`,
           });
-          console.log(`Error trying to write ad. No ad markup or adUrl for ${adId}`);
+          console.log(
+            `Error trying to write ad. No ad markup or adUrl for ${adId}`
+          );
         }
       } catch (e) {
         signalRenderResult(false, { reason: "exception", message: e.message });
@@ -97,16 +102,17 @@ export function renderCrossDomain(win, adId, pubAdServerDomain = '', pubUrl) {
       }
     }
 
-  function signalRenderResult(success, { reason, message } = {}) {
-    const payload = {
-      message: 'Prebid Event',
-      adId,
-      event: success ? 'adRenderSucceeded' : 'adRenderFailed',
-    };
-    if (!success) {
-      payload.info = { reason, message };
+    function signalRenderResult(success, { reason, message } = {}) {
+      const payload = {
+        message: "Prebid Event",
+        adId,
+        event: success ? "adRenderSucceeded" : "adRenderFailed",
+      };
+      if (!success) {
+        payload.info = { reason, message };
+      }
+      sendMessage(payload);
     }
-    sendMessage(payload);
   }
 
   function requestAdFromPrebid() {

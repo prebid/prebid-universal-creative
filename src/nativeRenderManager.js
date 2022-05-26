@@ -66,7 +66,7 @@ export function newNativeRenderManager(win) {
         fireNativeCallback();
       });
     } else {
-      console.warn('Prebid Native Tag object was missing \'adId\'.');
+      console.warn("Prebid Native Tag object was missing 'adId'.");
     }
   }
 

@@ -114,13 +114,13 @@ describe('renderingManager', function() {
       });
     }
 
-    it('should render cross domain creative', function() {
+    it("should render cross domain creative", function () {
       mockPrebidResponse({
-        ad: 'ad',
+        ad: "ad",
         adUrl: ORIGIN,
-        adId: '123',
+        adId: "123",
         width: 300,
-        height: 250
+        height: 250,
       });
       expect(mockIframe.contentDocument.write.args[0][0]).to.equal("ad");
     });
