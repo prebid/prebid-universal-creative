@@ -6,7 +6,9 @@
 import { fireNativeClickTrackers, fireNativeImpressionTrackers } from './nativeORTBTrackerManager';
 import { sendRequest, loadScript } from './utils';
 import {prebidMessenger} from './messaging.js';
+import { newEnvironment } from './environment.js';
 
+const envionment = newEnvironment(window);
 /*
  * Native asset->key mapping from Prebid.js/src/constants.json
  * https://github.com/prebid/Prebid.js/blob/8635c91942de9df4ec236672c39b19448545a812/src/constants.json#L67
@@ -334,7 +336,39 @@ export function newNativeAssetManager(win, pubUrl) {
     }
   }
 
+  /** This function returns the element that contains the current iframe. */
+  function getCurrentFrameContainer(win) {
+    let currentWindow = win;
+    let currentParentWindow;
+
+    while (currentWindow !== win.top) {
+        currentParentWindow = currentWindow.parent;
+        if (!currentParentWindow.frames || !currentParentWindow.frames.length) return null;
+        for (let idx = 0; idx < currentParentWindow.frames.length; idx++)
+            if (currentParentWindow.frames[idx] === currentWindow) {
+              if (!currentParentWindow.document) return null; 
+                for (let frameElement of currentParentWindow.document.getElementsByTagName('iframe')) {
+                    if (!frameElement.contentWindow) return null;
+                    if (frameElement.contentWindow === currentWindow) {
+                        return frameElement.parentElement;
+                    }
+                }
+            }
+    }
+}
+
   function renderAd(html, bid) {
+    // if the current iframe is not a safeframe, try to set the 
+    // current iframe width to the width of the container. This 
+    // is to handle the case where the native ad is rendered inside 
+    // a GAM display ad. 
+    if (!envionment.isSafeFrame()) {
+      let iframeContainer = getCurrentFrameContainer(win);
+      if (iframeContainer) {
+        let width =  iframeContainer.getBoundingClientRect().width;
+        win.document.body.style.width = `${width}px`;
+      }
+    }
     win.document.body.innerHTML += html;
     callback && callback();
     win.removeEventListener('message', replaceAssets);
