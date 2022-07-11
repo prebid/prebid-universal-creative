@@ -294,9 +294,10 @@ export function newNativeAssetManager(win, pubUrl) {
 
       if (head) win.document.head.innerHTML = replace(head, data);
 
+      data.assets = data.assets || [];
       let renderPayload = data.assets;
       if (data.ortb) {
-        renderPayload = data.ortb;
+        renderPayload.ortb = data.ortb;
         callback = () => {
           fireNativeImpressionTrackers(data.ortb);
           fireNativeClickTrackers(data.ortb);
@@ -358,10 +359,10 @@ export function newNativeAssetManager(win, pubUrl) {
 }
 
   function renderAd(html, bid) {
-    // if the current iframe is not a safeframe, try to set the 
-    // current iframe width to the width of the container. This 
-    // is to handle the case where the native ad is rendered inside 
-    // a GAM display ad. 
+    // if the current iframe is not a safeframe, try to set the
+    // current iframe width to the width of the container. This
+    // is to handle the case where the native ad is rendered inside
+    // a GAM display ad.
     if (!envionment.isSafeFrame()) {
       let iframeContainer = getCurrentFrameContainer(win);
       if (iframeContainer) {
@@ -380,50 +381,7 @@ export function newNativeAssetManager(win, pubUrl) {
     }
   }
 
-  /**
-   * 
-   * @returns all native placeholders, e.g. `hb_native_title`. 
-   */
-  function getNativePlaceholdersOnly() {
-    return Object.values(NATIVE_KEYS)
-    .filter(value => !['hb_renderer_url', 'hb_native_linkurl', 'hb_native_privacy'].includes(value));
-  }
-
-  /**
-   * returns true if native template is for legacy assets.
-   */
-  function isLegacyTemplate(html) {
-    return getNativePlaceholdersOnly().some(key => html.includes(key));
-  }
-
-  /**
-   * Tries to convert legacy template to ortb assets. 
-   * @param {*} html 
-   * @param {*} data 
-   * @returns a new HTML where, instead of `hb_native_title`, there'll be the matching `hb_native_asset_id_X`. 
-   */
-  function convertLegacyTemplateToOrtbTempate(html, data) {
-    let newHtml = html; 
-    const {nativeAssetToOrtbId} = data;
-    const legacyAssets = getNativePlaceholdersOnly();
-    if (!nativeAssetToOrtbId) {
-      console.log("Native ad template is legacy type, but I couldn't read the legacy to ortb asset mapping.");
-      return newHtml;
-    }
-    for (const legacyAsset of legacyAssets) {
-      newHtml = newHtml.replaceAll(legacyAsset, `hb_native_asset_id_${nativeAssetToOrtbId[legacyAsset]}`);
-    }
-    return newHtml;
-  }
-
-  function replaceORTBAssetsAndLinks(html, data) {
-
-    // convert the template if it's a legacy template.
-    if(isLegacyTemplate(html)) {
-      html = convertLegacyTemplateToOrtbTempate(html, data);
-    }
-
-    const {ortb} = data;
+  function replaceORTBAssetsAndLinks(html, ortb) {
 
     const getAssetValue = (asset) => {
       if (asset.img) {
@@ -465,7 +423,7 @@ export function newNativeAssetManager(win, pubUrl) {
    */
   function replace(html, { assets, ortb, adId }) {
     if (data.ortb) {
-      return replaceORTBAssetsAndLinks(html, data);
+      html = replaceORTBAssetsAndLinks(html, data.ortb);
     } else if (!Array.isArray(data.assets)) {
       return html;
     }

@@ -384,6 +384,7 @@ describe('nativeAssetManager', () => {
           link: {
             url: "http://www.example.com",
           },
+
         },
         null,
         template,
