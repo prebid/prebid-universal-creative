@@ -257,12 +257,13 @@ export function newNativeAssetManager(win, pubUrl) {
   /*
    * Sends postmessage to Prebid for native resize
    */
-  function requestHeightResize(adId, height) {
+  function requestHeightResize(adId, height, width) {
     const message = {
       message: 'Prebid Native',
       action: 'resizeNativeHeight',
       adId,
       height,
+      width
     };
     sendMessage(message);
   }
@@ -365,16 +366,21 @@ export function newNativeAssetManager(win, pubUrl) {
     // a GAM display ad.
     if (!envionment.isSafeFrame()) {
       let iframeContainer = getCurrentFrameContainer(win);
-      if (iframeContainer) {
-        let width =  iframeContainer.getBoundingClientRect().width;
-        win.document.body.style.width = `${width}px`;
+      if (iframeContainer && iframeContainer.children && iframeContainer.children[0]) {
+        const iframe = iframeContainer.children[0]; 
+        if (iframe.width === '1' && iframe.height === '1') {
+          let width =  iframeContainer.getBoundingClientRect().width;
+          win.document.body.style.width = `${width}px`;
+        }
       }
+    } else {
+      document.body.style.width = Math.ceil(win.$sf.ext.geom().self.b) + 'px';
     }
     win.document.body.innerHTML += html;
     callback && callback();
     win.removeEventListener('message', replaceAssets);
     stopListening();
-    requestHeightResize(bid.adId, (document.body.clientHeight || document.body.offsetHeight));
+    requestHeightResize(bid.adId, (document.body.clientHeight || document.body.offsetHeight), document.body.clientWidth);
 
     if (typeof window.postRenderAd === 'function') {
       window.postRenderAd(bid);

@@ -502,16 +502,20 @@ describe('nativeAssetManager', () => {
     
     beforeEach(() => {
       win.parent.frames = [win];
-        win.parent.document = {
-          getElementsByTagName: sinon.stub().returns([{ 
-            contentWindow: win,
-            parentElement: {
-              getBoundingClientRect: () => ({
-                width: 600
-              })
-            }
-          }])
-        } 
+      win.parent.document = {
+        getElementsByTagName: sinon.stub().returns([{ 
+          contentWindow: win,
+          parentElement: {
+            getBoundingClientRect: () => ({
+              width: 600
+            }),
+            children: [{
+              width: '1', 
+              height: '1'
+            }]
+          }
+        }])
+      } 
     })
 
     it('should set the iframe to the width of the container', () => {
