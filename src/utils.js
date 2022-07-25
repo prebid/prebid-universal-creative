@@ -32,7 +32,9 @@ export function writeAdUrl(adUrl, width, height) {
 }
 
 export function writeAdHtml(markup) {
-  postscribe(document.body, markup);
+  postscribe(document.body, markup, {
+    error: console.error
+  });
 }
 
 export function sendRequest(url, callback) {
@@ -99,7 +101,7 @@ export function loadScript(currentWindow, tagSrc, successCallback, errorCallback
 
 /**
  * Return comment element
- * @param {*} bid 
+ * @param {*} bid
  */
 export function getCreativeComment(bid) {
   return document.createComment(`Creative ${bid.crid} served by Prebid.js Header Bidding`);
@@ -107,7 +109,7 @@ export function getCreativeComment(bid) {
 
 /**
  * Returns comment element markup
- * @param {*} bid 
+ * @param {*} bid
  */
 export function getCreativeCommentMarkup(bid) {
   let creativeComment = exports.getCreativeComment(bid);
@@ -127,7 +129,15 @@ export function transformAuctionTargetingData(tagData) {
     hb_format: 'mediaType',
     hb_env: 'env',
     hb_size: 'size',
-    hb_pb: 'hbPb'
+    hb_pb: 'hbPb',
+    fs_adid: 'adId',
+    fs_cache_host: 'cacheHost',
+    fs_cache_path: 'cachePath',
+    fs_cache_id: 'uuid',
+    fs_format: 'mediaType',
+    fs_env: 'env',
+    fs_size: 'size',
+    fs_pb: 'hbPb',
   };
 
   /**
@@ -138,7 +148,7 @@ export function transformAuctionTargetingData(tagData) {
   function isMacroPresent(paramName) {
     return !!(
       tagData[paramName] && (
-        (isPlainObject(tagData[paramName]) && Object.keys(tagData[paramName]).length > 0) || 
+        (isPlainObject(tagData[paramName]) && Object.keys(tagData[paramName]).length > 0) ||
         (isStr(tagData[paramName]) && tagData[paramName] !== '')
       )
     );
@@ -169,7 +179,7 @@ export function transformAuctionTargetingData(tagData) {
   function convertKeyPairStringToMap(keywordsStr) {
     let keywordsMap = {};
     const keywordsArr = keywordsStr.split(',');
-    
+
     if (keywordsArr.length > 0) {
       keywordsArr.forEach(function(keyPairStr) {
         let keyPairArr = keyPairStr.split(':');
@@ -182,7 +192,7 @@ export function transformAuctionTargetingData(tagData) {
     }
     return keywordsMap;
   }
-  
+
   /**
    * Rename key if it's part of the auctionKeyMap object; if not, leave key as is
    * Store the resultant keypair in the auctionData object for later use in renderingManager.renderAd()
@@ -192,19 +202,19 @@ export function transformAuctionTargetingData(tagData) {
     Object.keys(adServerKeyMap).forEach(function(key) {
       let internalKey = auctionKeyMap[key] || key;
       auctionData[internalKey] = adServerKeyMap[key];
-    }); 
+    });
   }
 
   let auctionData = {};
   let formattedKeyMap = {};
-  
+
   if (isMacroPresent('targetingMap')) {
     formattedKeyMap = convertTargetingMapToNormalMap(tagData.targetingMap);
   } else if (isMacroPresent('targetingKeywords')) {
     formattedKeyMap = convertKeyPairStringToMap(tagData.targetingKeywords);
   }
   renameKnownAuctionKeys(formattedKeyMap);
-  
+
   // set keys not in defined map macros (eg targetingMap) and/or the keys setup within a non-DFP adserver
   Object.keys(tagData).forEach(function (key) {
     if (key !== 'targetingMap' && key !== 'targetingKeywords' && isStr(tagData[key]) && tagData[key] !== '') {
@@ -218,7 +228,7 @@ export function parseUrl(url) {
   let parsed = document.createElement('a');
 
   parsed.href = decodeURIComponent(url);
-  
+
   return {
     href: parsed.href,
     protocol: (parsed.protocol || '').replace(/:$/, ''),

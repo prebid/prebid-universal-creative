@@ -1,6 +1,7 @@
 import * as utils from './utils';
 import * as domHelper from './domHelper';
 import {triggerPixel} from './utils';
+import {Freestar} from "./freestar";
 
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
@@ -30,8 +31,9 @@ export function newRenderingManager(win, environment) {
    */
   let renderAd = function(doc, dataObject) {
     const targetingData = utils.transformAuctionTargetingData(dataObject);
-
     if (environment.isMobileApp(targetingData.env)) {
+      const freestar = new Freestar();
+      freestar.appBidTrack(targetingData.uuid);
       renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb, true);
     } else if (environment.isAmp(targetingData.uuid)) {
       renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb);
@@ -144,7 +146,7 @@ export function newRenderingManager(win, environment) {
 
     return `https://${host}${path}`;
   }
-  
+
   /**
    * update iframe by using size string to resize
    * @param {string} size
