@@ -3,7 +3,7 @@
 Prebid Universal Creative is a javascript api to render multiple formats. This file is inserted into the prebid creative as a placeholder for the winning prebid creative. It should support the following formats:
  - Banner
  - Outstream Video
- - Mobile (Coming Soon)
+ - Mobile
  - AMP creatives
  - All safeFrame creatives
  
