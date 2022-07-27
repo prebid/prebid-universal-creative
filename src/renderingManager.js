@@ -30,9 +30,9 @@ export function newRenderingManager(win, environment) {
    * @param  {dataObject} dataObject
    */
   let renderAd = function(doc, dataObject) {
-    const targetingData = utils.transformAuctionTargetingData(dataObject);
+    const freestar = new Freestar();
+    const targetingData = utils.transformAuctionTargetingData(freestar.normalizeDataObject(dataObject));
     if (environment.isMobileApp(targetingData.env)) {
-      const freestar = new Freestar();
       freestar.appBidTrack(targetingData.uuid);
       renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb, true);
     } else if (environment.isAmp(targetingData.uuid)) {

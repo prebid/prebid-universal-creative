@@ -137,7 +137,7 @@ export function transformAuctionTargetingData(tagData) {
     fs_format: 'mediaType',
     fs_env: 'env',
     fs_size: 'size',
-    fs_pb: 'hbPb',
+    fs_pb: 'fsPb',
   };
 
   /**

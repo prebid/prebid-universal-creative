@@ -99,10 +99,12 @@ describe('renderingManager', function() {
     it('should render mobile app creative', function() {
       const renderObject = newRenderingManager(mockWin, env);
       let ucTagData = {
-        cacheHost: 'example.com',
-        cachePath: '/path',
+        host: 'foo.com',
         uuid: '123',
-        size: '300x250'
+        mediaType: 'banner',
+        pubUrl: 'app.app',
+        winurl: 'foo.com/nurl',
+        winbidid: 'ag62374gnnn324234n',
       };
 
       renderObject.renderAd(mockWin.document, ucTagData);
@@ -114,9 +116,8 @@ describe('renderingManager', function() {
         adm: 'ad-markup',
         wurl: 'https://test.prebidcache.wurl'
       };
-      requests[0].respond(200, {}, JSON.stringify(response));
+      requests[1].respond(200, {}, JSON.stringify(response));
       expect(writeHtmlSpy.callCount).to.equal(1);
-      expect(sendRequestSpy.args[0][0]).to.equal('https://example.com/path?uuid=123');
     });
 
     it('should render mobile app creative with missing cache wurl', function() {
@@ -136,7 +137,7 @@ describe('renderingManager', function() {
         crid: 123,
         adm: 'ad-markup'
       };
-      requests[0].respond(200, {}, JSON.stringify(response));
+      requests[1].respond(200, {}, JSON.stringify(response));
       expect(writeHtmlSpy.callCount).to.equal(1);
       expect(sendRequestSpy.args[0][0]).to.equal('https://example.com/path?uuid=123');
     });
@@ -156,7 +157,7 @@ describe('renderingManager', function() {
         crid: 123,
         adm: 'ad-markup'
       };
-      requests[0].respond(200, {}, JSON.stringify(response));
+      requests[1].respond(200, {}, JSON.stringify(response));
       expect(writeHtmlSpy.callCount).to.equal(1);
       expect(sendRequestSpy.args[0][0]).to.equal('https://prebid.adnxs.com/pbc/v1/cache?uuid=123');
     });
