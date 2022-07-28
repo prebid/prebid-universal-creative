@@ -28,8 +28,8 @@ export class Freestar {
         return (env.length) ? env : fsEnv;
     }
 
-    getHbPb ({ hbPb= '', fsPb = ''}) {
-        return (hbPb.length) ? hbPb : fsPb;
+    getHbPb ({ hbPb= '', fsPb = '', t13Pb = ''}) {
+        return (hbPb.length) ? hbPb : (fsPb.length) ? fsPb : t13Pb;
     }
 
     getCacheHost ({ cacheHost = '', fsCacheHost = ''}) {
