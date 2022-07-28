@@ -30,17 +30,17 @@ export function newRenderingManager(win, environment) {
    * @param  {dataObject} dataObject
    */
   let renderAd = function(doc, dataObject) {
-    const freestar = new Freestar();
-    const targetingData = utils.transformAuctionTargetingData(freestar.normalizeDataObject(dataObject));
-    if (environment.isMobileApp(targetingData.env)) {
-      freestar.appBidTrack(targetingData.uuid);
-      renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb, true);
-    } else if (environment.isAmp(targetingData.uuid)) {
-      renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb);
+    const targetingData = utils.transformAuctionTargetingData(dataObject);
+    const freestar = new Freestar(targetingData);
+    if (environment.isMobileApp(freestar.env)) {
+      freestar.appBidTrack(freestar.uuid);
+      renderAmpOrMobileAd(freestar.cacheHost, freestar.cachePath, freestar.uuid, freestar.size, freestar.hbPb, true);
+    } else if (environment.isAmp(freestar.uuid)) {
+      renderAmpOrMobileAd(freestar.cacheHost, freestar.cachePath, freestar.uuid, freestar.size, freestar.hbPb, false);
     } else if (!environment.canLocatePrebid()) {
-      renderCrossDomain(targetingData.adId, targetingData.adServerDomain, targetingData.pubUrl);
+      renderCrossDomain(freestar.adId, targetingData.adServerDomain, targetingData.pubUrl);
     } else {
-      renderLegacy(doc, targetingData.adId);
+      renderLegacy(doc, freestar.adId);
     }
   };
 
@@ -167,7 +167,7 @@ export function newRenderingManager(win, environment) {
    * @param {string} uuid id to render response from cache endpoint
    * @param {string} size size of the creative
    * @param {string} hbPb final price of the winning bid
-   * @param {Bool} isMobileApp flag to detect mobile app
+   * @param {boolean} isMobileApp flag to detect mobile app
    */
   function renderAmpOrMobileAd(cacheHost, cachePath, uuid = '', size, hbPb, isMobileApp) {
     // For MoPub, creative is stored in localStorage via SDK.
@@ -186,7 +186,7 @@ export function newRenderingManager(win, environment) {
 
   /**
    * Cache request Callback to display creative
-   * @param {Bool} isMobileApp
+   * @param {boolean} isMobileApp
    * @param {string} hbPb final price of the winning bid
    * @returns {function} a callback function that parses response
    */

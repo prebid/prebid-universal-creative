@@ -1,8 +1,13 @@
 export class Freestar {
 
-    constructor() {
-        this.fsPb = 'fsPb';
-        this.hsPb = 'hsPb';
+    constructor(targetingData) {
+        this.env = this.getEnv(targetingData);
+        this.uuid = this.getUuid(targetingData);
+        this.hbPb = this.getHbPb(targetingData);
+        this.cacheHost = this.getCacheHost(targetingData);
+        this.cachePath = this.getCachePath(targetingData);
+        this.size = this.getSize(targetingData);
+        this.adId = this.getAdId(targetingData);
     }
 
     appBidTrack (p1, p2 = "-", p3 = "-") {
@@ -14,15 +19,32 @@ export class Freestar {
         };
         xmlHttp.send( null );
     }
-    normalizeDataObject (dataObject) {
-        if (dataObject[this.fsPb] && dataObject[this.fsPb].length && !dataObject[this.hbPb].length) {
-            dataObject.hbPb = dataObject[this.fsPb];
-            if (dataObject.targetMapping) {
-                dataObject.targetMapping['hb_pb'] = [dataObject[this.fsPb]];
-                dataObject.targetMapping['fs_pb'] = [dataObject[this.fsPb]];
-            }
-        }
-        return dataObject;
+
+    getUuid({ uuid = '', fsUuid = ''}) {
+        return (uuid.length) ? uuid : fsUuid;
     }
 
+    getEnv ({ env= '', fsEnv = ''}) {
+        return (env.length) ? env : fsEnv;
+    }
+
+    getHbPb ({ hbPb= '', fsPb = ''}) {
+        return (hbPb.length) ? hbPb : fsPb;
+    }
+
+    getCacheHost ({ cacheHost = '', fsCacheHost = ''}) {
+        return (cacheHost.length) ? cacheHost : fsCacheHost;
+    }
+
+    getCachePath ({ cachePath = '', fsCachePath = ''}) {
+        return (cachePath.length) ? cachePath : fsCachePath;
+    }
+
+    getSize ({ size = '', fsSize = ''}) {
+        return (size.length) ? size : fsSize;
+    }
+
+    getAdId ({ adId = '', fsAdId = ''}) {
+        return (adId.length) ? adId : fsAdId;
+    }
 }
