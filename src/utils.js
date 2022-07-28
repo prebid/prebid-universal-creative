@@ -138,6 +138,13 @@ export function transformAuctionTargetingData(tagData) {
     fs_env: 'fsEnv',
     fs_size: 'fsSize',
     fs_pb: 'fsPb',
+    t13_adid: 't13AdId',
+    t13_cache_host: 't13CacheHost',
+    t13_cache_path: 't13CachePath',
+    t13_cache_id: 't13Uuid',
+    t13_format: 't13MediaType',
+    t13_env: 't13Env',
+    t13_size: 't13Size',
     t13_pb: 't13Pb'
   };
 
