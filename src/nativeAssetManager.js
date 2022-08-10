@@ -170,6 +170,10 @@ export function newNativeAssetManager(win, pubUrl) {
     }
   }
 
+  function pbNativeDataHasValidType() {
+    return typeof win.pbNativeData !== 'undefined'
+  }
+
   /*
    * Entry point to search for placeholderes and set up postmessage roundtrip
    * to retrieve native assets. Looks for placeholders for the given adId and
@@ -178,16 +182,16 @@ export function newNativeAssetManager(win, pubUrl) {
    * to retrieve native assets that have a value on the corresponding bid
    */
   function loadAssets(adId, cb) {
-    const placeholders = scanForPlaceholders(adId), flag = (typeof win.pbNativeData !== 'undefined');
+    const placeholders = scanForPlaceholders(adId);
 
-    if (flag && win.pbNativeData.hasOwnProperty('assetsToReplace')) {
+    if (pbNativeDataHasValidType() && win.pbNativeData.hasOwnProperty('assetsToReplace')) {
         win.pbNativeData.assetsToReplace.forEach((asset) => {
           const key = (asset.match(/hb_native_/i)) ? asset : NATIVE_KEYS[asset];
           if (key) {placeholders.push(key);}
         });
     }
 
-    if (flag && win.pbNativeData.hasOwnProperty('requestAllAssets') && win.pbNativeData.requestAllAssets) {
+    if (pbNativeDataHasValidType() && win.pbNativeData.hasOwnProperty('requestAllAssets') && win.pbNativeData.requestAllAssets) {
       callback = cb;
       cancelMessageListener = requestAllAssets(adId);
     } else if (placeholders.length > 0) {
@@ -202,11 +206,10 @@ export function newNativeAssetManager(win, pubUrl) {
   function scanForPlaceholders(adId) {
     let placeholders = [];
     const doc = win.document;
-    const flag = (typeof win.pbNativeData !== 'undefined');
 
     Object.keys(NATIVE_KEYS).forEach(key => {
       const placeholderKey = NATIVE_KEYS[key];
-      const placeholder = (adId && !flag) ? `${placeholderKey}:${adId}` : `${placeholderKey}`;
+      const placeholder = (adId && !pbNativeDataHasValidType()) ? `${placeholderKey}:${adId}` : `${placeholderKey}`;
       const placeholderIndex = (~doc.body.innerHTML.indexOf(placeholder)) ? doc.body.innerHTML.indexOf(placeholder) : (doc.head.innerHTML && doc.head.innerHTML.indexOf(placeholder));
 
       if (~placeholderIndex) {
@@ -280,7 +283,7 @@ export function newNativeAssetManager(win, pubUrl) {
     if (data.message === 'assetResponse') {
       const body = win.document.body.innerHTML;
       const head = win.document.head.innerHTML;
-      const flag = (typeof win.pbNativeData !== 'undefined');
+      const flag = pbNativeDataHasValidType();
 
       if (flag && data.adId !== win.pbNativeData.adId) return;
 
@@ -333,16 +336,23 @@ export function newNativeAssetManager(win, pubUrl) {
   /**
    * Replaces occurrences of native placeholder values with their actual values
    * in the given document.
+   * If there are still native placeholders in the template that were not replaced (because no asset value was sent),
+   * those placeholders will be replaced by an empty string.
    */
   function replace(document, { assets, adId }) {
     let html = document;
 
     (assets || []).forEach(asset => {
-      const flag = (typeof win.pbNativeData !== 'undefined');
+      const flag = pbNativeDataHasValidType();
       const searchString = (adId && !flag) ? `${NATIVE_KEYS[asset.key]}:${adId}` : ((flag) ? '##'+`${NATIVE_KEYS[asset.key]}`+'##' : `${NATIVE_KEYS[asset.key]}`);
       const searchStringRegex = new RegExp(searchString, 'g');
       html = html.replace(searchStringRegex, asset.value);
     });
+
+    scanForPlaceholders().forEach(placeholder => {
+      const searchString = pbNativeDataHasValidType() ? `##${placeholder}##` : placeholder;
+      html = html.replaceAll(searchString, '');
+    })
 
     return html;
   }
