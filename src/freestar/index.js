@@ -1,3 +1,5 @@
+import {sendRequest} from "../utils";
+
 export class Freestar {
 
     constructor(targetingData) {
@@ -11,13 +13,11 @@ export class Freestar {
     }
 
     appBidTrack (p1, p2 = "-", p3 = "-") {
-        const theUrl = 'https://serve.pubapp.network/adserver/ssp/btrk?p1=' + p1 + '&p2=' + p2 + '&p3=' +  p3;
-        const xmlHttp = new XMLHttpRequest();
-        xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
-        xmlHttp.onload = function() {
-            console.log("Http Status Code: " + xmlHttp.status + " readyState: " + xmlHttp.readyState + " StatusText: " + xmlHttp.statusText);
+        const fsAppTrackURL = 'https://serve.pubapp.network/adserver/ssp/btrk?p1=' + p1 + '&p2=' + p2 + '&p3=' +  p3;
+        const callback = function(responseText) {
+            console.log(responseText);
         };
-        xmlHttp.send( null );
+        sendRequest(fsAppTrackURL, callback);
     }
 
     getHbPb ({ hbPb= '', fsPb = '', t13Pb = ''}) {
