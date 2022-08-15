@@ -1,8 +1,7 @@
 import * as utils from './utils';
 import * as domHelper from './domHelper';
 import {triggerPixel} from './utils';
-import {Freestar} from "./freestar";
-import {sendRequest} from "./utils";
+import {appBidTrack, Freestar} from "./freestar";
 
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
@@ -34,7 +33,6 @@ export function newRenderingManager(win, environment) {
     const targetingData = utils.transformAuctionTargetingData(dataObject);
     const freestar = new Freestar(targetingData);
     if (environment.isMobileApp(freestar.env)) {
-      freestar.appBidTrack(freestar.uuid);
       renderAmpOrMobileAd(freestar.cacheHost, freestar.cachePath, freestar.uuid, freestar.size, freestar.hbPb, true);
     } else if (environment.isAmp(freestar.uuid)) {
       renderAmpOrMobileAd(freestar.cacheHost, freestar.cachePath, freestar.uuid, freestar.size, freestar.hbPb, false);
@@ -181,7 +179,7 @@ export function newRenderingManager(win, environment) {
       let adUrl = `${getCacheEndpoint(cacheHost, cachePath)}?uuid=${uuid}`;
       //register creative right away to not miss initial geom-update
       updateIframe(size);
-      utils.sendRequest(adUrl, responseCallback(isMobileApp, hbPb));
+      utils.sendRequest(adUrl, responseCallback(isMobileApp, hbPb, uuid));
     }
   }
 
@@ -189,9 +187,10 @@ export function newRenderingManager(win, environment) {
    * Cache request Callback to display creative
    * @param {boolean} isMobileApp
    * @param {string} hbPb final price of the winning bid
+   * @param {string} uuid
    * @returns {function} a callback function that parses response
    */
-  function responseCallback(isMobileApp, hbPb) {
+  function responseCallback(isMobileApp, hbPb, uuid) {
     return function(response) {
       let bidObject = parseResponse(response);
       let auctionPrice = bidObject.price || hbPb;
@@ -238,6 +237,7 @@ export function newRenderingManager(win, environment) {
         if(isMobileApp) {
           let adhtml = utils.loadScript(win, bidObject.nurl);
           ad += constructMarkup(adhtml.outerHTML, width, height);
+          appBidTrack(uuid);
           utils.writeAdHtml(ad);
         } else {
           let nurl = bidObject.nurl;
@@ -247,7 +247,7 @@ export function newRenderingManager(win, environment) {
         }
       }
     }
-  };
+  }
 
   /**
    * Load response from localStorage. In case of MoPub, sdk caches response

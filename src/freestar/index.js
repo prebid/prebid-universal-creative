@@ -12,14 +12,6 @@ export class Freestar {
         this.adId = this.getAdId(targetingData);
     }
 
-    appBidTrack (p1, p2 = "-", p3 = "-") {
-        const fsAppTrackURL = 'https://serve.pubapp.network/adserver/ssp/btrk?p1=' + p1 + '&p2=' + p2 + '&p3=' +  p3;
-        const callback = function(responseText) {
-            console.log(responseText);
-        };
-        sendRequest(fsAppTrackURL, callback);
-    }
-
     getHbPb ({ hbPb= '', fsPb = '', t13Pb = ''}) {
         return (hbPb.length) ? hbPb : (fsPb.length) ? fsPb : t13Pb;
     }
@@ -47,4 +39,12 @@ export class Freestar {
     getAdId ({ adId = '', fsAdId = '', t13AdId = ''}) {
         return (adId.length) ? adId : (fsAdId.length) ? fsAdId : t13AdId;
     }
+}
+
+export function appBidTrack (p1, p2 = "-", p3 = "-") {
+    const fsAppTrackURL = 'https://serve.pubapp.network/adserver/ssp/btrk?p1=' + p1 + '&p2=' + p2 + '&p3=' +  p3;
+    const callback = function(responseText) {
+        console.log(responseText);
+    };
+    sendRequest(fsAppTrackURL, callback);
 }
