@@ -43,8 +43,5 @@ export class Freestar {
 
 export function appBidTrack (p1, p2 = "-", p3 = "-") {
     const fsAppTrackURL = 'https://serve.pubapp.network/adserver/ssp/btrk?p1=' + p1 + '&p2=' + p2 + '&p3=' +  p3;
-    const callback = function(responseText) {
-        console.log(responseText);
-    };
-    sendRequest(fsAppTrackURL, callback);
+    sendRequest(fsAppTrackURL, () =>{});
 }
