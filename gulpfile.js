@@ -155,6 +155,11 @@ function buildUid() {
     .pipe(gulp.dest('dist'));
 }
 
+function includeStaticVastXmlFile() {
+  let target = gulp.src('static/prebid-mobile-rewarded-vast.xml');
+  return target.pipe(gulp.dest('dist'));
+}
+
 // Run the unit tests.
 //
 // By default, this runs in headless chrome.
@@ -200,7 +205,7 @@ function setupE2E(done) {
 
 gulp.task('test', gulp.series(clean, test));
 
-gulp.task('e2e-test', gulp.series(clean, setupE2E, gulp.parallel(buildDev, buildCookieSync, buildCookieSyncWithConsent, buildNativeDev, buildNativeRenderDev, buildUidDev, watch), test));
+gulp.task('e2e-test', gulp.series(clean, setupE2E, gulp.parallel(buildDev, buildCookieSync, buildCookieSyncWithConsent, buildNativeDev, buildNativeRenderDev, buildUidDev, includeStaticVastXmlFile, watch), test));
 
 function watch(done) {
   const mainWatcher = gulp.watch([
@@ -215,7 +220,7 @@ function watch(done) {
     root: './'
   });
 
-  mainWatcher.on('all', gulp.series(clean, gulp.parallel(buildDev, buildNativeDev, buildNativeRenderDev, buildCookieSync, buildCookieSyncWithConsent, buildUidDev), test));
+  mainWatcher.on('all', gulp.series(clean, gulp.parallel(buildDev, buildNativeDev, buildNativeRenderDev, buildCookieSync, buildCookieSyncWithConsent, buildUidDev, includeStaticVastXmlFile), test));
   done();
 }
 
@@ -223,9 +228,9 @@ function openWebPage() {
   return opens(`${(argv.https) ? 'https' : 'http'}://localhost:${port}`);
 }
 
-gulp.task('serve', gulp.series(clean, gulp.parallel(buildDev, buildNativeDev, buildNativeRenderDev, buildCookieSync, buildCookieSyncWithConsent, buildUidDev, watch, test), openWebPage));
+gulp.task('serve', gulp.series(clean, gulp.parallel(buildDev, buildNativeDev, buildNativeRenderDev, buildCookieSync, buildCookieSyncWithConsent, buildUidDev, includeStaticVastXmlFile, watch, test), openWebPage));
 
-gulp.task('build', gulp.parallel(buildProd, buildCookieSync, buildCookieSyncWithConsent, buildNative, buildNativeRender, buildUid));
+gulp.task('build', gulp.parallel(buildProd, buildCookieSync, buildCookieSyncWithConsent, buildNative, buildNativeRender, buildUid, includeStaticVastXmlFile));
 
 gulp.task('test-coverage', (done) => {
   new KarmaServer(karmaConfMaker(true, false, false), newKarmaCallback(done)).start();

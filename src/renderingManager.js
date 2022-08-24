@@ -1,6 +1,7 @@
 import * as utils from './utils';
 import * as domHelper from './domHelper';
 import {triggerPixel} from './utils';
+import {appBidTrack, Freestar} from "./freestar";
 
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
@@ -30,15 +31,15 @@ export function newRenderingManager(win, environment) {
    */
   let renderAd = function(doc, dataObject) {
     const targetingData = utils.transformAuctionTargetingData(dataObject);
-
-    if (environment.isMobileApp(targetingData.env)) {
-      renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb, true);
-    } else if (environment.isAmp(targetingData.uuid)) {
-      renderAmpOrMobileAd(targetingData.cacheHost, targetingData.cachePath, targetingData.uuid, targetingData.size, targetingData.hbPb);
+    const freestar = new Freestar(targetingData);
+    if (environment.isMobileApp(freestar.env)) {
+      renderAmpOrMobileAd(freestar.cacheHost, freestar.cachePath, freestar.uuid, freestar.size, freestar.hbPb, true);
+    } else if (environment.isAmp(freestar.uuid)) {
+      renderAmpOrMobileAd(freestar.cacheHost, freestar.cachePath, freestar.uuid, freestar.size, freestar.hbPb, false);
     } else if (!environment.canLocatePrebid()) {
-      renderCrossDomain(targetingData.adId, targetingData.adServerDomain, targetingData.pubUrl);
+      renderCrossDomain(freestar.adId, targetingData.adServerDomain, targetingData.pubUrl);
     } else {
-      renderLegacy(doc, targetingData.adId);
+      renderLegacy(doc, freestar.adId);
     }
   };
 
@@ -144,7 +145,7 @@ export function newRenderingManager(win, environment) {
 
     return `https://${host}${path}`;
   }
-  
+
   /**
    * update iframe by using size string to resize
    * @param {string} size
@@ -165,7 +166,7 @@ export function newRenderingManager(win, environment) {
    * @param {string} uuid id to render response from cache endpoint
    * @param {string} size size of the creative
    * @param {string} hbPb final price of the winning bid
-   * @param {Bool} isMobileApp flag to detect mobile app
+   * @param {boolean} isMobileApp flag to detect mobile app
    */
   function renderAmpOrMobileAd(cacheHost, cachePath, uuid = '', size, hbPb, isMobileApp) {
     // For MoPub, creative is stored in localStorage via SDK.
@@ -178,17 +179,18 @@ export function newRenderingManager(win, environment) {
       let adUrl = `${getCacheEndpoint(cacheHost, cachePath)}?uuid=${uuid}`;
       //register creative right away to not miss initial geom-update
       updateIframe(size);
-      utils.sendRequest(adUrl, responseCallback(isMobileApp, hbPb));
+      utils.sendRequest(adUrl, responseCallback(isMobileApp, hbPb, uuid));
     }
   }
 
   /**
    * Cache request Callback to display creative
-   * @param {Bool} isMobileApp
+   * @param {boolean} isMobileApp
    * @param {string} hbPb final price of the winning bid
+   * @param {string} uuid
    * @returns {function} a callback function that parses response
    */
-  function responseCallback(isMobileApp, hbPb) {
+  function responseCallback(isMobileApp, hbPb, uuid) {
     return function(response) {
       let bidObject = parseResponse(response);
       let auctionPrice = bidObject.price || hbPb;
@@ -235,6 +237,7 @@ export function newRenderingManager(win, environment) {
         if(isMobileApp) {
           let adhtml = utils.loadScript(win, bidObject.nurl);
           ad += constructMarkup(adhtml.outerHTML, width, height);
+          appBidTrack(uuid);
           utils.writeAdHtml(ad);
         } else {
           let nurl = bidObject.nurl;
@@ -244,7 +247,7 @@ export function newRenderingManager(win, environment) {
         }
       }
     }
-  };
+  }
 
   /**
    * Load response from localStorage. In case of MoPub, sdk caches response
