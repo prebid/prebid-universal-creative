@@ -1,18 +1,21 @@
-import { fireNativeClickTrackers, fireNativeImpressionTrackers } from 'src/nativeORTBTrackerManager';
+import { addNativeClickTrackers, fireNativeImpressionTrackers } from 'src/nativeORTBTrackerManager';
 import * as utils from 'src/utils';
 
 describe('test firing native trackers', function () {
   let triggerPixel;
   let loadScript;
   let getElementsByClassName;
+  let sendMessage;
 
   beforeEach(function () {
     triggerPixel = sinon.stub(utils, 'triggerPixel');
     loadScript = sinon.stub(utils, 'loadScript');
+    sendMessage = sinon.spy();
 
     getElementsByClassName = sinon.stub(document, 'getElementsByClassName').callsFake(() => {
       return [{
         addEventListener: (event, callback, capture) => {
+          // immediately call the callback to test the click
           callback({
             target: {
               getAttribute: (name) => {
@@ -29,30 +32,29 @@ describe('test firing native trackers', function () {
     triggerPixel.restore();
     loadScript.restore();
     getElementsByClassName.restore();
+    sendMessage.resetHistory();
   });
 
 
   it('should fire impression trackers', function () {
     let imgUrl = 'foo.bar/event?type=img';
     let jsUrl = 'foo.bar/event?type=js';
-    let nativeOrtb = {
-      eventtrackers: [
-        { url: imgUrl, event: 1, method: 1 },
-        { url: jsUrl, event: 1, method: 2 },
-      ]
-    }
+    
 
-    fireNativeImpressionTrackers(nativeOrtb);
+    fireNativeImpressionTrackers("abc123", sendMessage);
 
-    expect(triggerPixel.callCount).to.equal(1);
-    expect(triggerPixel.args[0][0]).to.equal(imgUrl);
-    expect(loadScript.callCount).to.equal(1);
-    expect(loadScript.args[0][1]).to.equal(jsUrl);
+    console.log('sendMesage arguments: ', sendMessage.getCall(0).args[0]);
+    expect(sendMessage.getCall(0).args[0]).to.deep.equal({
+      message: 'Prebid Native', 
+      action: 'fireNativeImpressionTrackers',
+      adId: 'abc123'
+    })
   });
 
   it('should fire asset clicktrackers', function () {
     let assetTrackers = ['foo.bar/click?id=1', 'foo.bar/click?id=2'];
     let mainTrackers = ['foo.bar/click?id=3'];
+    let adId = "abc123";
     let nativeOrtb = {
       assets: [{
         id: 1,
@@ -63,15 +65,13 @@ describe('test firing native trackers', function () {
       }
     }
 
-    fireNativeClickTrackers(nativeOrtb);
-    expect(triggerPixel.callCount).to.equal(2);
-    expect(triggerPixel.args[0][0]).to.equal(assetTrackers[0]);
-    expect(triggerPixel.args[1][0]).to.equal(assetTrackers[1]);
-
-    // change assetId to 2
-    nativeOrtb.assets[0].id = 2;
-    fireNativeClickTrackers(nativeOrtb);
-    expect(triggerPixel.callCount).to.equal(3);
-    expect(triggerPixel.args[2][0]).to.equal(mainTrackers[0]);
+    addNativeClickTrackers(adId, nativeOrtb, sendMessage);
+    expect(sendMessage.getCall(0).args[0]).to.deep.equal({
+      message: "Prebid Native",
+      action: 'click',
+      adId: 'abc123',
+      assetId: 1
+    });
+    
   });
 });

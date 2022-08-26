@@ -3,7 +3,7 @@
  * values in native creative templates.
  */
 
-import { fireNativeClickTrackers, fireNativeImpressionTrackers } from './nativeORTBTrackerManager';
+import { addNativeClickTrackers, fireNativeImpressionTrackers } from './nativeORTBTrackerManager';
 import { sendRequest, loadScript } from './utils';
 import {prebidMessenger} from './messaging.js';
 import { newEnvironment } from './environment.js';
@@ -300,8 +300,8 @@ export function newNativeAssetManager(win, pubUrl) {
       if (data.ortb) {
         renderPayload.ortb = data.ortb;
         callback = () => {
-          fireNativeImpressionTrackers(data.ortb);
-          fireNativeClickTrackers(data.ortb);
+          fireNativeImpressionTrackers(data.adId, sendMessage);
+          addNativeClickTrackers(data.adId, data.ortb, sendMessage);
         }
       }
 
