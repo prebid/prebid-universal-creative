@@ -402,6 +402,7 @@ export function newNativeAssetManager(win, pubUrl) {
       if (asset.video) {
         return asset.video.vasttag;
       }
+      return ''
     }
 
     ortb.assets.forEach(asset => {
@@ -410,6 +411,8 @@ export function newNativeAssetManager(win, pubUrl) {
         html = html.replace(`##hb_native_asset_link_id_${asset.id}##`, asset.link.url);
       }
     });
+
+    html = html.replaceAll(/##hb_native_asset_id_\d+##/gm, '');
 
     if (ortb.privacy) {
       html = html.replace("##hb_native_privacy##", ortb.privacy);

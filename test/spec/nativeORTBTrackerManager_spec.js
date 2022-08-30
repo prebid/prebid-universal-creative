@@ -43,7 +43,6 @@ describe('test firing native trackers', function () {
 
     fireNativeImpressionTrackers("abc123", sendMessage);
 
-    console.log('sendMesage arguments: ', sendMessage.getCall(0).args[0]);
     expect(sendMessage.getCall(0).args[0]).to.deep.equal({
       message: 'Prebid Native', 
       action: 'fireNativeImpressionTrackers',

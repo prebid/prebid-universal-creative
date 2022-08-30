@@ -348,6 +348,7 @@ describe('nativeAssetManager', () => {
       <div class="attribution">
         <img class="pb-icon" src="##hb_native_asset_id_3##" alt="icon" height="150" width="50">
       </div>
+      <p>##hb_native_asset_id_4##</p>
     </div>
   </div>
   `;
@@ -401,6 +402,10 @@ describe('nativeAssetManager', () => {
         `<img class="pb-icon" src="http://www.image.com/picture.jpg" alt="icon" height="150" width="50">`
       );
       expect(win.document.body.innerHTML).to.include(`<p>Body content</p>`);
+
+      // ##hb_native_asset_id_4## was not returned in the response, it should 
+      // be transformed into an empty string
+      expect(win.document.body.innerHTML).to.not.include(`##hb_native_asset_id_4##`);
     });
   
     it('no placeholders found but requests all assets flag set - adTemplate', () => {
