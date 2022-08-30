@@ -340,7 +340,7 @@ export function newNativeAssetManager(win, pubUrl) {
     let html = document;
 
     scanForPlaceholders().forEach(placeholder => {
-      const flag = true;
+      const flag = pbNativeDataHasValidType();
       const searchString = (adId && !flag) ? `${placeholder}:${adId}` : ((flag) ? '##'+`${placeholder}`+'##' : `${placeholder}`);
       const searchStringRegex = new RegExp(searchString, 'g');
       const fittingAsset = assets.find(asset => placeholder === NATIVE_KEYS[asset.key]);
