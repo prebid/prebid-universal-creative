@@ -70,8 +70,6 @@ export function newNativeAssetManager(win, pubUrl) {
     }
   }
 
-
-
   function getCacheEndpoint(cacheHost, cachePath) {
     let host = (typeof cacheHost === 'undefined' || cacheHost === "") ? DEFAULT_CACHE_HOST : cacheHost;
     let path = (typeof cachePath === 'undefined' || cachePath === "") ? DEFAULT_CACHE_PATH : cachePath;
@@ -336,22 +334,17 @@ export function newNativeAssetManager(win, pubUrl) {
   /**
    * Replaces occurrences of native placeholder values with their actual values
    * in the given document.
-   * If there are still native placeholders in the template that were not replaced (because no asset value was sent),
-   * those placeholders will be replaced by an empty string.
+   * If there's no actual value, the placeholder gets replaced by an empty string.
    */
   function replace(document, { assets, adId }) {
     let html = document;
 
-    (assets || []).forEach(asset => {
-      const flag = pbNativeDataHasValidType();
-      const searchString = (adId && !flag) ? `${NATIVE_KEYS[asset.key]}:${adId}` : ((flag) ? '##'+`${NATIVE_KEYS[asset.key]}`+'##' : `${NATIVE_KEYS[asset.key]}`);
-      const searchStringRegex = new RegExp(searchString, 'g');
-      html = html.replace(searchStringRegex, asset.value);
-    });
-
     scanForPlaceholders().forEach(placeholder => {
-      const searchString = pbNativeDataHasValidType() ? `##${placeholder}##` : placeholder;
-      html = html.replaceAll(searchString, '');
+      const flag = true;
+      const searchString = (adId && !flag) ? `${placeholder}:${adId}` : ((flag) ? '##'+`${placeholder}`+'##' : `${placeholder}`);
+      const searchStringRegex = new RegExp(searchString, 'g');
+      const fittingAsset = assets.find(asset => placeholder === NATIVE_KEYS[asset.key]);
+      html = html.replace(searchStringRegex, fittingAsset ? fittingAsset.value : '');
     })
 
     return html;
