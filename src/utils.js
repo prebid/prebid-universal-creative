@@ -32,6 +32,9 @@ export function writeAdUrl(adUrl, width, height) {
 }
 
 export function writeAdHtml(markup) {
+  // remove <?xml> and <!doctype> tags
+  // https://github.com/prebid/prebid-universal-creative/issues/134
+  markup = markup.replace(/\<(\?xml|(\!DOCTYPE[^\>\[]+(\[[^\]]+)?))+[^>]+\>/g, '');
   postscribe(document.body, markup, {
     error: console.error
   });
