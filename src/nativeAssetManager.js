@@ -134,7 +134,8 @@ export function newNativeAssetManager(win, pubUrl) {
     return {
       assets,
       clicktrackers,
-      'imptrackers' : adMarkup.imptrackers
+      'imptrackers' : adMarkup.imptrackers,
+      'eventtrackers': adMarkup.eventtrackers
     }
   }
 
@@ -151,7 +152,8 @@ export function newNativeAssetManager(win, pubUrl) {
 
           callback && callback({
             clickTrackers: data.clicktrackers,
-            impTrackers: data.imptrackers
+            impTrackers: data.imptrackers,
+            eventtrackers: data.eventtrackers
           });
         } else {
           // TODO Shall we just write the markup in the page
@@ -220,7 +222,7 @@ export function newNativeAssetManager(win, pubUrl) {
   }
 
   /*
-   * Searches the DOM for placeholder values sent in by Prebid Native
+   * Searches the DOM for legacy placeholder values sent in by Prebid Native
    */
   function scanDOMForPlaceHolders(adId) {
     return scanForPlaceHolders(adId, win.document.body.innerHTML, win.document.head.innerHTML);
