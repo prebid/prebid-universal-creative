@@ -161,14 +161,14 @@ export function newNativeAssetManager(win, pubUrl) {
   }
 
   function loadMobileAssets(tagData, cb) {
-    const placeholders = scanForPlaceholders();
+    const placeholders = scanDOMForPlaceHolders();
     if (placeholders.length > 0) {
       callback = cb;
       requestAssetsFromCache(tagData);
     }
   }
 
-  function pbNativeDataHasValidType() {
+  function hasPbNativeData() {
     return typeof win.pbNativeData !== 'undefined'
   }
 
@@ -180,16 +180,16 @@ export function newNativeAssetManager(win, pubUrl) {
    * to retrieve native assets that have a value on the corresponding bid
    */
   function loadAssets(adId, cb) {
-    const placeholders = scanForPlaceholders(adId);
+    const placeholders = scanDOMForPlaceHolders(adId);
 
-    if (pbNativeDataHasValidType() && win.pbNativeData.hasOwnProperty('assetsToReplace')) {
+    if (hasPbNativeData() && win.pbNativeData.hasOwnProperty('assetsToReplace')) {
         win.pbNativeData.assetsToReplace.forEach((asset) => {
           const key = (asset.match(/hb_native_/i)) ? asset : NATIVE_KEYS[asset];
           if (key) {placeholders.push(key);}
         });
     }
 
-    if (pbNativeDataHasValidType() && win.pbNativeData.hasOwnProperty('requestAllAssets') && win.pbNativeData.requestAllAssets) {
+    if (hasPbNativeData() && win.pbNativeData.hasOwnProperty('requestAllAssets') && win.pbNativeData.requestAllAssets) {
       callback = cb;
       cancelMessageListener = requestAllAssets(adId);
     } else if (placeholders.length > 0) {
@@ -198,24 +198,29 @@ export function newNativeAssetManager(win, pubUrl) {
     }
   }
 
+  function placeholderFor(key, adId) {
+    return (adId && !hasPbNativeData()) ? `${key}:${adId}` : ((hasPbNativeData()) ? '##'+`${key}`+'##' : `${key}`)
+  }
+
+  function scanForPlaceHolders(adId, ...markupFragments) {
+    return Object.values(NATIVE_KEYS)
+        .reduce((found, key) => {
+          const placeholder = placeholderFor(key, adId);
+          for (const mkup of markupFragments.filter(Boolean)) {
+            if (mkup.indexOf(placeholder) >= 0) {
+              found.push(key);
+              break;
+            }
+          }
+          return found;
+        }, []);
+  }
+
   /*
    * Searches the DOM for placeholder values sent in by Prebid Native
    */
-  function scanForPlaceholders(adId) {
-    let placeholders = [];
-    const doc = win.document;
-
-    Object.keys(NATIVE_KEYS).forEach(key => {
-      const placeholderKey = NATIVE_KEYS[key];
-      const placeholder = (adId && !pbNativeDataHasValidType()) ? `${placeholderKey}:${adId}` : `${placeholderKey}`;
-      const placeholderIndex = (~doc.body.innerHTML.indexOf(placeholder)) ? doc.body.innerHTML.indexOf(placeholder) : (doc.head.innerHTML && doc.head.innerHTML.indexOf(placeholder));
-
-      if (~placeholderIndex) {
-        placeholders.push(placeholderKey);
-      }
-    });
-
-    return placeholders;
+  function scanDOMForPlaceHolders(adId) {
+    return scanForPlaceHolders(adId, win.document.body.innerHTML, win.document.head.innerHTML);
   }
 
   /*
@@ -281,13 +286,12 @@ export function newNativeAssetManager(win, pubUrl) {
     if (data.message === 'assetResponse') {
       const body = win.document.body.innerHTML;
       const head = win.document.head.innerHTML;
-      const flag = pbNativeDataHasValidType();
 
-      if (flag && data.adId !== win.pbNativeData.adId) return;
+      if (hasPbNativeData() && data.adId !== win.pbNativeData.adId) return;
 
       if (head) win.document.head.innerHTML = replace(head, data);
 
-      if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (flag && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
+      if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
         if (win.renderAd) {
           const newHtml = (win.renderAd && win.renderAd(data.assets)) || '';
 
@@ -305,7 +309,7 @@ export function newNativeAssetManager(win, pubUrl) {
             requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
           });
         } else {
-          loadScript(win, ((flag && win.pbNativeData.hasOwnProperty('rendererUrl') && win.pbNativeData.rendererUrl) || data.rendererUrl), function() {
+          loadScript(win, ((hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl') && win.pbNativeData.rendererUrl) || data.rendererUrl), function() {
             const newHtml = (win.renderAd && win.renderAd(data.assets)) || '';
 
             win.document.body.innerHTML = body + newHtml;
@@ -314,8 +318,8 @@ export function newNativeAssetManager(win, pubUrl) {
             requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
           })
         }
-      } else if ((data.hasOwnProperty('adTemplate') && data.adTemplate)||(flag && win.pbNativeData.hasOwnProperty('adTemplate'))) {
-        const template =  (flag && win.pbNativeData.hasOwnProperty('adTemplate') && win.pbNativeData.adTemplate) || data.adTemplate;
+      } else if ((data.hasOwnProperty('adTemplate') && data.adTemplate)||(hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate'))) {
+        const template =  (hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate') && win.pbNativeData.adTemplate) || data.adTemplate;
         const newHtml = replace(template, data);
         win.document.body.innerHTML = body + newHtml;
         callback && callback();
@@ -336,12 +340,11 @@ export function newNativeAssetManager(win, pubUrl) {
    * in the given document.
    * If there's no actual value, the placeholder gets replaced by an empty string.
    */
-  function replace(document, { assets, adId }) {
-    let html = document;
+  function replace(html, { assets, adId }) {
+    assets = assets || [];
 
-    scanForPlaceholders().forEach(placeholder => {
-      const flag = pbNativeDataHasValidType();
-      const searchString = (adId && !flag) ? `${placeholder}:${adId}` : ((flag) ? '##'+`${placeholder}`+'##' : `${placeholder}`);
+    scanForPlaceHolders(adId, html).forEach(placeholder => {
+      const searchString = placeholderFor(placeholder, adId);
       const searchStringRegex = new RegExp(searchString, 'g');
       const fittingAsset = assets.find(asset => placeholder === NATIVE_KEYS[asset.key]);
       html = html.replace(searchStringRegex, fittingAsset ? fittingAsset.value : '');
