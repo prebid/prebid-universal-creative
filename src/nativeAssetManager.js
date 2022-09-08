@@ -199,7 +199,7 @@ export function newNativeAssetManager(win, pubUrl) {
   }
 
   function placeholderFor(key, adId) {
-    return (adId && !hasPbNativeData()) ? `${key}:${adId}` : ((hasPbNativeData()) ? '##'+`${key}`+'##' : `${key}`)
+    return (adId && !hasPbNativeData()) ? `${key}:${adId}` : ((hasPbNativeData()) ? `##${key}##` : key)
   }
 
   function scanForPlaceHolders(adId, ...markupFragments) {
