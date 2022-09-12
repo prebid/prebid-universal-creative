@@ -437,8 +437,8 @@ describe('nativeAssetManager', () => {
     expect(win.document.body.innerHTML).to.include(`
       <a href="http://example.com">Click Here</a>
     `);
-    // cta was not a requested asset so this should stay as is
-    expect(win.document.body.innerHTML).to.include('<h1>hb_native_cta</h1>');
+    // cta was not in the response so it should default to an empty string
+    expect(win.document.body.innerHTML).to.include('<h1></h1>');
     utils.sendRequest.restore();
   })
 });
