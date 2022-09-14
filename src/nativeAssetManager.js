@@ -6,9 +6,7 @@
 import { addNativeClickTrackers, fireNativeImpressionTrackers } from './nativeORTBTrackerManager';
 import { sendRequest, loadScript } from './utils';
 import {prebidMessenger} from './messaging.js';
-import { newEnvironment } from './environment.js';
-
-const envionment = newEnvironment(window);
+import { isSafeFrame } from './environment.js';
 /*
  * Native asset->key mapping from Prebid.js/src/constants.json
  * https://github.com/prebid/Prebid.js/blob/8635c91942de9df4ec236672c39b19448545a812/src/constants.json#L67
@@ -366,7 +364,7 @@ export function newNativeAssetManager(win, pubUrl) {
     // current iframe width to the width of the container. This
     // is to handle the case where the native ad is rendered inside
     // a GAM display ad.
-    if (!envionment.isSafeFrame()) {
+    if (!isSafeFrame(window)) {
       let iframeContainer = getCurrentFrameContainer(win);
       if (iframeContainer && iframeContainer.children && iframeContainer.children[0]) {
         const iframe = iframeContainer.children[0]; 
