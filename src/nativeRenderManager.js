@@ -53,7 +53,7 @@ export function newNativeRenderManager(win) {
     sendMessage = prebidMessenger(nativeTag.pubUrl, win);
     const nativeAssetManager = newNativeAssetManager(window, nativeTag.pubUrl);
 
-    if (targetingData.hasOwnProperty('adId')) {
+    if (nativeTag.hasOwnProperty('adId')) {
 
       if (nativeTag.hasOwnProperty('rendererUrl') && !nativeTag.rendererUrl.match(/##.*##/i)) {
         const scr = doc.createElement('SCRIPT');
