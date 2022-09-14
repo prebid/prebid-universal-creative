@@ -307,7 +307,7 @@ export function newNativeAssetManager(win, pubUrl) {
         }
       }
 
-      if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (hasPbNativeData()() && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
+      if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
         if (win.renderAd) {
           const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
 
@@ -433,9 +433,9 @@ export function newNativeAssetManager(win, pubUrl) {
    * If there's no actual value, the placeholder gets replaced by an empty string.
    */
   function replace(html, { assets, ortb, adId }) {
-    if (data.ortb) {
-      html = replaceORTBAssetsAndLinks(html, data.ortb);
-    } else if (!Array.isArray(data.assets)) {
+    if (ortb) {
+      html = replaceORTBAssetsAndLinks(html, ortb);
+    } else if (!Array.isArray(assets)) {
       return html;
     }
     assets = assets || [];
