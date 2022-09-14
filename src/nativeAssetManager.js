@@ -3,9 +3,12 @@
  * values in native creative templates.
  */
 
+import { addNativeClickTrackers, fireNativeImpressionTrackers } from './nativeORTBTrackerManager';
 import { sendRequest, loadScript } from './utils';
 import {prebidMessenger} from './messaging.js';
+import { newEnvironment } from './environment.js';
 
+const envionment = newEnvironment(window);
 /*
  * Native asset->key mapping from Prebid.js/src/constants.json
  * https://github.com/prebid/Prebid.js/blob/8635c91942de9df4ec236672c39b19448545a812/src/constants.json#L67
@@ -131,7 +134,8 @@ export function newNativeAssetManager(win, pubUrl) {
     return {
       assets,
       clicktrackers,
-      'imptrackers' : adMarkup.imptrackers
+      'imptrackers' : adMarkup.imptrackers,
+      'eventtrackers': adMarkup.eventtrackers
     }
   }
 
@@ -148,7 +152,8 @@ export function newNativeAssetManager(win, pubUrl) {
 
           callback && callback({
             clickTrackers: data.clicktrackers,
-            impTrackers: data.imptrackers
+            impTrackers: data.imptrackers,
+            eventtrackers: data.eventtrackers
           });
         } else {
           // TODO Shall we just write the markup in the page
@@ -217,7 +222,7 @@ export function newNativeAssetManager(win, pubUrl) {
   }
 
   /*
-   * Searches the DOM for placeholder values sent in by Prebid Native
+   * Searches the DOM for legacy placeholder values sent in by Prebid Native
    */
   function scanDOMForPlaceHolders(adId) {
     return scanForPlaceHolders(adId, win.document.body.innerHTML, win.document.head.innerHTML);
@@ -254,12 +259,13 @@ export function newNativeAssetManager(win, pubUrl) {
   /*
    * Sends postmessage to Prebid for native resize
    */
-  function requestHeightResize(adId, height) {
+  function requestHeightResize(adId, height, width) {
     const message = {
       message: 'Prebid Native',
       action: 'resizeNativeHeight',
       adId,
       height,
+      width
     };
     sendMessage(message);
   }
@@ -291,40 +297,39 @@ export function newNativeAssetManager(win, pubUrl) {
 
       if (head) win.document.head.innerHTML = replace(head, data);
 
+      data.assets = data.assets || [];
+      let renderPayload = data.assets;
+      if (data.ortb) {
+        renderPayload.ortb = data.ortb;
+        callback = () => {
+          fireNativeImpressionTrackers(data.adId, sendMessage);
+          addNativeClickTrackers(data.adId, data.ortb, sendMessage);
+        }
+      }
+
       if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
         if (win.renderAd) {
-          const newHtml = (win.renderAd && win.renderAd(data.assets)) || '';
+          const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
 
-          win.document.body.innerHTML = body + newHtml;
-          callback && callback();
-          stopListening();
-          requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
+          renderAd(newHtml, data);
         } else if (document.getElementById('pb-native-renderer')) {
           document.getElementById('pb-native-renderer').addEventListener('load', function() {
-            const newHtml = (win.renderAd && win.renderAd(data.assets)) || '';
+            const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
 
-            win.document.body.innerHTML = body + newHtml;
-            callback && callback();
-            stopListening();
-            requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
+            renderAd(newHtml, data);
           });
         } else {
           loadScript(win, ((hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl') && win.pbNativeData.rendererUrl) || data.rendererUrl), function() {
-            const newHtml = (win.renderAd && win.renderAd(data.assets)) || '';
+            const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
 
-            win.document.body.innerHTML = body + newHtml;
-            callback && callback();
-            stopListening();
-            requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
+            renderAd(newHtml, data);
           })
         }
       } else if ((data.hasOwnProperty('adTemplate') && data.adTemplate)||(hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate'))) {
         const template =  (hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate') && win.pbNativeData.adTemplate) || data.adTemplate;
         const newHtml = replace(template, data);
-        win.document.body.innerHTML = body + newHtml;
-        callback && callback();
-        stopListening();
-        requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
+        
+        renderAd(newHtml, data);
       } else {
         const newHtml = replace(body, data);
 
@@ -335,12 +340,104 @@ export function newNativeAssetManager(win, pubUrl) {
     }
   }
 
+  /** This function returns the element that contains the current iframe. */
+  function getCurrentFrameContainer(win) {
+    let currentWindow = win;
+    let currentParentWindow;
+
+    while (currentWindow !== win.top) {
+        currentParentWindow = currentWindow.parent;
+        if (!currentParentWindow.frames || !currentParentWindow.frames.length) return null;
+        for (let idx = 0; idx < currentParentWindow.frames.length; idx++)
+            if (currentParentWindow.frames[idx] === currentWindow) {
+              if (!currentParentWindow.document) return null; 
+                for (let frameElement of currentParentWindow.document.getElementsByTagName('iframe')) {
+                    if (!frameElement.contentWindow) return null;
+                    if (frameElement.contentWindow === currentWindow) {
+                        return frameElement.parentElement;
+                    }
+                }
+            }
+    }
+}
+
+  function renderAd(html, bid) {
+    // if the current iframe is not a safeframe, try to set the
+    // current iframe width to the width of the container. This
+    // is to handle the case where the native ad is rendered inside
+    // a GAM display ad.
+    if (!envionment.isSafeFrame()) {
+      let iframeContainer = getCurrentFrameContainer(win);
+      if (iframeContainer && iframeContainer.children && iframeContainer.children[0]) {
+        const iframe = iframeContainer.children[0]; 
+        if (iframe.width === '1' && iframe.height === '1') {
+          let width =  iframeContainer.getBoundingClientRect().width;
+          win.document.body.style.width = `${width}px`;
+        }
+      }
+    } else {
+      document.body.style.width = Math.ceil(win.$sf.ext.geom().self.b) + 'px';
+    }
+    win.document.body.innerHTML += html;
+    callback && callback();
+    win.removeEventListener('message', replaceAssets);
+    stopListening();
+    requestHeightResize(bid.adId, (document.body.clientHeight || document.body.offsetHeight), document.body.clientWidth);
+
+    if (typeof window.postRenderAd === 'function') {
+      window.postRenderAd(bid);
+    }
+  }
+
+  function replaceORTBAssetsAndLinks(html, ortb) {
+
+    const getAssetValue = (asset) => {
+      if (asset.img) {
+        return asset.img.url;
+      }
+      if (asset.data) {
+        return asset.data.value;
+      }
+      if (asset.title) {
+        return asset.title.text;
+      }
+      if (asset.video) {
+        return asset.video.vasttag;
+      }
+      return ''
+    }
+
+    ortb.assets.forEach(asset => {
+      html = html.replace(`##hb_native_asset_id_${asset.id}##`, getAssetValue(asset));
+      if (asset.link && asset.link.url) {
+        html = html.replace(`##hb_native_asset_link_id_${asset.id}##`, asset.link.url);
+      }
+    });
+
+    html = html.replaceAll(/##hb_native_asset_id_\d+##/gm, '');
+
+    if (ortb.privacy) {
+      html = html.replace("##hb_native_privacy##", ortb.privacy);
+    }
+
+    if (ortb.link) {
+      html = html.replaceAll("##hb_native_linkurl##", ortb.link.url);
+    }
+  
+    return html;
+  }
+
   /**
    * Replaces occurrences of native placeholder values with their actual values
    * in the given document.
    * If there's no actual value, the placeholder gets replaced by an empty string.
    */
-  function replace(html, { assets, adId }) {
+  function replace(html, { assets, ortb, adId }) {
+    if (ortb) {
+      html = replaceORTBAssetsAndLinks(html, ortb);
+    } else if (!Array.isArray(assets)) {
+      return html;
+    }
     assets = assets || [];
 
     scanForPlaceHolders(adId, html).forEach(placeholder => {
