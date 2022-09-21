@@ -190,7 +190,7 @@ function buildUid() {
   return gulp.src(['src/ssp-userids/uid.js'])
   .pipe(webpackStream(cloned))
     .pipe(uglify())
-    .pipe(header('/* v<%= creative.version %>\n' + dateString + '\nDEPRECATED, please use creative based on hb_format targeting */\n', { creative: creative }))
+    .pipe(header('/* v<%= creative.version %>\n' + dateString + ' */\n', { creative: creative }))
     .pipe(gulp.dest('dist'));
 }
 
