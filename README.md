@@ -20,6 +20,9 @@ You can find a detailed explanations on the [Prebid Universal Creative](http://p
   ucTagData.adServerDomain = "";
   ucTagData.pubUrl = "%%PATTERN:url%%";
   ucTagData.targetingMap = %%PATTERN:TARGETINGMAP%%;
+  ucTagData.hbPb = "%%PATTERN:hb_pb%%";
+  ucTagData.hbFormat = "%%PATTERN:hb_format%%";
+  ucTagData.adId = "%%PATTERN:hb_adid%%";
   ucTagData.requestAllAssets = true;
 
   try {
