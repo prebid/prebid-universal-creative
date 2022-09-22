@@ -3,4 +3,4 @@ import { newNativeRenderManager } from './nativeRenderManager';
 window.pbNativeTag = (window.pbNativeTag || {});
 const nativeRenderManager = newNativeRenderManager(window);
 
-window.pbNativeTag.renderNativeAd = nativeRenderManager.renderNativeAd;
+window.pbNativeTag.renderNativeAd = (args) => nativeRenderManager.renderNativeAd.call(document, args);
