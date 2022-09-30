@@ -33,10 +33,7 @@
                     intercept: [
                         {
                             when: {},
-                            then: {
-                                ad: '<p id="the-ad">This is the ad</p>',
-                                mediaType: params.get('mediaType') || 'banner'
-                            }
+                            then: JSON.parse(params.get('bidResponse'))
                         }
                     ]
                 }

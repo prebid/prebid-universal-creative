@@ -1,6 +1,6 @@
 import {test as baseTest} from '@playwright/test';
 import path from 'path';
-
+import {expect} from '@playwright/test';
 export {expect} from '@playwright/test';
 export const BASE_URL = 'https://www.prebid.org/puc-test/';
 export const PUC_URL = 'https://cdn.jsdelivr.net/npm/prebid-universal-creative@latest/dist/';
@@ -59,4 +59,13 @@ export const test = baseTest.extend({
             })
         })
     },
+    async expectEvent({page}, use) {
+        use(async function (predicate, numMatches = 1) {
+            await expect.poll(async () =>
+                ((await page.evaluate(() => window.pbjs?.getEvents && window.pbjs.getEvents())) || [])
+                    .filter(predicate)
+                    .length === numMatches
+            ).toBeTruthy();
+        });
+    }
 });
