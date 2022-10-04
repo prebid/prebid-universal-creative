@@ -33,7 +33,7 @@ export const test = baseTest.extend({
      * page, across all frames.
      */
     async crossLocator({page}, use) {
-        use(function (selector) {
+        await use(function (selector) {
             let n = 0;
             return new Promise((resolve, reject) => {
                 async function frameLocator(frame) {
@@ -60,7 +60,7 @@ export const test = baseTest.extend({
         })
     },
     async expectEvent({page}, use) {
-        use(async function (predicate, numMatches = 1) {
+        await use(async function (predicate, numMatches = 1) {
             await expect.poll(async () =>
                 ((await page.evaluate(() => window.pbjs?.getEvents && window.pbjs.getEvents())) || [])
                     .filter(predicate)
