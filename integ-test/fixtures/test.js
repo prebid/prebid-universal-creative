@@ -2,8 +2,12 @@ import {test as baseTest} from '@playwright/test';
 import path from 'path';
 import {expect} from '@playwright/test';
 export {expect} from '@playwright/test';
+import process from 'process'
 export const BASE_URL = 'https://www.prebid.org/puc-test/';
 export const PUC_URL = 'https://cdn.jsdelivr.net/npm/prebid-universal-creative@latest/dist/';
+export const PBJS_URL = 'https://cdn.jsdelivr.net/npm/prebid.js@latest/dist/not-for-prod/prebid.js'
+
+const LOCAL_PBJS_URL = 'http://localhost:9999/build/dev/prebid.js';
 
 const REDIRECTS = {
     [BASE_URL]: '../pages',
@@ -26,6 +30,10 @@ export const test = baseTest.extend({
                 });
             })
         );
+        if (process.env.LOCAL_PBJS) {
+            const localUrl = process.env.LOCAL_PBJS.startsWith('http') ? process.env.LOCAL_PBJS : LOCAL_PBJS_URL;
+            await context.route((u) => u.href.startsWith(PBJS_URL), (route) => route.fulfill({status: 302, headers: {Location: localUrl}}))
+        }
         await use(context);
     },
     /**

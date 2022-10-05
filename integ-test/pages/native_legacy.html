@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Prebid.js Native Test</title>
+    <title>Prebid.js Legacy Native Test</title>
 
     <!-- Prebid.js -->
     <script async src="https://cdn.jsdelivr.net/npm/prebid.js@latest/dist/not-for-prod/prebid.js"></script>
@@ -84,7 +84,7 @@
     <script>
         googletag.cmd.push(function () {
             googletag
-                .defineSlot('/41758329/integ-test', 'fluid', 'slot')
+                .defineSlot('/41758329/integ-test', params.get('banner') === 'true' ? [[640, 480]] : 'fluid', 'slot')
                 .setTargeting('creative', params.get('creative'))
                 .addService(googletag.pubads());
 
@@ -95,7 +95,7 @@
 </head>
 
 <body>
-<h2>Prebid.js Banner Ad Unit Test</h2>
+<h2>Prebid.js Legacy Native Ad Unit Test</h2>
 <div id='slot'>
     <script>
         googletag.cmd.push(function () {
