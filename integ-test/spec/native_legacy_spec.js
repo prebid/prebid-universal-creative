@@ -6,6 +6,7 @@ test.describe('Legacy native', () => {
     const TRACKERS = Object.fromEntries(
         ['imp', 'js', 'click'].map(ttype => [ttype, `${TRACKER_URL}${ttype}`])
     )
+
     const TEMPLATE = `
         <div id="the-ad">
           <a class="clickUrl" href="##hb_native_linkurl##">Click</a>
