@@ -35,6 +35,7 @@ test.describe('Banner', () => {
                             await page.route((u) => u.href.startsWith(mockAdUrl), (route, request) => {
                                 const price = request.url().substring(mockAdUrl.length);
                                 route.fulfill({
+                                    contentType: 'text/html',
                                     body: `
                                      <p id="the-ad">
                                          This is the ad

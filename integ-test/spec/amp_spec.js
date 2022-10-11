@@ -42,7 +42,7 @@ test.describe('AMP', () => {
             const trigger = req.url().substring(TRIGGERED_URL_BASE.length);
             triggers[trigger] = true;
             route.fulfill({
-                application: 'text/html',
+                contentType: 'text/html',
                 body: trigger === 'nurl' && nurlResponse || ''
             })
         })
