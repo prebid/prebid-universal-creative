@@ -259,7 +259,7 @@ function watch(done) {
     root: './'
   });
 
-  mainWatcher.on('all', gulp.series(clean, gulp.parallel(buildBannerDev, buildVideoDev, buildAmpDev, buildMobileDev, buildNativeDev, buildNativeRenderDev, buildCookieSync, buildCookieSyncWithConsent, buildUidDev, includeStaticVastXmlFile), test));
+  mainWatcher.on('all', gulp.series(clean, gulp.parallel(buildLegacyDev, buildBannerDev, buildVideoDev, buildAmpDev, buildMobileDev, buildNativeRenderLegacyDev, buildNativeDev, buildNativeRenderDev, buildCookieSync, buildCookieSyncWithConsent, buildUidDev, includeStaticVastXmlFile), test));
   done();
 }
 
