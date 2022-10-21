@@ -373,8 +373,6 @@ export function newNativeAssetManager(win, pubUrl) {
           win.document.body.style.width = `${width}px`;
         }
       }
-    } else {
-      document.body.style.width = Math.ceil(win.$sf.ext.geom().self.b) + 'px';
     }
     win.document.body.innerHTML += html;
     callback && callback();
