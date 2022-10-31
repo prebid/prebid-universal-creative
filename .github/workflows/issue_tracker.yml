@@ -64,7 +64,6 @@ jobs:
           
           echo 'ITEM_ID='$(jq '.data.addProjectNextItem.projectNextItem.id' issue_data.json) >> $GITHUB_ENV
           echo 'ITEM_CREATION_DATE='$(jq '.data.addProjectNextItem.projectNextItem.content.createdAt' issue_data.json) >> $GITHUB_ENV
-
       - name: Set fields
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}

@@ -10,88 +10,75 @@
  *  Mobile App: function to detect mobile app environment
  */
 
+/**
+ * @param {String} uuid key value from auction, contains the cache id of the winning bid stored in prebid cache
+ * @returns true if there is an AMP context object
+ */
+export function isAmp(uuid, win) {
+  // TODO Use amp context once it is available in cross domain
+  // https://github.com/ampproject/amphtml/issues/6829
+  return typeof uuid === 'string' && uuid !== "" && isCrossDomain(win);
+}
 
-export function newEnvironment(win) {
-  /**
-   * @param {String} uuid key value from auction, contains the cache id of the winning bid stored in prebid cache
-   * @returns true if there is an AMP context object
-   */
-  function isAmp(uuid) {
-    // TODO Use amp context once it is available in cross domain
-    // https://github.com/ampproject/amphtml/issues/6829
-    return typeof uuid === 'string' && uuid !== "" && isCrossDomain();
-  }
+/**
+ * @returns true if the environment is a SafeFrame.
+ */
+export function isSafeFrame(win) {
+  return !!(win.$sf && win.$sf.ext);
+}
 
-  /**
-   * @returns true if the environment is a SafeFrame.
-   */
-  function isSafeFrame() {
-    return !!(win.$sf && win.$sf.ext);
-  }
+/**
+  * Return true if we are in an iframe and can't access the top window.
+  * @returns true if the environment is a Cross Domain
+  */
+export function isCrossDomain(win) {
+  return win.top !== win && !canInspectWindow(win);
+}
 
-  /**
-    * Return true if we are in an iframe and can't access the top window.
-    * @returns true if the environment is a Cross Domain
-    */
-  function isCrossDomain() {
-    return win.top !== win && !canInspectWindow(win);
-  }
-
-  /**
-   * Returns true if win's properties can be accessed and win is defined.
-   * This functioned is used to determine if a window is cross-domained
-   * from the perspective of the current window.
-   * @param {!Window} win
-   * @return {boolean}
-   */
-  function canInspectWindow(win) {
-    try {
-      // force an exception in x-domain environments. #1509
-      win.top.location.toString();
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  /**
-   * Returns true if we can find the prebid global object (eg pbjs) as we
-   * climb the accessible windows.  Return false if it's not found.
-   * @returns {boolean}
-   */
-  function canLocatePrebid() {
-    let result = false;
-    let currentWindow = win;
-    
-    while (!result) {
-      try {
-        if (currentWindow.$$PREBID_GLOBAL$$) {
-          result = true;
-          break;
-        }
-      } catch (e) { }
-      if (currentWindow === window.top) break;
-      
-      currentWindow = currentWindow.parent;
-    }
-    return result;
-  }
-
-  /**
-   * @param {String} env key value from auction, indicates the environment where tag is served
-   * @returns true if env exists and is equal to the string 'mobile-app'
-   */
-  function isMobileApp(env) {
-    return env && env === 'mobile-app';
-  }
-
-  return {
-    isMobileApp,
-    isCrossDomain,
-    isSafeFrame,
-    isAmp,
-    canLocatePrebid
+/**
+ * Returns true if win's properties can be accessed and win is defined.
+ * This functioned is used to determine if a window is cross-domained
+ * from the perspective of the current window.
+ * @param {!Window} win
+ * @return {boolean}
+ */
+export function canInspectWindow(win) {
+  try {
+    // force an exception in x-domain environments. #1509
+    win.top.location.toString();
+    return true;
+  } catch (e) {
+    return false;
   }
 }
 
+/**
+ * Returns true if we can find the prebid global object (eg pbjs) as we
+ * climb the accessible windows.  Return false if it's not found.
+ * @returns {boolean}
+ */
+export function canLocatePrebid(win) {
+  let result = false;
+  let currentWindow = win;
 
+  while (!result) {
+    try {
+      if (currentWindow.$$PREBID_GLOBAL$$) {
+        result = true;
+        break;
+      }
+    } catch (e) { }
+    if (currentWindow === window.top) break;
+
+    currentWindow = currentWindow.parent;
+  }
+  return result;
+}
+
+/**
+ * @param {String} env key value from auction, indicates the environment where tag is served
+ * @returns true if env exists and is equal to the string 'mobile-app'
+ */
+export function isMobileApp(env) {
+  return env && env === 'mobile-app';
+}

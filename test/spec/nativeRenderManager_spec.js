@@ -55,18 +55,19 @@ describe('nativeRenderManager', function () {
       assetManagerStub.restore();
     });
 
-    it('should verify the postMessage for impression trackers was executed', function() {
-      mockWin.document.getElementsByClassName = () => [{
-        attributes: {
-          pbAdId: {
-            value: 'ad123'
-          }
+    it("should verify the postMessage for impression trackers was executed", function () {
+      mockWin.document.getElementsByClassName = () => [
+        {
+          attributes: {
+            pbAdId: {
+              value: "ad123",
+            },
+          },
+          addEventListener: (type, listener, capture) => {},
         },
-        addEventListener: (type, listener, capture) => {
-        },
-      }];
+      ];
       let nativeTracker = new newNativeRenderManager(mockWin);
-      nativeTracker.renderNativeAd(tagData);
+      nativeTracker.renderNativeAd(mockWin.document, tagData);
 
       expect(mockWin.parent.postMessage.callCount).to.equal(1);
       let postMessageTargetDomain = mockWin.parent.postMessage.args[0][1];
@@ -93,7 +94,7 @@ describe('nativeRenderManager', function () {
       }];
 
       let nativeTracker = new newNativeRenderManager(mockWin);
-      nativeTracker.renderNativeAd(tagData);
+      nativeTracker.renderNativeAd(mockWin.document, tagData);
 
       expect(mockWin.parent.postMessage.callCount).to.equal(2);
 

@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { newEnvironment } from 'src/environment';
+import * as env from 'src/environment';
 import { mocks } from 'test/helpers/mocks';
 import { merge } from 'lodash';
 
@@ -16,8 +16,6 @@ const envMocks = {
 describe('environment module', function() {
   
   it('should return env object with proper public api', function() {
-    const mockWin = merge(mocks.createFakeWindow('http://appnexus.com'), envMocks.getWindowObject());
-    const env = newEnvironment(mockWin);
     expect(env.isMobileApp).to.exist;
     expect(env.isCrossDomain).to.exist;
     expect(env.isSafeFrame).to.exist;
@@ -26,8 +24,7 @@ describe('environment module', function() {
 
   it('should detect safeframe', function() {
     const mockWin = merge(mocks.createFakeWindow('http://appnexus.com'), envMocks.getWindowObject());
-    const env = newEnvironment(mockWin);
-    expect(env.isSafeFrame()).to.equal(true);
+    expect(env.isSafeFrame(mockWin)).to.equal(true);
   });
 
   it('should detect amp', function() {
@@ -39,8 +36,7 @@ describe('environment module', function() {
 			}
 		}
     const mockWin = merge(mocks.createFakeWindow('http://appnexus.com'), envMocks.getWindowObject(), localWindow);
-    const env = newEnvironment(mockWin);
-    expect(env.isAmp('some-uuid')).to.equal(true);
+    expect(env.isAmp('some-uuid', mockWin)).to.equal(true);
 	});
 	
 	it('should detect Prebid in higher window', function() {
@@ -54,13 +50,10 @@ describe('environment module', function() {
       }
     };
     const mockWin = merge(mocks.createFakeWindow('http://appnexus.com'), envMocks.getWindowObject(), localWindow);
-    const env = newEnvironment(mockWin);
-    expect(env.canLocatePrebid()).to.equal(true);
+    expect(env.canLocatePrebid(mockWin)).to.equal(true);
 	});
   
   it('should detect mobile app', function() {
-    const mockWin = merge(mocks.createFakeWindow('http://appnexus.com'), envMocks.getWindowObject());
-    const env = newEnvironment(mockWin);
     expect(env.isMobileApp('mobile-app')).to.equal(true);
   });
 });
