@@ -244,7 +244,9 @@ function setupE2E(done) {
 
 gulp.task('test', gulp.series(clean, test));
 
-gulp.task('e2e-test', gulp.series(clean, setupE2E, gulp.parallel(buildBannerDev, buildVideoDev, buildAmpDev, buildMobileDev, buildCookieSync, buildCookieSyncWithConsent, buildNativeDev, buildNativeRenderDev, buildUidDev, includeStaticVastXmlFile, watch), test));
+const buildDevFunctions = [buildLegacyDev, buildBannerDev, buildVideoDev, buildAmpDev, buildMobileDev, buildNativeRenderLegacyDev, buildNativeDev, buildNativeRenderDev, buildCookieSync, buildCookieSyncWithConsent, buildUidDev, includeStaticVastXmlFile];
+
+gulp.task('e2e-test', gulp.series(clean, setupE2E, gulp.parallel(...buildDevFunctions, watch), test));
 
 function watch(done) {
   const mainWatcher = gulp.watch([
@@ -259,7 +261,7 @@ function watch(done) {
     root: './'
   });
 
-  mainWatcher.on('all', gulp.series(clean, gulp.parallel(buildLegacyDev, buildBannerDev, buildVideoDev, buildAmpDev, buildMobileDev, buildNativeRenderLegacyDev, buildNativeDev, buildNativeRenderDev, buildCookieSync, buildCookieSyncWithConsent, buildUidDev, includeStaticVastXmlFile), test));
+  mainWatcher.on('all', gulp.series(clean, gulp.parallel(...buildDevFunctions), test));
   done();
 }
 
@@ -267,7 +269,9 @@ function openWebPage() {
   return opens(`${(argv.https) ? 'https' : 'http'}://localhost:${port}`);
 }
 
-gulp.task('serve', gulp.series(clean, gulp.parallel(buildLegacyDev, buildBannerDev, buildVideoDev, buildAmpDev, buildMobileDev, buildNativeRenderLegacyDev, buildNativeDev, buildNativeRenderDev, buildCookieSync, buildCookieSyncWithConsent, buildUidDev, includeStaticVastXmlFile, watch, test), openWebPage));
+gulp.task('serve', gulp.series(clean, gulp.parallel(...buildDevFunctions, watch, test), openWebPage));
+
+gulp.task('build-dev', gulp.parallel(...buildDevFunctions));
 
 gulp.task('build', gulp.parallel(buildProdLegacy, buildLegacyNativeRender, buildBanner, buildVideo, buildCookieSync, buildCookieSyncWithConsent, buildNative, buildNativeRender, buildUid, buildAmp, buildMobile, includeStaticVastXmlFile));
 
