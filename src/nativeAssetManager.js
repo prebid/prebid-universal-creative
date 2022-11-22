@@ -326,7 +326,7 @@ export function newNativeAssetManager(win, pubUrl) {
       } else if ((data.hasOwnProperty('adTemplate') && data.adTemplate)||(hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate'))) {
         const template =  (hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate') && win.pbNativeData.adTemplate) || data.adTemplate;
         const newHtml = replace(template, data);
-        
+
         renderAd(newHtml, data);
       } else {
         const newHtml = replace(body, data);
@@ -348,7 +348,7 @@ export function newNativeAssetManager(win, pubUrl) {
         if (!currentParentWindow.frames || !currentParentWindow.frames.length) return null;
         for (let idx = 0; idx < currentParentWindow.frames.length; idx++)
             if (currentParentWindow.frames[idx] === currentWindow) {
-              if (!currentParentWindow.document) return null; 
+              if (!currentParentWindow.document) return null;
                 for (let frameElement of currentParentWindow.document.getElementsByTagName('iframe')) {
                     if (!frameElement.contentWindow) return null;
                     if (frameElement.contentWindow === currentWindow) {
@@ -367,7 +367,7 @@ export function newNativeAssetManager(win, pubUrl) {
     if (!isSafeFrame(window)) {
       let iframeContainer = getCurrentFrameContainer(win);
       if (iframeContainer && iframeContainer.children && iframeContainer.children[0]) {
-        const iframe = iframeContainer.children[0]; 
+        const iframe = iframeContainer.children[0];
         if (iframe.width === '1' && iframe.height === '1') {
           let width =  iframeContainer.getBoundingClientRect().width;
           win.document.body.style.width = `${width}px`;
@@ -378,7 +378,8 @@ export function newNativeAssetManager(win, pubUrl) {
     callback && callback();
     win.removeEventListener('message', replaceAssets);
     stopListening();
-    requestHeightResize(bid.adId, (document.body.clientHeight || document.body.offsetHeight), document.body.clientWidth);
+    const resize = () => requestHeightResize(bid.adId, (document.body.clientHeight || document.body.offsetHeight), document.body.clientWidth);
+    document.readyState === 'complete' ? resize() : window.onload = resize;
 
     if (typeof window.postRenderAd === 'function') {
       window.postRenderAd(bid);
@@ -419,7 +420,7 @@ export function newNativeAssetManager(win, pubUrl) {
     if (ortb.link) {
       html = html.replaceAll("##hb_native_linkurl##", ortb.link.url);
     }
-  
+
     return html;
   }
 
