@@ -16,6 +16,7 @@ const NATIVE_KEYS = {
   body: 'hb_native_body',
   body2: 'hb_native_body2',
   privacyLink: 'hb_native_privacy',
+  privacyIcon: 'hb_native_privicon',
   sponsoredBy: 'hb_native_brand',
   image: 'hb_native_image',
   icon: 'hb_native_icon',
