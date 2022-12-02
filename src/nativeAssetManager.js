@@ -58,7 +58,21 @@ const assetTypeMapping = {
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
 
-export function newNativeAssetManager(win, pubUrl) {
+const CLICK_URL_UNESC = `%%CLICK_URL_UNESC%%`;
+
+let clickUrlUnesc = '';
+
+export function newNativeAssetManager(win, nativeTag) {
+  const { pubUrl } = nativeTag;
+
+
+    // clickUrlUnesc contains the url to track clicks in GAM. we check if it 
+    // has been transformed, by GAM, in an URL. 
+    // if CLICK_URL_UNESC is the string "%%CLICK_URL_UNESC%%", we're not in GAM. 
+    if (nativeTag.clickUrlUnesc && nativeTag.clickUrlUnesc !== CLICK_URL_UNESC) {
+      clickUrlUnesc = nativeTag.clickUrlUnesc;
+    }
+
   const sendMessage = prebidMessenger(pubUrl, win);
   let callback;
   let errorCountEscapeHatch = 0;
@@ -288,6 +302,9 @@ export function newNativeAssetManager(win, pubUrl) {
     }
 
     if (data.message === 'assetResponse') {
+      // add GAM %%CLICK_URL_UNESC%% to the data object to be eventually used in renderers
+      data.clickUrlUnesc = clickUrlUnesc;
+
       const body = win.document.body.innerHTML;
       const head = win.document.head.innerHTML;
 
@@ -374,6 +391,10 @@ export function newNativeAssetManager(win, pubUrl) {
         }
       }
     }
+
+    //substitute CLICK_URL_UNESC with actual value
+    html = html.replaceAll(CLICK_URL_UNESC, bid.clickUrlUnesc || "");
+
     win.document.body.innerHTML += html;
     callback && callback();
     win.removeEventListener('message', replaceAssets);

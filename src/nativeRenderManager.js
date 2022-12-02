@@ -51,7 +51,7 @@ export function newNativeRenderManager(win) {
   let renderNativeAd = function(doc, nativeTag) {
     window.pbNativeData = nativeTag;
     sendMessage = prebidMessenger(nativeTag.pubUrl, win);
-    const nativeAssetManager = newNativeAssetManager(window, nativeTag.pubUrl);
+    const nativeAssetManager = newNativeAssetManager(window, nativeTag);
 
     if (nativeTag.hasOwnProperty('adId')) {
 

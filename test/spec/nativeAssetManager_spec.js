@@ -86,7 +86,9 @@ describe('nativeAssetManager', () => {
   let win;
 
   function makeManager() {
-    return newNativeAssetManager(win, ORIGIN);
+    return newNativeAssetManager(win, {
+      pubUrl: ORIGIN
+    });
   }
 
   beforeEach(() => {
