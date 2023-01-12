@@ -3,7 +3,7 @@ const webpackConf = require('./webpack.conf');
 const karmaConstants = require('karma').constants;
 const path = require('path');
 
-function setBrowsers(karmaConf, browserstack, watchMode) {
+function setBrowsers(karmaConf, browserstack) {
   if (browserstack) {
     karmaConf.browserStack = {
       username: process.env.BROWSERSTACK_USERNAME,
@@ -12,8 +12,6 @@ function setBrowsers(karmaConf, browserstack, watchMode) {
     }
     karmaConf.customLaunchers = require('./browsers.json')
     karmaConf.browsers = Object.keys(karmaConf.customLaunchers);
-  } else if (watchMode) {
-    karmaConf.browsers = ['Chrome'];
   }
 }
 
@@ -29,7 +27,7 @@ function setReporters(karmaConf, codeCoverage, browserstack) {
       suppressPassed: true
     };
   }
-  
+
   if (codeCoverage) {
     karmaConf.reporters.push('coverage-istanbul');
     karmaConf.coverageIstanbulReporter = {
@@ -41,7 +39,7 @@ function setReporters(karmaConf, codeCoverage, browserstack) {
           urlFriendlyName: true, // simply replaces spaces with _ for files/dirs
         }
       }
-    }  
+    }
   }
 }
 
@@ -149,6 +147,6 @@ module.exports = function(codeCoverage, browserstack, watchMode) {
     captureTimeout: 4 * 60 * 1000, // default 60000
   }
   setReporters(config, codeCoverage, browserstack);
-  setBrowsers(config, browserstack, watchMode);
+  setBrowsers(config, browserstack);
   return config;
 }

@@ -32,7 +32,7 @@ function clean() {
 
 /**
  * This generic function will compile the file specified as inputFile and will
- * generate an output file in the build directory. 
+ * generate an output file in the build directory.
  */
 function buildDev({ inputFile, outputFile }) {
   var cloned = _.cloneDeep(webpackConfig);
@@ -234,7 +234,7 @@ function newKarmaCallback(done) {
         process.exit(exitCode);
       }
     }
-  } 
+  }
 }
 
 function setupE2E(done) {
@@ -265,11 +265,7 @@ function watch(done) {
   done();
 }
 
-function openWebPage() {
-  return opens(`${(argv.https) ? 'https' : 'http'}://localhost:${port}`);
-}
-
-gulp.task('serve', gulp.series(clean, gulp.parallel(...buildDevFunctions, watch, test), openWebPage));
+gulp.task('serve', gulp.series(clean, gulp.parallel(...buildDevFunctions, watch, test)));
 
 gulp.task('build-dev', gulp.parallel(...buildDevFunctions));
 

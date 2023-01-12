@@ -58,9 +58,9 @@ const assetTypeMapping = {
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
 
-export function newNativeAssetManager(win, pubUrl) {
-  const sendMessage = prebidMessenger(pubUrl, win);
-  let callback;
+export function newNativeAssetManager(win, pubUrl, mkMessenger = prebidMessenger) {
+  const sendMessage = mkMessenger(pubUrl, win);
+  let callback, errCallback;
   let errorCountEscapeHatch = 0;
   let cancelMessageListener;
 
@@ -182,7 +182,8 @@ export function newNativeAssetManager(win, pubUrl) {
    * and requestAllAssets flag is set in the tag, postmessage roundtrip
    * to retrieve native assets that have a value on the corresponding bid
    */
-  function loadAssets(adId, cb) {
+  function loadAssets(adId, cb, onError) {
+    errCallback = onError;
     const placeholders = scanDOMForPlaceHolders(adId);
 
     if (hasPbNativeData() && win.pbNativeData.hasOwnProperty('assetsToReplace')) {
@@ -198,6 +199,8 @@ export function newNativeAssetManager(win, pubUrl) {
     } else if (placeholders.length > 0) {
       callback = cb;
       cancelMessageListener = requestAssets(adId, placeholders);
+    } else {
+      onError && onError(new Error('No assets to load: no placeholders found in template'));
     }
   }
 
@@ -272,69 +275,82 @@ export function newNativeAssetManager(win, pubUrl) {
    * Postmessage listener for when Prebid responds with requested native assets.
    */
   function replaceAssets(event) {
-    var data = {};
-
     try {
-      data = JSON.parse(event.data);
-    } catch (e) {
-      if (errorCountEscapeHatch++ > 10) {
-        /*
-         * if for some reason Prebid never responds with the native assets,
-         * get rid of this listener because other messages won't stop coming
-         */
-        stopListening();
-      }
-      return;
-    }
 
-    if (data.message === 'assetResponse') {
-      const body = win.document.body.innerHTML;
-      const head = win.document.head.innerHTML;
+      var data = {};
 
-      if (hasPbNativeData() && data.adId !== win.pbNativeData.adId) return;
-
-      if (head) win.document.head.innerHTML = replace(head, data);
-
-      data.assets = data.assets || [];
-      let renderPayload = data.assets;
-      if (data.ortb) {
-        renderPayload.ortb = data.ortb;
-        callback = () => {
-          fireNativeImpressionTrackers(data.adId, sendMessage);
-          addNativeClickTrackers(data.adId, data.ortb, sendMessage);
+      try {
+        data = JSON.parse(event.data);
+      } catch (e) {
+        if (errorCountEscapeHatch++ > 10) {
+          // TODO: this should be a timeout, not an arbitrary cap on the number of messages received
+          /*
+           * if for some reason Prebid never responds with the native assets,
+           * get rid of this listener because other messages won't stop coming
+           */
+          stopListening();
+          throw e;
         }
+        return;
       }
 
-      if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
-        if (win.renderAd) {
-          const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
+      if (data.message === 'assetResponse') {
+
+        const body = win.document.body.innerHTML;
+        const head = win.document.head.innerHTML;
+
+        if (hasPbNativeData() && data.adId !== win.pbNativeData.adId) return;
+
+        callback = ((cb) => {
+          return () => {
+            fireNativeImpressionTrackers(data.adId, sendMessage);
+            addNativeClickTrackers(data.adId, sendMessage);
+            cb && cb();
+          }
+        })(callback);
+
+        if (head) win.document.head.innerHTML = replace(head, data);
+
+
+        data.assets = data.assets || [];
+        let renderPayload = data.assets;
+        if (data.ortb) {
+          renderPayload.ortb = data.ortb;
+        }
+
+        if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
+          if (win.renderAd) {
+            const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
+
+            renderAd(newHtml, data);
+          } else if (document.getElementById('pb-native-renderer')) {
+            document.getElementById('pb-native-renderer').addEventListener('load', function () {
+              const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
+
+              renderAd(newHtml, data);
+            });
+          } else {
+            loadScript(win, ((hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl') && win.pbNativeData.rendererUrl) || data.rendererUrl), function () {
+              const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
+
+              renderAd(newHtml, data);
+            });
+          }
+        } else if ((data.hasOwnProperty('adTemplate') && data.adTemplate) || (hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate'))) {
+          const template = (hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate') && win.pbNativeData.adTemplate) || data.adTemplate;
+          const newHtml = replace(template, data);
 
           renderAd(newHtml, data);
-        } else if (document.getElementById('pb-native-renderer')) {
-          document.getElementById('pb-native-renderer').addEventListener('load', function() {
-            const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
-
-            renderAd(newHtml, data);
-          });
         } else {
-          loadScript(win, ((hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl') && win.pbNativeData.rendererUrl) || data.rendererUrl), function() {
-            const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
+          const newHtml = replace(body, data);
 
-            renderAd(newHtml, data);
-          })
+          win.document.body.innerHTML = newHtml;
+          callback && callback();
+          stopListening();
         }
-      } else if ((data.hasOwnProperty('adTemplate') && data.adTemplate)||(hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate'))) {
-        const template =  (hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate') && win.pbNativeData.adTemplate) || data.adTemplate;
-        const newHtml = replace(template, data);
-        
-        renderAd(newHtml, data);
-      } else {
-        const newHtml = replace(body, data);
-
-        win.document.body.innerHTML = newHtml;
-        callback && callback();
-        stopListening();
       }
+    } catch (e) {
+      errCallback && errCallback(e);
     }
   }
 
@@ -348,7 +364,7 @@ export function newNativeAssetManager(win, pubUrl) {
         if (!currentParentWindow.frames || !currentParentWindow.frames.length) return null;
         for (let idx = 0; idx < currentParentWindow.frames.length; idx++)
             if (currentParentWindow.frames[idx] === currentWindow) {
-              if (!currentParentWindow.document) return null; 
+              if (!currentParentWindow.document) return null;
                 for (let frameElement of currentParentWindow.document.getElementsByTagName('iframe')) {
                     if (!frameElement.contentWindow) return null;
                     if (frameElement.contentWindow === currentWindow) {
@@ -367,7 +383,7 @@ export function newNativeAssetManager(win, pubUrl) {
     if (!isSafeFrame(window)) {
       let iframeContainer = getCurrentFrameContainer(win);
       if (iframeContainer && iframeContainer.children && iframeContainer.children[0]) {
-        const iframe = iframeContainer.children[0]; 
+        const iframe = iframeContainer.children[0];
         if (iframe.width === '1' && iframe.height === '1') {
           let width =  iframeContainer.getBoundingClientRect().width;
           win.document.body.style.width = `${width}px`;
@@ -419,7 +435,7 @@ export function newNativeAssetManager(win, pubUrl) {
     if (ortb.link) {
       html = html.replaceAll("##hb_native_linkurl##", ortb.link.url);
     }
-  
+
     return html;
   }
 
