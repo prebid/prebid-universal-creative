@@ -23,6 +23,8 @@ You can find a detailed explanations on the [Prebid Universal Creative](http://p
   ucTagData.hbPb = "%%PATTERN:hb_pb%%";
   ucTagData.hbFormat = "%%PATTERN:hb_format%%";
   ucTagData.adId = "%%PATTERN:hb_adid%%";
+  // if you're using GAM and want to track outbound clicks on native ads you can add this line
+  ucTagData.clickUrlUnesc = "%%CLICK_URL_UNESC%%";
   ucTagData.requestAllAssets = true;
 
   try {
