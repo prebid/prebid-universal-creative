@@ -4,7 +4,7 @@
     "description": "Universal creative for Prebid apps",
     "main": "dist/creative.js",
     "scripts": {
-        "test": "echo test",
+        "test": "gulp test",
         "prepublish": "gulp build"
     },
     "repository": {

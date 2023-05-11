@@ -426,16 +426,16 @@ export function newNativeAssetManager(win, nativeTag) {
     }
 
     ortb.assets.forEach(asset => {
-      html = html.replace(`##hb_native_asset_id_${asset.id}##`, getAssetValue(asset));
+      html = html.replaceAll(`##hb_native_asset_id_${asset.id}##`, getAssetValue(asset));
       if (asset.link && asset.link.url) {
-        html = html.replace(`##hb_native_asset_link_id_${asset.id}##`, asset.link.url);
+        html = html.replaceAll(`##hb_native_asset_link_id_${asset.id}##`, asset.link.url);
       }
     });
 
     html = html.replaceAll(/##hb_native_asset_id_\d+##/gm, '');
 
     if (ortb.privacy) {
-      html = html.replace("##hb_native_privacy##", ortb.privacy);
+      html = html.replaceAll("##hb_native_privacy##", ortb.privacy);
     }
 
     if (ortb.link) {

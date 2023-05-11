@@ -357,6 +357,7 @@ describe('nativeAssetManager', () => {
       <div class="attribution">
         <img class="pb-icon" src="##hb_native_asset_id_3##" alt="icon" height="150" width="50">
       </div>
+      <h2>##hb_native_asset_id_1##</h2>
       <p>##hb_native_asset_id_4##</p>
     </div>
   </div>
@@ -415,6 +416,9 @@ describe('nativeAssetManager', () => {
       // ##hb_native_asset_id_4## was not returned in the response, it should 
       // be transformed into an empty string
       expect(win.document.body.innerHTML).to.not.include(`##hb_native_asset_id_4##`);
+
+      // test that we are replacing ALL asset occurrences
+      expect(([...win.document.body.innerHTML.match(/new value/g)] || []).length, "expected 2 occurrences of \"new value\"").to.equal(2);
     });
   
     it('no placeholders found but requests all assets flag set - adTemplate', () => {
