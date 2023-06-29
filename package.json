@@ -1,5 +1,5 @@
 {
-    "name": "prebid-universal-creative",
+    "name": "apester-prebid-universal-creative",
     "version": "1.16.0-pre",
     "description": "Universal creative for Prebid apps",
     "main": "dist/creative.js",
@@ -9,18 +9,18 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/prebid/prebid-universal-creative.git"
+        "url": "git+https://github.com/apester-pub/apester-prebid-universal-creative.git"
     },
     "keywords": [
         "Prebid.js"
     ],
-    "globalVarName": "pbjs",
+    "globalVarName": "apepbjs",
     "author": "Prebid.org Contributors",
     "license": "Apache-2.0",
     "bugs": {
-        "url": "https://github.com/prebid/prebid-universal-creative/issues"
+        "url": "https://github.com/apester-pub/apester-prebid-universal-creative/issues"
     },
-    "homepage": "https://github.com/prebid/prebid-universal-creative#readme",
+    "homepage": "https://github.com/apester-pub/apester-prebid-universal-creative#readme",
     "devDependencies": {
         "@babel/core": "^7.2.2",
         "@babel/plugin-transform-modules-commonjs": "^7.6.0",
