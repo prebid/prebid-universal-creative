@@ -22,9 +22,9 @@ export function newNativeRenderManager(win, mkMessenger = prebidMessenger, asset
         }
 
         try {
-            const nativeAssetManager = assetMgr(window, nativeTag.pubUrl);
+            const nativeAssetManager = assetMgr(window, nativeTag);
 
-            if (nativeTag.adId != null) {
+            if (nativeTag.hasOwnProperty('adId')) {
 
                 if (nativeTag.hasOwnProperty('rendererUrl') && !nativeTag.rendererUrl.match(/##.*##/i)) {
                     const scr = doc.createElement('SCRIPT');

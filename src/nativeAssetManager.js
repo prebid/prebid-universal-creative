@@ -16,6 +16,7 @@ const NATIVE_KEYS = {
   body: 'hb_native_body',
   body2: 'hb_native_body2',
   privacyLink: 'hb_native_privacy',
+  privacyIcon: 'hb_native_privicon',
   sponsoredBy: 'hb_native_brand',
   image: 'hb_native_image',
   icon: 'hb_native_icon',
@@ -58,7 +59,19 @@ const assetTypeMapping = {
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
 
-export function newNativeAssetManager(win, pubUrl, mkMessenger = prebidMessenger) {
+const CLICK_URL_UNESC = `%%CLICK_URL_UNESC%%`;
+
+let clickUrlUnesc = '';
+
+export function newNativeAssetManager(win, nativeTag, mkMessenger = prebidMessenger) {
+
+    // clickUrlUnesc contains the url to track clicks in GAM. we check if it
+    // has been transformed, by GAM, in an URL.
+    // if CLICK_URL_UNESC is the string "%%CLICK_URL_UNESC%%", we're not in GAM.
+    if (nativeTag.clickUrlUnesc && nativeTag.clickUrlUnesc !== CLICK_URL_UNESC) {
+      clickUrlUnesc = nativeTag.clickUrlUnesc;
+    }
+
   const sendMessage = mkMessenger(pubUrl, win);
   let callback, errCallback;
   let errorCountEscapeHatch = 0;
@@ -294,10 +307,11 @@ export function newNativeAssetManager(win, pubUrl, mkMessenger = prebidMessenger
         return;
       }
 
-      if (data.message === 'assetResponse') {
-
-        const body = win.document.body.innerHTML;
-        const head = win.document.head.innerHTML;
+    if (data.message === 'assetResponse') {
+      // add GAM %%CLICK_URL_UNESC%% to the data object to be eventually used in renderers
+      data.clickUrlUnesc = clickUrlUnesc;
+      const body = win.document.body.innerHTML;
+      const head = win.document.head.innerHTML;
 
         if (hasPbNativeData() && data.adId !== win.pbNativeData.adId) return;
 
@@ -390,11 +404,16 @@ export function newNativeAssetManager(win, pubUrl, mkMessenger = prebidMessenger
         }
       }
     }
+
+    //substitute CLICK_URL_UNESC with actual value
+    html = html.replaceAll(CLICK_URL_UNESC, bid.clickUrlUnesc || "");
+
     win.document.body.innerHTML += html;
     callback && callback();
     win.removeEventListener('message', replaceAssets);
     stopListening();
-    requestHeightResize(bid.adId, (document.body.clientHeight || document.body.offsetHeight), document.body.clientWidth);
+    const resize = () => requestHeightResize(bid.adId, (document.body.clientHeight || document.body.offsetHeight), document.body.clientWidth);
+    document.readyState === 'complete' ? resize() : window.onload = resize;
 
     if (typeof window.postRenderAd === 'function') {
       window.postRenderAd(bid);
@@ -420,16 +439,16 @@ export function newNativeAssetManager(win, pubUrl, mkMessenger = prebidMessenger
     }
 
     ortb.assets.forEach(asset => {
-      html = html.replace(`##hb_native_asset_id_${asset.id}##`, getAssetValue(asset));
+      html = html.replaceAll(`##hb_native_asset_id_${asset.id}##`, getAssetValue(asset));
       if (asset.link && asset.link.url) {
-        html = html.replace(`##hb_native_asset_link_id_${asset.id}##`, asset.link.url);
+        html = html.replaceAll(`##hb_native_asset_link_id_${asset.id}##`, asset.link.url);
       }
     });
 
     html = html.replaceAll(/##hb_native_asset_id_\d+##/gm, '');
 
     if (ortb.privacy) {
-      html = html.replace("##hb_native_privacy##", ortb.privacy);
+      html = html.replaceAll("##hb_native_privacy##", ortb.privacy);
     }
 
     if (ortb.link) {
