@@ -249,11 +249,7 @@ function watch(done) {
   done();
 }
 
-function openWebPage() {
-  return opens(`${(argv.https) ? 'https' : 'http'}://localhost:${port}`);
-}
-
-gulp.task('serve', gulp.series(clean, gulp.parallel(...buildDevFunctions, watch, test), openWebPage));
+gulp.task('serve', gulp.series(clean, gulp.parallel(...buildDevFunctions, watch, test)));
 
 gulp.task('build-dev', gulp.parallel(...buildDevFunctions));
 

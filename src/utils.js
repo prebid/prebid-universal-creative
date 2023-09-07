@@ -30,15 +30,6 @@ export function writeAdUrl(adUrl, width, height) {
   document.body.appendChild(iframe);
 }
 
-export function writeAdHtml(markup) {
-  // remove <?xml> and <!doctype> tags
-  // https://github.com/prebid/prebid-universal-creative/issues/134
-  markup = markup.replace(/\<(\?xml|(\!DOCTYPE[^\>\[]+(\[[^\]]+)?))+[^>]+\>/g, '');
-  postscribe(document.body, markup, {
-    error: console.error
-  });
-}
-
 export function sendRequest(url, callback) {
   function reqListener() {
     callback(oReq.responseText);

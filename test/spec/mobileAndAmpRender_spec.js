@@ -4,6 +4,7 @@ import * as utils from 'src/utils';
 import { expect } from 'chai';
 import { mocks } from 'test/helpers/mocks';
 import { merge } from 'lodash';
+import {writeAdHtml} from 'src/postscribeRender';
 
 
 function renderingMocks() {
@@ -306,3 +307,10 @@ describe("renderingManager", function () {
   });
 });
 
+describe('writeAdHtml', () => {
+  it('removes DOCTYPE from markup', () => {
+    const ps = sinon.stub();
+    writeAdHtml('<!DOCTYPE html><div>mock-ad</div>', ps);
+    sinon.assert.calledWith(ps, sinon.match.any, '<div>mock-ad</div>')
+  })
+})

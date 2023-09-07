@@ -12,11 +12,11 @@ export function fireNativeImpressionTrackers(adId, sendMessage) {
     sendMessage(message);
 }
 
-export function addNativeClickTrackers(adId, ortb, sendMessage) {
+export function addNativeClickTrackers(adId, sendMessage) {
     const message = {
         message: 'Prebid Native',
         action: 'click',
-        adId 
+        adId
       };
     const adElements = document.getElementsByClassName(AD_ANCHOR_CLASS_NAME) || [];
     // get all assets that have 'link' property, map asset.id -> asset.link
