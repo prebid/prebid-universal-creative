@@ -63,19 +63,18 @@ const CLICK_URL_UNESC = `%%CLICK_URL_UNESC%%`;
 
 let clickUrlUnesc = '';
 
-export function newNativeAssetManager(win, nativeTag) {
-  const { pubUrl } = nativeTag;
+export function newNativeAssetManager(win, nativeTag, mkMessenger = prebidMessenger) {
 
-
-    // clickUrlUnesc contains the url to track clicks in GAM. we check if it 
-    // has been transformed, by GAM, in an URL. 
-    // if CLICK_URL_UNESC is the string "%%CLICK_URL_UNESC%%", we're not in GAM. 
+    // clickUrlUnesc contains the url to track clicks in GAM. we check if it
+    // has been transformed, by GAM, in an URL.
+    // if CLICK_URL_UNESC is the string "%%CLICK_URL_UNESC%%", we're not in GAM.
     if (nativeTag.clickUrlUnesc && nativeTag.clickUrlUnesc !== CLICK_URL_UNESC) {
       clickUrlUnesc = nativeTag.clickUrlUnesc;
     }
+  const {pubUrl} = nativeTag;
 
-  const sendMessage = prebidMessenger(pubUrl, win);
-  let callback;
+  const sendMessage = mkMessenger(pubUrl, win);
+  let callback, errCallback;
   let errorCountEscapeHatch = 0;
   let cancelMessageListener;
 
@@ -197,7 +196,8 @@ export function newNativeAssetManager(win, nativeTag) {
    * and requestAllAssets flag is set in the tag, postmessage roundtrip
    * to retrieve native assets that have a value on the corresponding bid
    */
-  function loadAssets(adId, cb) {
+  function loadAssets(adId, cb, onError) {
+    errCallback = onError;
     const placeholders = scanDOMForPlaceHolders(adId);
 
     if (hasPbNativeData() && win.pbNativeData.hasOwnProperty('assetsToReplace')) {
@@ -213,6 +213,8 @@ export function newNativeAssetManager(win, nativeTag) {
     } else if (placeholders.length > 0) {
       callback = cb;
       cancelMessageListener = requestAssets(adId, placeholders);
+    } else {
+      onError && onError(new Error('No assets to load: no placeholders found in template'));
     }
   }
 
@@ -287,72 +289,83 @@ export function newNativeAssetManager(win, nativeTag) {
    * Postmessage listener for when Prebid responds with requested native assets.
    */
   function replaceAssets(event) {
-    var data = {};
-
     try {
-      data = JSON.parse(event.data);
-    } catch (e) {
-      if (errorCountEscapeHatch++ > 10) {
-        /*
-         * if for some reason Prebid never responds with the native assets,
-         * get rid of this listener because other messages won't stop coming
-         */
-        stopListening();
+
+      var data = {};
+
+      try {
+        data = JSON.parse(event.data);
+      } catch (e) {
+        if (errorCountEscapeHatch++ > 10) {
+          // TODO: this should be a timeout, not an arbitrary cap on the number of messages received
+          /*
+           * if for some reason Prebid never responds with the native assets,
+           * get rid of this listener because other messages won't stop coming
+           */
+          stopListening();
+          throw e;
+        }
+        return;
       }
-      return;
-    }
 
     if (data.message === 'assetResponse') {
       // add GAM %%CLICK_URL_UNESC%% to the data object to be eventually used in renderers
       data.clickUrlUnesc = clickUrlUnesc;
-
       const body = win.document.body.innerHTML;
       const head = win.document.head.innerHTML;
 
-      if (hasPbNativeData() && data.adId !== win.pbNativeData.adId) return;
+        if (hasPbNativeData() && data.adId !== win.pbNativeData.adId) return;
 
-      if (head) win.document.head.innerHTML = replace(head, data);
+        callback = ((cb) => {
+          return () => {
+            fireNativeImpressionTrackers(data.adId, sendMessage);
+            addNativeClickTrackers(data.adId, sendMessage);
+            cb && cb();
+          }
+        })(callback);
 
-      data.assets = data.assets || [];
-      let renderPayload = data.assets;
-      if (data.ortb) {
-        renderPayload.ortb = data.ortb;
-        callback = () => {
-          fireNativeImpressionTrackers(data.adId, sendMessage);
-          addNativeClickTrackers(data.adId, data.ortb, sendMessage);
+        if (head) win.document.head.innerHTML = replace(head, data);
+
+
+        data.assets = data.assets || [];
+        let renderPayload = data.assets;
+        if (data.ortb) {
+          renderPayload.ortb = data.ortb;
         }
-      }
 
-      if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
-        if (win.renderAd) {
-          const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
+        if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
+          if (win.renderAd) {
+            const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
+
+            renderAd(newHtml, data);
+          } else if (document.getElementById('pb-native-renderer')) {
+            document.getElementById('pb-native-renderer').addEventListener('load', function () {
+              const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
+
+              renderAd(newHtml, data);
+            });
+          } else {
+            loadScript(win, ((hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl') && win.pbNativeData.rendererUrl) || data.rendererUrl), function () {
+              const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
+
+              renderAd(newHtml, data);
+            });
+          }
+        } else if ((data.hasOwnProperty('adTemplate') && data.adTemplate) || (hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate'))) {
+          const template = (hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate') && win.pbNativeData.adTemplate) || data.adTemplate;
+          const newHtml = replace(template, data);
 
           renderAd(newHtml, data);
-        } else if (document.getElementById('pb-native-renderer')) {
-          document.getElementById('pb-native-renderer').addEventListener('load', function() {
-            const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
-
-            renderAd(newHtml, data);
-          });
         } else {
-          loadScript(win, ((hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl') && win.pbNativeData.rendererUrl) || data.rendererUrl), function() {
-            const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
+          const newHtml = replace(body, data);
 
-            renderAd(newHtml, data);
-          })
+          win.document.body.innerHTML = newHtml;
+          callback && callback();
+          stopListening();
         }
-      } else if ((data.hasOwnProperty('adTemplate') && data.adTemplate)||(hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate'))) {
-        const template =  (hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate') && win.pbNativeData.adTemplate) || data.adTemplate;
-        const newHtml = replace(template, data);
-
-        renderAd(newHtml, data);
-      } else {
-        const newHtml = replace(body, data);
-
-        win.document.body.innerHTML = newHtml;
-        callback && callback();
-        stopListening();
       }
+    } catch (e) {
+      errCallback && errCallback(e);
     }
   }
 

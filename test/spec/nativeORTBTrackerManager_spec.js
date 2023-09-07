@@ -37,40 +37,24 @@ describe('test firing native trackers', function () {
 
 
   it('should fire impression trackers', function () {
-    let imgUrl = 'foo.bar/event?type=img';
-    let jsUrl = 'foo.bar/event?type=js';
-    
-
     fireNativeImpressionTrackers("abc123", sendMessage);
 
     expect(sendMessage.getCall(0).args[0]).to.deep.equal({
-      message: 'Prebid Native', 
+      message: 'Prebid Native',
       action: 'fireNativeImpressionTrackers',
       adId: 'abc123'
     })
   });
 
   it('should fire asset clicktrackers', function () {
-    let assetTrackers = ['foo.bar/click?id=1', 'foo.bar/click?id=2'];
-    let mainTrackers = ['foo.bar/click?id=3'];
     let adId = "abc123";
-    let nativeOrtb = {
-      assets: [{
-        id: 1,
-        link: { clicktrackers: assetTrackers }
-      }],
-      link: {
-        clicktrackers: mainTrackers
-      }
-    }
-
-    addNativeClickTrackers(adId, nativeOrtb, sendMessage);
+    addNativeClickTrackers(adId, sendMessage);
     expect(sendMessage.getCall(0).args[0]).to.deep.equal({
       message: "Prebid Native",
       action: 'click',
       adId: 'abc123',
       assetId: 1
     });
-    
+
   });
 });
