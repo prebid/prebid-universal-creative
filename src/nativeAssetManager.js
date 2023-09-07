@@ -71,6 +71,7 @@ export function newNativeAssetManager(win, nativeTag, mkMessenger = prebidMessen
     if (nativeTag.clickUrlUnesc && nativeTag.clickUrlUnesc !== CLICK_URL_UNESC) {
       clickUrlUnesc = nativeTag.clickUrlUnesc;
     }
+  const {pubUrl} = nativeTag;
 
   const sendMessage = mkMessenger(pubUrl, win);
   let callback, errCallback;

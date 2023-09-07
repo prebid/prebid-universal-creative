@@ -631,7 +631,7 @@ describe('nativeAssetManager', () => {
                 beforeEach(() => {
                     win.pbNativeData = pbData;
                     win.document.body.innerHTML = '##hb_native_title##';
-                    mgr = makeManager(mockMessenger);
+                    mgr = makeManager({}, mockMessenger);
                 });
 
                 it('on response "timeout"', () => {
