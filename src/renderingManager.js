@@ -25,8 +25,8 @@ export function renderLegacy(doc, adId) {
     w = w.parent;
     if (w.$$PREBID_GLOBAL$$) {
       try {
-        found = true;
         w.$$PREBID_GLOBAL$$.renderAd(doc, adId);
+        found = true;
         break;
       } catch (e) {
         continue;
