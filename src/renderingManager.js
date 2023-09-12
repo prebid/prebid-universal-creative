@@ -19,17 +19,22 @@ export function renderBannerOrDisplayAd(doc, dataObject) {
  * @param {string} adId Id of creative to render
  */
 export function renderLegacy(doc, adId) {
+  let found = false;
   let w = window;
   for (let i = 0; i < 10; i++) {
     w = w.parent;
     if (w.$$PREBID_GLOBAL$$) {
       try {
+        found = true;
         w.$$PREBID_GLOBAL$$.renderAd(doc, adId);
         break;
       } catch (e) {
         continue;
       }
     }
+  }
+  if (!found) {
+    console.error("Unable to locate $$PREBID_GLOBAL$$.renderAd function!");
   }
 }
 
