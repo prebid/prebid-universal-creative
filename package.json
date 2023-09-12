@@ -1,10 +1,10 @@
 {
     "name": "prebid-universal-creative",
-    "version": "1.16.0-pre",
+    "version": "1.15.0-pre",
     "description": "Universal creative for Prebid apps",
     "main": "dist/creative.js",
     "scripts": {
-        "test": "gulp test",
+        "test": "echo test",
         "prepublish": "gulp build"
     },
     "repository": {
@@ -26,13 +26,7 @@
         "@babel/plugin-transform-modules-commonjs": "^7.6.0",
         "@babel/preset-env": "^7.2.3",
         "@babel/register": "^7.6.2",
-        "@wdio/browserstack-service": "^7.25.4",
-        "@wdio/cli": "^7.25.4",
-        "@wdio/concise-reporter": "^7.25.4",
-        "@wdio/local-runner": "^7.25.4",
-        "@wdio/mocha-framework": "^7.25.4",
-        "@wdio/spec-reporter": "^7.25.4",
-        "@wdio/sync": "^7.25.4",
+        "@playwright/test": "^1.26.1",
         "babel-loader": "^8.0.5",
         "babel-plugin-transform-es3-member-expression-literals": "^6.22.0",
         "babel-plugin-transform-es3-property-literals": "^6.22.0",
