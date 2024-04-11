@@ -1,5 +1,11 @@
 import {mocks} from '../helpers/mocks.js';
-import {prebidMessenger} from '../../src/messaging.js';
+import {
+    AD_RENDER_FAILED,
+    AD_RENDER_SUCCEEDED,
+    PREBID_EVENT,
+    prebidMessenger,
+    renderEventMessage
+} from '../../src/messaging.js';
 
 describe('prebidMessenger',() => {
     let win;
@@ -61,4 +67,36 @@ describe('prebidMessenger',() => {
         })
 
     });
+})
+
+describe('renderEventMessage', () => {
+    Object.entries({
+        'success': {
+            input: {adId: '123'},
+            output: {
+                event: AD_RENDER_SUCCEEDED
+            }
+        },
+        'failure': {
+            input: {
+                adId: '321',
+                errorInfo: {
+                    reason: 'failureReason',
+                    message: 'error message'
+                }
+            },
+            output: {
+                event: AD_RENDER_FAILED,
+                info: {
+                    reason: 'failureReason',
+                    message: 'error message'
+                }
+            }
+        }
+    }).forEach(([t, {input: {adId, errorInfo}, output}]) => {
+        Object.assign(output, {message: PREBID_EVENT, adId});
+        it(t, () => {
+            expect(renderEventMessage(adId, errorInfo)).to.eql(output);
+        })
+    })
 })

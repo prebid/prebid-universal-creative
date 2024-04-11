@@ -1,6 +1,7 @@
 import { renderCrossDomain, renderLegacy } from 'src/renderingManager';
 import * as utils from 'src/utils';
 import * as domHelper from 'src/domHelper';
+import * as dynamic from 'src/dynamicRenderer.js';
 import { expect } from 'chai';
 import { mocks } from 'test/helpers/mocks';
 import { merge } from 'lodash';
@@ -72,6 +73,7 @@ describe('renderingManager', function() {
 
   describe('cross domain creative', function() {
     const ORIGIN = 'http://example.com';
+    let sandbox;
     let parseStub;
     let iframeStub;
     let triggerPixelSpy;
@@ -81,10 +83,11 @@ describe('renderingManager', function() {
     let eventSource;
 
     beforeEach(function(){
+      sandbox = sinon.createSandbox();
       mockIframe = createMockIframe();
-      parseStub = sinon.stub(utils, 'parseUrl');
-      iframeStub = sinon.stub(domHelper, 'getEmptyIframe').returns(mockIframe);
-      triggerPixelSpy = sinon.stub(utils, 'triggerPixel');
+      parseStub = sandbox.stub(utils, 'parseUrl');
+      iframeStub = sandbox.stub(domHelper, 'getEmptyIframe').returns(mockIframe);
+      triggerPixelSpy = sandbox.stub(utils, 'triggerPixel');
       parseStub.returns({
         protocol: 'http',
         host: 'example.com'
@@ -102,9 +105,7 @@ describe('renderingManager', function() {
     });
 
     afterEach(function () {
-      parseStub.restore();
-      iframeStub.restore();
-      triggerPixelSpy.restore();
+      sandbox.restore();
     });
 
     function mockPrebidResponse(msg)  {
@@ -113,6 +114,10 @@ describe('renderingManager', function() {
         message: JSON.stringify(Object.assign({ message: 'Prebid Response' }, msg))
       });
     }
+
+    it('should run renderer if present', () => {
+      expect(true).to.be.false;
+    })
 
     it("should render cross domain creative", function () {
       mockPrebidResponse({
