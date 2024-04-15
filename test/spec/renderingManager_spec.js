@@ -116,7 +116,14 @@ describe('renderingManager', function() {
     }
 
     it('should run renderer if present', () => {
-      expect(true).to.be.false;
+      sandbox.stub(dynamic, 'runDynamicRenderer');
+      const data = {
+        adId: '123',
+        renderer: 'mock-renderer',
+        ad: 'markup'
+      };
+      mockPrebidResponse(data);
+      sinon.assert.calledWith(dynamic.runDynamicRenderer, data.adId, sinon.match(data))
     })
 
     it("should render cross domain creative", function () {
