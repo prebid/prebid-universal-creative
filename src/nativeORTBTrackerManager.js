@@ -21,7 +21,7 @@ export function addNativeClickTrackers(adId, sendMessage) {
     const adElements = document.getElementsByClassName(AD_ANCHOR_CLASS_NAME) || [];
     // get all assets that have 'link' property, map asset.id -> asset.link
     for (let i = 0; i < adElements.length; i++) {
-        adElements[i].addEventListener('click', (event) => {
+        adElements[i].addEventListener('pointerdown', (event) => {
             let targetElement = event.target;
             // check if clicked element is associated with any native asset (look for 'hb_native_asset_id' attribute)
             let assetId = targetElement && targetElement.getAttribute(ASSET_ID_ELEMENT_ATTRIBUTE);
