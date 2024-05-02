@@ -1,78 +1,53 @@
 /*
  * Script to handle firing impression and click trackers from native teamplates
  */
-import { parseUrl, triggerPixel, transformAuctionTargetingData } from './utils';
-import { newNativeAssetManager } from './nativeAssetManager';
+import {newNativeAssetManager} from './nativeAssetManager';
+import {prebidMessenger} from './messaging.js';
 
-const AD_ANCHOR_CLASS_NAME = 'pb-click';
-const AD_DATA_ADID_ATTRIBUTE = 'pbAdId';
-
-export function newNativeRenderManager(win) {
-  let publisherDomain;
+export function newNativeRenderManager(win, mkMessenger = prebidMessenger, assetMgr = newNativeAssetManager) {
+    let sendMessage;
 
 
-  function findAdElements(className) {
-    let adElements = win.document.getElementsByClassName(className);
-    return adElements || [];
-  }
+    let renderNativeAd = function (doc, nativeTag) {
+        window.pbNativeData = nativeTag;
+        sendMessage = mkMessenger(nativeTag.pubUrl, win);
 
-  function loadClickTrackers(event, adId) {
-    fireTracker(adId, 'click');
-  }
+        function signalResult(adId, success, info) {
+            sendMessage({
+                message: 'Prebid Event',
+                adId,
+                event: success ? 'adRenderSucceeded' : 'adRenderFailed',
+                info
+            });
+        }
 
-  function fireTracker(adId, action) {
-    if (adId === '') {
-      console.warn('Prebid tracking event was missing \'adId\'.  Was adId macro set in the HTML attribute ' + AD_DATA_ADID_ATTRIBUTE + 'on the ad\'s anchor element');
-    } else {
-      let message = { message: 'Prebid Native', adId: adId };
+        try {
+            const nativeAssetManager = assetMgr(window, nativeTag);
 
-      // fires click trackers when called via link
-      if (action === 'click') {
-        message.action = 'click';
-      }
+            if (nativeTag.adId != null) {
 
-      win.parent.postMessage(JSON.stringify(message), publisherDomain);
-    }
-  }
+                if (nativeTag.hasOwnProperty('rendererUrl') && !nativeTag.rendererUrl.match(/##.*##/i)) {
+                    const scr = doc.createElement('SCRIPT');
+                    scr.src = nativeTag.rendererUrl,
+                        scr.id = 'pb-native-renderer';
+                    doc.body.appendChild(scr);
+                }
+                nativeAssetManager.loadAssets(nativeTag.adId, () => {
+                    signalResult(nativeTag.adId, true);
+                }, (e) => {
+                    signalResult(nativeTag.adId, false, {reason: 'exception', message: e.message});
+                });
+            } else {
+                signalResult(null, false, {reason: 'missingDocOrAdid'});
+                console.warn('Prebid Native Tag object was missing \'adId\'.');
+            }
+        } catch (e) {
+            signalResult(nativeTag && nativeTag.adId, false, {reason: 'exception', message: e.message});
+            console.error('Error rendering ad', e);
+        }
+    };
 
-  function fireNativeImpTracker(adId) {
-    fireTracker(adId, 'impression');
-  }
-
-  function fireNativeCallback() {
-    const adElements = findAdElements(AD_ANCHOR_CLASS_NAME);
-    for (let i = 0; i < adElements.length; i++) {
-      adElements[i].addEventListener('click', function(event) {
-        loadClickTrackers(event, window.pbNativeData.adId);
-      }, true);
-    }
-  }
-
-  // START OF MAIN CODE
-  let renderNativeAd = function(nativeTag) {
-    window.pbNativeData = nativeTag;
-    const targetingData = transformAuctionTargetingData(nativeTag);
-    const nativeAssetManager = newNativeAssetManager(window);
-
-    if (nativeTag.hasOwnProperty('adId')) {
-      let parsedUrl = parseUrl(window.pbNativeData.pubUrl);
-      publisherDomain = parsedUrl.protocol + '://' + parsedUrl.host;
-
-      if (nativeTag.hasOwnProperty('rendererUrl') && !nativeTag.rendererUrl.match(/##.*##/i)) {
-        const scr = document.createElement('SCRIPT');
-        scr.src = nativeTag.rendererUrl,
-        scr.id = 'pb-native-renderer';
-        document.body.appendChild(scr);
-      }
-      nativeAssetManager.loadAssets(nativeTag.adId,fireNativeCallback);
-      fireNativeCallback();
-      fireNativeImpTracker(nativeTag.adId);
-    } else {
-      console.warn('Prebid Native Tag object was missing \'adId\'.');
-    }
-  }
-
-  return {
-    renderNativeAd
-  }
+    return {
+        renderNativeAd
+    };
 }

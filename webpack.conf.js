@@ -1,6 +1,7 @@
 var creative = require('./package.json');
 var StringReplacePlugin = require('string-replace-webpack-plugin');
 var path = require('path');
+const ShakePlugin = require('webpack-common-shake').Plugin;
 
 module.exports = {
   devtool: 'source-map',
@@ -42,5 +43,6 @@ module.exports = {
         })
       }
     ]
-  }
+  },
+  plugins: [new ShakePlugin()],
 };

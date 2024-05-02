@@ -19,7 +19,13 @@ read -p "
 If you are missing the dev-a sub domain that means you will be publishing to PRODUCTION.
 
 
-Are you sure you're ready to publish the file prebid-universal-creative.js to $DOMAIN?" -n 1 -r
+Are you sure you're ready to publish following files:
+- prebid-universal-creative-amp.js
+- prebid-universal-creative-banner.js
+- prebid-universal-creative-mobile.js
+- prebid-universal-creative-native.js
+- prebid-universal-creative-video.js
+to $DOMAIN?" -n 1 -r
 if [[ $REPLY =~ ^[Yy]$ ]]; then
   echo -e "${GREN}*** OKAY ***"
   PARENT_DIRECTORY="$(dirname $( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P ) )"
@@ -28,10 +34,35 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo -e "${RED}*** DID YOU FORGET TO BUILD? ***${NC}"
     exit 1
   fi
-  FILE=$PARENT_DIRECTORY/dist/creative.js
+
+  FILE=$PARENT_DIRECTORY/dist/amp.js
   echo -e "${GREEN}Built File ${FILE}"
-  gsutil mv $PARENT_DIRECTORY/dist/creative.js gs://$DOMAIN/core/prebid-universal-creative.js
+  gsutil mv $PARENT_DIRECTORY/dist/amp.js gs://$DOMAIN/core/prebid-universal-creative-amp.js
   echo -e "${GREEN}Setting permissions for $FILE...${NC}"
-  gsutil acl ch -u AllUsers:R gs://$DOMAIN/core/prebid-universal-creative.js
+  gsutil acl ch -u AllUsers:R gs://$DOMAIN/core/prebid-universal-creative-amp.js
+
+  FILE=$PARENT_DIRECTORY/dist/banner.js
+  echo -e "${GREEN}Built File ${FILE}"
+  gsutil mv $PARENT_DIRECTORY/dist/banner.js gs://$DOMAIN/core/prebid-universal-creative-banner.js
+  echo -e "${GREEN}Setting permissions for $FILE...${NC}"
+  gsutil acl ch -u AllUsers:R gs://$DOMAIN/core/prebid-universal-creative-banner.js
+
+  FILE=$PARENT_DIRECTORY/dist/mobile.js
+  echo -e "${GREEN}Built File ${FILE}"
+  gsutil mv $PARENT_DIRECTORY/dist/mobile.js gs://$DOMAIN/core/prebid-universal-creative-mobile.js
+  echo -e "${GREEN}Setting permissions for $FILE...${NC}"
+  gsutil acl ch -u AllUsers:R gs://$DOMAIN/core/prebid-universal-creative-mobile.js
+
+  FILE=$PARENT_DIRECTORY/dist/native.js
+  echo -e "${GREEN}Built File ${FILE}"
+  gsutil mv $PARENT_DIRECTORY/dist/native.js gs://$DOMAIN/core/prebid-universal-creative-native.js
+  echo -e "${GREEN}Setting permissions for $FILE...${NC}"
+  gsutil acl ch -u AllUsers:R gs://$DOMAIN/core/prebid-universal-creative-native.js
+
+  FILE=$PARENT_DIRECTORY/dist/video.js
+  echo -e "${GREEN}Built File ${FILE}"
+  gsutil mv $PARENT_DIRECTORY/dist/video.js gs://$DOMAIN/core/prebid-universal-creative-video.js
+  echo -e "${GREEN}Setting permissions for $FILE...${NC}"
+  gsutil acl ch -u AllUsers:R gs://$DOMAIN/core/prebid-universal-creative-video.js
 fi
 

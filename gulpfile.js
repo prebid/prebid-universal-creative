@@ -30,28 +30,48 @@ function clean() {
     .pipe(gulpClean());
 }
 
-function buildDev() {
-  return gulp.src(['src/creative.js'])
-    .pipe(webpackStream(webpackConfig))
+/**
+ * This generic function will compile the file specified as inputFile and will
+ * generate an output file in the build directory.
+ */
+function buildDev({ inputFile, outputFile }) {
+  var cloned = _.cloneDeep(webpackConfig);
+  cloned.output.filename = outputFile;
+  return gulp.src([inputFile])
+    .pipe(webpackStream(cloned))
     .pipe(gulp.dest('build'));
+}
+
+function buildLegacyDev() {
+  return buildDev({ inputFile: 'src/legacy.js', outputFile: 'creative.js' });
+}
+
+function buildBannerDev() {
+  return buildDev({ inputFile: 'src/creative.js', outputFile: 'banner.js' });
+}
+
+function buildVideoDev() {
+  return buildDev({ inputFile: 'src/creative.js', outputFile: 'video.js' });
+}
+
+function buildAmpDev() {
+  return buildDev({ inputFile: 'src/ampOrMobile.js', outputFile: 'amp.js' });
+}
+
+function buildMobileDev() {
+  return buildDev({ inputFile: 'src/ampOrMobile.js', outputFile: 'mobile.js' });
 }
 
 function buildNativeDev() {
-  var cloned = _.cloneDeep(webpackConfig);
-  cloned.output.filename = 'native-trk.js';
-
-  return gulp.src(['src/nativeTrackers.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(gulp.dest('build'));
+  return buildDev({ inputFile: 'src/nativeTrackers.js', outputFile: 'native-trk.js' });
 }
 
 function buildNativeRenderDev() {
-  var cloned = _.cloneDeep(webpackConfig);
-  cloned.output.filename = 'native-render.js';
+  return buildDev({ inputFile: 'src/nativeRender.js', outputFile: 'native.js' });
+}
 
-  return gulp.src(['src/nativeRender.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(gulp.dest('build'));
+function buildNativeRenderLegacyDev() {
+  return buildDev({ inputFile: 'src/legacyNativeRender.js', outputFile: 'native-render.js' });
 }
 
 function buildCookieSync() {
@@ -93,25 +113,19 @@ function buildCookieSyncWithConsent() {
 }
 
 function buildUidDev() {
-  var cloned = _.cloneDeep(webpackConfig);
-  delete cloned.devtool;
-  cloned.output.filename = 'uid.js';
-
-  return gulp.src(['src/ssp-userids/uid.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(gulp.dest('build'));
+  return buildDev({ inputFile: 'src/ssp-userids/uid.js', outputFile: 'uid.js' });
 }
 
-function buildProd() {
+function buildProdLegacy() {
   let cloned = _.cloneDeep(webpackConfig);
   delete cloned.devtool;
 
-  return gulp.src(['src/creative.js'])
+  return gulp.src(['src/legacy.js'])
     .pipe(webpackStream(cloned))
     .pipe(rename({ extname: '.max.js' }))
     .pipe(gulp.dest('dist'))
     .pipe(uglify())
-    .pipe(header(banner, { creative: creative }))
+    .pipe(header('/* v<%= creative.version %>\n' + dateString + '\nDEPRECATED, please use creative based on hb_format targeting */\n', { creative: creative }))
     .pipe(rename({
       basename: 'creative',
       extname: '.js'
@@ -119,28 +133,53 @@ function buildProd() {
     .pipe(gulp.dest('dist'));
 }
 
-function buildNative() {
-  var cloned = _.cloneDeep(webpackConfig);
-  delete cloned.devtool;
-  cloned.output.filename = 'native-trk.js';
+function includeStaticVastXmlFile() {
+  let target = gulp.src('static/prebid-mobile-rewarded-vast.xml');
+  return target.pipe(gulp.dest('dist'));
+}
 
-  return gulp.src(['src/nativeTrackers.js'])
+function buildProd({ inputFile, outputFile }) {
+  let cloned = _.cloneDeep(webpackConfig);
+  delete cloned.devtool;
+
+  return gulp.src([inputFile])
     .pipe(webpackStream(cloned))
+    .pipe(gulp.dest('dist'))
     .pipe(uglify())
-    .pipe(header('/* v<%= creative.version %>\n' + dateString + ' */\n', { creative: creative }))
+    .pipe(header(banner, { creative: creative }))
+    .pipe(rename({
+      basename: outputFile.split('.')[0],
+      extname: `.${outputFile.split('.')[1]}`
+    }))
     .pipe(gulp.dest('dist'));
 }
 
-function buildNativeRender() {
-  var cloned = _.cloneDeep(webpackConfig);
-  delete cloned.devtool;
-  cloned.output.filename = 'native-render.js';
+function buildBanner() {
+  return buildProd({ inputFile: 'src/creative.js', outputFile: 'banner.js' });
+}
 
-  return gulp.src(['src/nativeRender.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(uglify())
-    .pipe(header('/* v<%= creative.version %>\n' + dateString + ' */\n', { creative: creative }))
-    .pipe(gulp.dest('dist'));
+function buildVideo() {
+  return buildProd({ inputFile: 'src/creative.js', outputFile: 'video.js' });
+}
+
+function buildAmp() {
+  return buildProd({ inputFile: 'src/ampOrMobile.js', outputFile: 'amp.js' });
+}
+
+function buildMobile() {
+  return buildProd({ inputFile: 'src/ampOrMobile.js', outputFile: 'mobile.js' });
+}
+
+function buildNative() {
+  return buildProd({ inputFile: 'src/nativeTrackers.js', outputFile: 'native-trk.js' });
+}
+
+function buildNativeRender() {
+  return buildProd({ inputFile: 'src/nativeRender.js', outputFile: 'native.js' });
+}
+
+function buildLegacyNativeRender() {
+  return buildProd({ inputFile: 'src/legacyNativeRender.js', outputFile: 'native-render.js' });
 }
 
 function buildUid() {
@@ -195,7 +234,7 @@ function newKarmaCallback(done) {
         process.exit(exitCode);
       }
     }
-  } 
+  }
 }
 
 function setupE2E(done) {
@@ -205,7 +244,9 @@ function setupE2E(done) {
 
 gulp.task('test', gulp.series(clean, test));
 
-gulp.task('e2e-test', gulp.series(clean, setupE2E, gulp.parallel(buildDev, buildCookieSync, buildCookieSyncWithConsent, buildNativeDev, buildNativeRenderDev, buildUidDev, includeStaticVastXmlFile, watch), test));
+const buildDevFunctions = [buildLegacyDev, buildBannerDev, buildVideoDev, buildAmpDev, buildMobileDev, buildNativeRenderLegacyDev, buildNativeDev, buildNativeRenderDev, buildCookieSync, buildCookieSyncWithConsent, buildUidDev, includeStaticVastXmlFile];
+
+gulp.task('e2e-test', gulp.series(clean, setupE2E, gulp.parallel(...buildDevFunctions, watch), test));
 
 function watch(done) {
   const mainWatcher = gulp.watch([
@@ -220,17 +261,15 @@ function watch(done) {
     root: './'
   });
 
-  mainWatcher.on('all', gulp.series(clean, gulp.parallel(buildDev, buildNativeDev, buildNativeRenderDev, buildCookieSync, buildCookieSyncWithConsent, buildUidDev, includeStaticVastXmlFile), test));
+  mainWatcher.on('all', gulp.series(clean, gulp.parallel(...buildDevFunctions), test));
   done();
 }
 
-function openWebPage() {
-  return opens(`${(argv.https) ? 'https' : 'http'}://localhost:${port}`);
-}
+gulp.task('serve', gulp.series(clean, gulp.parallel(...buildDevFunctions, watch, test)));
 
-gulp.task('serve', gulp.series(clean, gulp.parallel(buildDev, buildNativeDev, buildNativeRenderDev, buildCookieSync, buildCookieSyncWithConsent, buildUidDev, includeStaticVastXmlFile, watch, test), openWebPage));
+gulp.task('build-dev', gulp.parallel(...buildDevFunctions));
 
-gulp.task('build', gulp.parallel(buildProd, buildCookieSync, buildCookieSyncWithConsent, buildNative, buildNativeRender, buildUid, includeStaticVastXmlFile));
+gulp.task('build', gulp.parallel(buildProdLegacy, buildLegacyNativeRender, buildBanner, buildVideo, buildCookieSync, buildCookieSyncWithConsent, buildNative, buildNativeRender, buildUid, buildAmp, buildMobile, includeStaticVastXmlFile));
 
 gulp.task('test-coverage', (done) => {
   new KarmaServer(karmaConfMaker(true, false, false), newKarmaCallback(done)).start();
