@@ -334,11 +334,11 @@ export function newNativeAssetManager(win, nativeTag, mkMessenger = prebidMessen
         }
 
         // if there's a rendererUrl, we need to check whether it's already been loaded.
-        // The mark of it having been loaded is the existence of a window.renderAd() function.
         // There are 3 scenarios:
-        //   1) it's already been loaded in some undocumented way by a publisher or the creative
-        //   2) it was already loaded from nativeRenderManager.js (which creates a script with is pb-native-renderer)
+        //   1) it's already been loaded (window.renderAd is present)
+        //   2) it is currently being loaded (through a script tag with id "pb-native-renderer")
         //   3) it hasn't been loaded yet
+        //  1 and 2 seem intended to work with logic in nativeRenderManager.js, which (sometimes) loads rendererUrl through a <script id="pb-native-renderer">, but they could conceivably be used in an undocumented way to embed renderer logic directly in the creative.
         if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
           if (win.renderAd) {
             const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
