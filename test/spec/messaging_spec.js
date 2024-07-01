@@ -25,7 +25,6 @@ describe('prebidMessenger',() => {
     describe('when publisher URL is available', () => {
         const URL = 'https://www.publisher.com/page.html';
         const ORIGIN = 'https://www.publisher.com'
-        let sendMessage;
         let callback, handler;
 
         beforeEach(() => {
@@ -33,13 +32,56 @@ describe('prebidMessenger',() => {
                 handler = h;
             }
             win.removeEventListener = sinon.spy();
-            sendMessage = prebidMessenger(URL, win);
             callback = sinon.spy();
         })
+
+        function sendMessage(...args) {
+            return prebidMessenger(URL, win)(...args);
+        }
 
         it('should use origin for postMessage', () => {
            sendMessage('test');
            sinon.assert.calledWith(win.parent.postMessage, JSON.stringify('test'), ORIGIN);
+        });
+
+        describe('when window has multiple ancestors', () => {
+            let target;
+            beforeEach(() => {
+                const top = mocks.createFakeWindow('top');
+                target = {
+                    ...win.parent,
+                    frames: {},
+                    parent: {
+                        top,
+                        frames: {},
+                        parent: top
+                    }
+                };
+                win = {
+                    top,
+                    frames: {},
+                    parent: {
+                        top,
+                        frames: {},
+                        parent: target
+                    }
+                };
+            })
+            it('should post to first ancestor that has a __pb_locator__ child', () => {
+                [target, target.parent].forEach(win => {
+                    win.frames = {
+                        __pb_locator__: {}
+                    };
+                })
+                sendMessage('test');
+                sinon.assert.calledWith(target.postMessage);
+            });
+            it('should post to immediate parent when no ancestor has __pb_locator__', () => {
+                win.parent.postMessage = sinon.spy();
+                delete target.postMessage;
+                sendMessage('test');
+                sinon.assert.calledWith(win.parent.postMessage);
+            });
         });
 
         it('should not run callback on response if origin does not mach', ()=> {
