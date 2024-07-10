@@ -14,8 +14,10 @@ export function prebidMessenger(publisherURL, win = window) {
     }
 
     let target = win.parent;
-    while (target != null && target !== win.top && !isPrebidWindow(target)) target = target.parent;
-    if (!isPrebidWindow(target)) target = win.parent;
+    try {
+        while (target != null && target !== win.top && !isPrebidWindow(target)) target = target.parent;
+        if (!isPrebidWindow(target)) target = win.parent;
+    } catch (e) {}
 
     return function sendMessage(message, onResponse) {
         if (prebidDomain == null) {
