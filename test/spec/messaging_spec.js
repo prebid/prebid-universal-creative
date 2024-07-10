@@ -67,21 +67,36 @@ describe('prebidMessenger',() => {
                     }
                 };
             })
-            it('should post to first ancestor that has a __pb_locator__ child', () => {
-                [target, target.parent].forEach(win => {
-                    win.frames = {
-                        __pb_locator__: {}
-                    };
+            Object.entries({
+                throws() { throw new DOMException() },
+                'does not throw'() { return {} }
+            }).forEach(([t, getFrames]) => {
+                describe(`when ancestor ${t}`, () => {
+                    beforeEach(() => {
+                        Object.defineProperty(target.parent.parent, 'frames', {get: getFrames});
+                    })
+                    it('should post to first ancestor that has a __pb_locator__ child', () => {
+                        [target, target.parent].forEach(win => {
+                            win.frames = {
+                                __pb_locator__: {}
+                            };
+                        })
+                        sendMessage('test');
+                        sinon.assert.called(target.postMessage);
+                    });
                 })
-                sendMessage('test');
-                sinon.assert.calledWith(target.postMessage);
-            });
+            })
             it('should post to immediate parent when no ancestor has __pb_locator__', () => {
                 win.parent.postMessage = sinon.spy();
                 delete target.postMessage;
                 sendMessage('test');
-                sinon.assert.calledWith(win.parent.postMessage);
+                sinon.assert.called(win.parent.postMessage);
             });
+            it('should post to first restricted frame if no __pb_locator__ can be found', () => {
+                Object.defineProperty(target, 'frames', {get() { throw new DOMException() }});
+                sendMessage('test');
+                sinon.assert.called(target.postMessage)
+            })
         });
 
         it('should not run callback on response if origin does not mach', ()=> {
