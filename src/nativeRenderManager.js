@@ -2,7 +2,7 @@
  * Script to handle firing impression and click trackers from native teamplates
  */
 import {newNativeAssetManager} from './nativeAssetManager';
-import {prebidMessenger} from './messaging.js';
+import {prebidMessenger, renderEventMessage} from './messaging.js';
 
 export function newNativeRenderManager(win, mkMessenger = prebidMessenger, assetMgr = newNativeAssetManager) {
     let sendMessage;
@@ -12,13 +12,8 @@ export function newNativeRenderManager(win, mkMessenger = prebidMessenger, asset
         window.pbNativeData = nativeTag;
         sendMessage = mkMessenger(nativeTag.pubUrl, win);
 
-        function signalResult(adId, success, info) {
-            sendMessage({
-                message: 'Prebid Event',
-                adId,
-                event: success ? 'adRenderSucceeded' : 'adRenderFailed',
-                info
-            });
+        function signalResult(adId, errorInfo) {
+            sendMessage(renderEventMessage(adId, errorInfo));
         }
 
         try {
@@ -33,16 +28,16 @@ export function newNativeRenderManager(win, mkMessenger = prebidMessenger, asset
                     doc.body.appendChild(scr);
                 }
                 nativeAssetManager.loadAssets(nativeTag.adId, () => {
-                    signalResult(nativeTag.adId, true);
+                    signalResult(nativeTag.adId);
                 }, (e) => {
-                    signalResult(nativeTag.adId, false, {reason: 'exception', message: e.message});
+                    signalResult(nativeTag.adId, {reason: 'exception', message: e.message});
                 });
             } else {
-                signalResult(null, false, {reason: 'missingDocOrAdid'});
+                signalResult(null, {reason: 'missingDocOrAdid'});
                 console.warn('Prebid Native Tag object was missing \'adId\'.');
             }
         } catch (e) {
-            signalResult(nativeTag && nativeTag.adId, false, {reason: 'exception', message: e.message});
+            signalResult(nativeTag && nativeTag.adId, {reason: 'exception', message: e.message});
             console.error('Error rendering ad', e);
         }
     };

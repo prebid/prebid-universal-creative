@@ -1,4 +1,7 @@
 import {parseUrl} from './utils.js';
+export const PREBID_EVENT = 'Prebid Event';
+export const AD_RENDER_SUCCEEDED = 'adRenderSucceeded';
+export const AD_RENDER_FAILED = 'adRenderFailed';
 
 export function prebidMessenger(publisherURL, win = window) {
     const prebidDomain = (() => {
@@ -50,4 +53,12 @@ export function prebidMessenger(publisherURL, win = window) {
         }
 
     }
+}
+
+export function renderEventMessage(adId, errorInfo) {
+    return Object.assign({
+        adId,
+        message: PREBID_EVENT,
+        event: errorInfo ? AD_RENDER_FAILED : AD_RENDER_SUCCEEDED,
+    }, errorInfo ? {info: errorInfo} : null)
 }
