@@ -333,11 +333,17 @@ export function newNativeAssetManager(win, nativeTag, mkMessenger = prebidMessen
           renderPayload.ortb = data.ortb;
         }
 
+        // if there's a rendererUrl, we need to check whether it's already been loaded.
+        // There are 3 scenarios:
+        //   1) it's already been loaded (window.renderAd is present)
+        //   2) it is currently being loaded (through a script tag with id "pb-native-renderer")
+        //   3) it hasn't been loaded yet
+        //  1 and 2 seem intended to work with logic in nativeRenderManager.js, which (sometimes) loads rendererUrl through a <script id="pb-native-renderer">, but they could conceivably be used in an undocumented way to embed renderer logic directly in the creative.
         if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
           if (win.renderAd) {
             const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
 
-            renderAd(newHtml, data);
+            renderAd(newHtml, data); // this is the renderAd() below, not to be confused with the renderAd() supplied by the rendererUrl script :-/
           } else if (document.getElementById('pb-native-renderer')) {
             document.getElementById('pb-native-renderer').addEventListener('load', function () {
               const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
@@ -360,7 +366,7 @@ export function newNativeAssetManager(win, nativeTag, mkMessenger = prebidMessen
           const newHtml = replace(body, data);
 
           win.document.body.innerHTML = newHtml;
-          callback && callback();
+          callback && callback();                // all the other scenarios hit the callback via renderAd()
           stopListening();
         }
       }
