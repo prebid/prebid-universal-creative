@@ -6,6 +6,9 @@ import { writeAdHtml } from './postscribeRender';
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
 
+let omImpressionTracked = false;
+let burlTracked = false;
+
 /**
  * Render mobile or amp ad
  * @param {string} cacheHost Cache host
@@ -131,17 +134,19 @@ function responseCallback(isMobileApp, hbPb) {
         ad += createTrackPixelHtml(decodeURIComponent(bidObject.nurl));
       }
       if (bidObject.burl) {
-        let triggerBurl = function () { triggerPixel(bidObject.burl); };
+        let triggerBurl = function () {
+          if (!burlTracked) {
+            burlTracked = true;
+            triggerPixel(bidObject.burl);
+          }
+        };
         if (isMobileApp) {
-          let mraidScript = loadScript(window, 'mraid.js',
-            function () { // Success loading MRAID
-              let result = registerMRAIDViewableEvent(triggerBurl);
-              if (!result) {
-                triggerBurl(); // Error registering event
-              }
-            },
-            triggerBurl // Error loading MRAID
-          );
+          let openMeasurementAvailable = window.omidBridge;
+          if (openMeasurementAvailable) {
+            registerOpenMeasurementImpressionTracker(triggerBurl);
+          } else {
+            registerMraidImpressionTracker(triggerBurl);
+          }
         } else {
           triggerBurl(); // Not a mobile app
         }
@@ -162,6 +167,87 @@ function responseCallback(isMobileApp, hbPb) {
     }
   }
 };
+
+
+/**
+ * Registers an MRAID impression tracker by loading the MRAID script and
+ * setting up the viewable event callback. If the MRAID script is successfully
+ * loaded, it attempts to register the MRAID viewable event. In case of an
+ * error either in loading the script or registering the event, it triggers a
+ * backup URL.
+ */
+function registerMraidImpressionTracker(triggerBurl) {
+  loadScript(window, 'mraid.js',
+      function () { // Success loading MRAID
+        let result = registerMRAIDViewableEvent(triggerBurl);
+        if (!result) {
+          triggerBurl(); // Error registering event
+        }
+      },
+      function () {
+        triggerBurl(); // Error loading MRAID
+      }
+  );
+}
+
+
+/**
+ * Registers a tracker for Open Measurement impression that triggers the burl callback when
+ * certain conditions are met in the Open Measurement environment.
+ * @param {function} triggerBurl - burl action event
+ */
+function registerOpenMeasurementImpressionTracker(triggerBurl) {
+  if (!window.omidBridge || !window.omidBridge.setNativeViewHierarchy) {
+    return;
+  }
+
+  let originalFunction = window.omidBridge.setNativeViewHierarchy;
+  window.omidBridge.setNativeViewHierarchy = function(...args) {
+    if (!omImpressionTracked) {
+      let viewHierarchy = args[0];
+      if (!viewHierarchy || viewIsNotOnScreen(viewHierarchy) || viewIsNotVisible(viewHierarchy)) {
+        return originalFunction.apply(this, args);
+      }
+      omImpressionTracked = true;
+      triggerBurl();
+    }
+    return originalFunction.apply(this, args);
+  }
+}
+
+/**
+ * Checks if the ad view is not on the screen.
+ * @param {Object} viewHierarchy - the OM SDK view hierarchy.
+ * @return {boolean} - true if the ad view is not on the screen
+ */
+function viewIsNotOnScreen(viewHierarchy) {
+  if (viewHierarchy.childViews && viewHierarchy.childViews.length > 0) {
+    return viewHierarchy.childViews[0].notVisibleReason === "notAttached";
+  }
+  return false;
+}
+
+/**
+ * Checks if the ad view sizes are zeros.
+ * @param {Object} viewHierarchy - the OM SDK view hierarchy.
+ * @return {boolean} - true if the ad view sizes are zeros.
+ * */
+function viewIsNotVisible(viewHierarchy) {
+  let stack = [viewHierarchy];
+  while (stack.length > 0) {
+    let current = stack.pop();
+    if (current.adSessionId) {
+      return (current.width === 0 && current.height === 0);
+    }
+
+    if (current.childViews && current.childViews.length > 0) {
+      for (let child of current.childViews) {
+        stack.push(child);
+      }
+    }
+  }
+  return true;
+}
 
 /**
  * Parse response
