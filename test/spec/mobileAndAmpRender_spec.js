@@ -312,5 +312,11 @@ describe('writeAdHtml', () => {
     const ps = sinon.stub();
     writeAdHtml('<!DOCTYPE html><div>mock-ad</div>', ps);
     sinon.assert.calledWith(ps, sinon.match.any, '<div>mock-ad</div>')
-  })
+  });
+
+  it('removes lowercase doctype from markup', () => {
+    const ps = sinon.stub();
+    writeAdHtml('<!doctype html><div>mock-ad</div>', ps);
+    sinon.assert.calledWith(ps, sinon.match.any, '<div>mock-ad</div>')
+  });
 })
