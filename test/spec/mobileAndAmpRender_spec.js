@@ -1,10 +1,10 @@
 import { renderAmpOrMobileAd } from 'src/mobileAndAmpRender';
-import * as postscribeRender from 'src/postscribeRender'
+import * as postscribeRender from 'src/adHtmlRender'
 import * as utils from 'src/utils';
 import { expect } from 'chai';
 import { mocks } from 'test/helpers/mocks';
 import { merge } from 'lodash';
-import {writeAdHtml} from 'src/postscribeRender';
+import {writeAdHtml} from 'src/adHtmlRender';
 
 
 function renderingMocks() {
