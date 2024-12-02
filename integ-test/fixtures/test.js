@@ -69,11 +69,16 @@ export const test = baseTest.extend({
     },
     async expectEvent({page}, use) {
         await use(async function (predicate, numMatches = 1) {
-            await expect.poll(async () =>
-                ((await page.evaluate(() => window.pbjs?.getEvents && window.pbjs.getEvents())) || [])
-                    .filter(predicate)
-                    .length === numMatches
-            ).toBeTruthy();
+            await expect.poll(async () => {
+                const events = (await page.evaluate(() => window.pbjs?.getEvents && window.pbjs.getEvents())) || [];
+                const matches = events.filter(predicate);
+                if (matches.length === numMatches) {
+                    return true;
+                } else {
+                    console.warn(`${matches.length} matches found, expected ${numMatches}. Events: `, JSON.stringify(events, null, 2));
+                    return false;
+                }
+            }).toBeTruthy();
         });
     }
 });
