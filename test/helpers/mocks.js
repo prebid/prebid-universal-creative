@@ -14,6 +14,7 @@ export const mocks = {
       },
       parent: {},
       top: {},
+      frames: {},
     };
   }
 }

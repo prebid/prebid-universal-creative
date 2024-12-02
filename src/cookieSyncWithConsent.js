@@ -20,6 +20,8 @@ const IS_AMP = sanitizeSource(parseQueryParam('source', window.location.search))
 const BIDDER_ARGS = sanitizeBidders(parseQueryParam('bidders', window.location.search));
 const maxSyncCountParam = parseQueryParam('max_sync_count', window.location.search);
 const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt((maxSyncCountParam) ? maxSyncCountParam : 10, 10));
+const coopSyncParam = parseQueryParam('coop_sync', window.location.search);
+const COOP_SYNC = !coopSyncParam || coopSyncParam === 'true' || !!parseInt(coopSyncParam);
 const TIMEOUT = sanitizeTimeout(parseInt(parseQueryParam('timeout', window.location.search), 10));
 const DEFAULT_GDPR_SCOPE = sanitizeScope(parseInt(parseQueryParam('defaultGdprScope', window.location.search), 10));
 
@@ -273,6 +275,7 @@ function attachConsent(data) {
 function getStringifiedData(endPointArgs) {
     var data = (endPointArgs && typeof endPointArgs === 'object') ? endPointArgs : {}
     data['limit'] = MAX_SYNC_COUNT;
+    data['coopSync'] = COOP_SYNC;
 
     if(IS_AMP) data.filterSettings = {
         iframe: {

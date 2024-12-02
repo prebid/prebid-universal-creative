@@ -1,10 +1,10 @@
 {
     "name": "prebid-universal-creative",
-    "version": "1.15.0-pre",
+    "version": "1.17.0-pre",
     "description": "Universal creative for Prebid apps",
     "main": "dist/creative.js",
     "scripts": {
-        "test": "echo test",
+        "test": "gulp test",
         "prepublish": "gulp build"
     },
     "repository": {
@@ -65,12 +65,13 @@
         "string-replace-webpack-plugin": "^0.1.3",
         "webdriverio": "^7.25.2",
         "webpack": "^3.12.0",
+        "webpack-common-shake": "^1.0.0",
         "webpack-stream": "^4.0.0",
-        "yargs": "^11.0.0",
-        "webpack-common-shake": "^1.0.0"
+        "yargs": "^11.0.0"
     },
     "dependencies": {
         "babel-plugin-transform-object-assign": "^6.22.0",
+        "gulp-cli": "^3.0.0",
         "postscribe": "^2.0.8"
     }
 }
