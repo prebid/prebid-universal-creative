@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Prebid.js Legacy Native Test</title>
+
+    <!-- Prebid.js -->
+    <script async src="https://cdn.jsdelivr.net/npm/prebid.js@latest/dist/not-for-prod/prebid.js"></script>
+
+    <!-- Google Publisher Tag -->
+    <script async src="https://www.googletagservices.com/tag/js/gpt.js"></script>
+
+    <script>
+        var pbjs = pbjs || {};
+        pbjs.que = pbjs.que || [];
+        window.params = new URLSearchParams(window.location.search);
+    </script>
+
+    <script>
+        var googletag = googletag || {};
+        googletag.cmd = googletag.cmd || [];
+
+        googletag.cmd.push(function () {
+            googletag.pubads().disableInitialLoad();
+        });
+
+        pbjs.que.push(function () {
+            pbjs.setConfig({
+                debug: true,
+                debugging: {
+                    enabled: true,
+                    intercept: [
+                        {
+                            when: {},
+                            then: JSON.parse(params.get('bidResponse'))
+                        }
+                    ]
+                }
+            });
+
+            pbjs.requestBids({
+                bidsBackHandler: sendAdServerRequest,
+                adUnits: [
+                    {
+                        code: 'slot',
+                        mediaTypes: {
+                            native: {
+                                image: {
+                                    required: false,
+                                },
+                                title: {
+                                    required: true
+                                },
+                                body: {
+                                    required: true
+                                },
+                                clickUrl: {
+                                    required: true
+                                }
+                            }
+                        },
+                        bids: [{
+                            bidder: 'appnexus',
+                            params: {
+                                placementId: 123
+                            }
+                        }]
+                    }
+                ]
+            });
+        });
+
+        function sendAdServerRequest() {
+            googletag.cmd.push(function () {
+                pbjs.que.push(function () {
+                    pbjs.setTargetingForGPTAsync('slot');
+                    googletag.pubads().refresh();
+                });
+            });
+        }
+    </script>
+
+    <script>
+        googletag.cmd.push(function () {
+            googletag
+                .defineSlot('/41758329/integ-test', params.get('banner') === 'true' ? [[640, 480]] : 'fluid', 'slot')
+                .setTargeting('creative', params.get('creative'))
+                .addService(googletag.pubads());
+
+            googletag.pubads().enableSingleRequest();
+            googletag.enableServices();
+        });
+    </script>
+</head>
+
+<body>
+<h2>Prebid.js Legacy Native Ad Unit Test</h2>
+<div id='slot'>
+    <script>
+        googletag.cmd.push(function () {
+            googletag.display('slot');
+        });
+    </script>
+</div>
+</body>
+</html>

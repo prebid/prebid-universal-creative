@@ -3,48 +3,62 @@
 # Check https://circleci.com/docs/2.0/language-javascript/ for more details
 #
 version: 2
+aliases:
+  - &environment
+      resource_class: xlarge
+      working_directory: ~/prebid-universal-creative
+
 jobs:
-  build:
+  unit-tests:
+    <<: *environment
     docker:
-      # specify the version you desire here
-      - image: circleci/node:14.18.2-browsers
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/mongo:3.4.4
-
-    working_directory: ~/prebid-universal-creative
+      - image: cimg/node:20.14.0-browsers
 
     steps:
       - checkout
-
-      # Download and cache dependencies
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "package.json" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
-
+            - v1-dependencies-unit-{{ checksum "package.json" }}
+            - v1-dependencies-unit
       - run: npm install
-
       - save_cache:
           paths:
             - node_modules
-          key: v1-dependencies-{{ checksum "package.json" }}
-
-      - run: sudo npm install -g gulp
-      # Download and run BrowserStack local
+          key: v1-dependencies-unit-{{ checksum "package.json" }}
       - run:
-          name : Download BrowserStack Local binary and start it.
-          command : |
-            # Download the browserstack binary file
-            wget "https://www.browserstack.com/browserstack-local/BrowserStackLocal-linux-x64.zip"
-            # Unzip it
-            unzip BrowserStackLocal-linux-x64.zip
-            # Run the file with user's access key
-            ./BrowserStackLocal ${BROWSERSTACK_ACCESS_KEY} &
-      # run tests!
+          name: Install gulp cli
+          command: sudo npm install -g gulp-cli
       - run:
           name: BrowserStack testing
           command: gulp test --browserstack
+
+  integ-tests:
+    <<: *environment
+    docker:
+      - image: mcr.microsoft.com/playwright:v1.26.0-focal
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-integ-{{ checksum "package.json" }}
+            - v1-dependencies-iteg
+      - run: npm install
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-integ-{{ checksum "package.json" }}
+      - run:
+          name: Build
+          command: npx gulp build
+      - run:
+          name: Install playwright browsers
+          command: npx playwright install --with-deps
+      - run:
+          name: Integ tests
+          command: npx playwright test
+workflows:
+  version: 2
+  commit:
+    jobs:
+      - unit-tests
+      - integ-tests
