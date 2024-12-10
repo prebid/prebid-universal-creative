@@ -5,7 +5,7 @@
 version: 2
 aliases:
   - &environment
-      resource_class: xlarge
+      resource_class: 2xlarge
       working_directory: ~/prebid-universal-creative
 
 jobs:
