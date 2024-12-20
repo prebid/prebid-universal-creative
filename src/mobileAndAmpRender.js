@@ -1,7 +1,7 @@
 import { getCreativeCommentMarkup, triggerPixel, createTrackPixelHtml, loadScript, getCreativeComment, writeAdUrl, transformAuctionTargetingData, sendRequest, getUUID } from './utils';
 import { isSafeFrame, isMobileApp } from './environment';
 import { insertElement } from './domHelper';
-import { writeAdHtml } from './postscribeRender';
+import { writeAdHtml } from './adHtmlRender';
 
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
@@ -196,7 +196,6 @@ function responseCallback(isMobileApp, hbPb) {
       if (isMobileApp) {
         let adhtml = loadScript(window, bidObject.nurl);
         ad += constructMarkup(adhtml.outerHTML, width, height);
-
         writeAdHtml(ad);
       } else {
         let nurl = bidObject.nurl;
