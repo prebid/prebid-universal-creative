@@ -41,7 +41,7 @@
         "core-js-pure": "^3.13.0",
         "del": "^5.0.0",
         "execa": "^1.0.0",
-        "gulp": "^4.0.2",
+        "gulp": "^5.0.0",
         "gulp-clean": "^0.4.0",
         "gulp-connect": "^5.7.0",
         "gulp-eslint": "^4.0.2",
@@ -76,7 +76,6 @@
         "webpack-common-shake": "^1.0.0"
     },
     "dependencies": {
-        "babel-plugin-transform-object-assign": "^6.22.0",
-        "postscribe": "^2.0.8"
+        "babel-plugin-transform-object-assign": "^6.22.0"
     }
 }

@@ -12,6 +12,16 @@ export function prebidMessenger(publisherURL, win = window) {
         return parsedUrl.protocol + '://' + parsedUrl.host;
     })();
 
+    function isPrebidWindow(win) {
+        return win && win.frames && win.frames.__pb_locator__;
+    }
+
+    let target = win.parent;
+    try {
+        while (target != null && target !== win.top && !isPrebidWindow(target)) target = target.parent;
+        if (!isPrebidWindow(target)) target = win.parent;
+    } catch (e) {}
+
     return function sendMessage(message, onResponse) {
         if (prebidDomain == null) {
             throw new Error('Missing pubUrl')
@@ -19,13 +29,13 @@ export function prebidMessenger(publisherURL, win = window) {
         message = JSON.stringify(message);
         let messagePort;
         if (onResponse == null) {
-            win.parent.postMessage(message, prebidDomain);
+            target.postMessage(message, prebidDomain);
         } else {
             const channel = new MessageChannel();
             messagePort = channel.port1;
             messagePort.onmessage = onResponse;
             win.addEventListener('message', windowListener);
-            win.parent.postMessage(message, prebidDomain, [channel.port2]);
+            target.postMessage(message, prebidDomain, [channel.port2]);
         }
 
         return function stopListening() {
