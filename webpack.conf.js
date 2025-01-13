@@ -12,7 +12,6 @@ module.exports = {
     ],
   },
   output: {
-    filename: 'creative.js',
   },
   module: {
     rules: [
