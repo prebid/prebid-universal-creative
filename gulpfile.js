@@ -142,16 +142,12 @@ function includeStaticVastXmlFile() {
 function buildProd({ inputFile, outputFile }) {
   let cloned = _.cloneDeep(webpackConfig);
   delete cloned.devtool;
-
+  cloned.output.filename = outputFile;
   return gulp.src([inputFile])
     .pipe(webpackStream(cloned))
     .pipe(gulp.dest('dist'))
     .pipe(uglify())
     .pipe(header(banner, { creative: creative }))
-    .pipe(rename({
-      basename: outputFile.split('.')[0],
-      extname: `.${outputFile.split('.')[1]}`
-    }))
     .pipe(gulp.dest('dist'));
 }
 
