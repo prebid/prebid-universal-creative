@@ -17,6 +17,7 @@ const KarmaServer = require('karma').Server;
 const karmaConfMaker = require('./karma.conf.maker');
 const execa = require('execa');
 const path = require('path');
+const {execSync} = require('child_process');
 
 const dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
 const banner = '/* <%= creative.name %> v<%= creative.version %>\n' + dateString + ' */\n';
@@ -141,16 +142,12 @@ function includeStaticVastXmlFile() {
 function buildProd({ inputFile, outputFile }) {
   let cloned = _.cloneDeep(webpackConfig);
   delete cloned.devtool;
-
+  cloned.output.filename = outputFile;
   return gulp.src([inputFile])
     .pipe(webpackStream(cloned))
     .pipe(gulp.dest('dist'))
     .pipe(uglify())
     .pipe(header(banner, { creative: creative }))
-    .pipe(rename({
-      basename: outputFile.split('.')[0],
-      extname: `.${outputFile.split('.')[1]}`
-    }))
     .pipe(gulp.dest('dist'));
 }
 
@@ -205,20 +202,10 @@ function includeStaticVastXmlFile() {
 //
 // If --watch is given, the task will open the karma debug window
 // If --browserstack is given, it will run the full suite of currently supported browsers.
-// If --e2e is given, it will run test defined in ./test/e2e/specs in browserstack
 
 function test(done) {
-  if (argv.e2e) {
-    let wdioCmd = path.join(__dirname, 'node_modules/.bin/wdio');
-    let wdioConf = path.join(__dirname, 'wdio.conf.js');
-    let wdioOpts = [
-      wdioConf
-    ];
-    return execa(wdioCmd, wdioOpts, { stdio: 'inherit' });
-  } else {
-    let karmaConf = karmaConfMaker(false, argv.browserstack, argv.watch);
-    new KarmaServer(karmaConf, newKarmaCallback(done)).start();
-  }
+  let karmaConf = karmaConfMaker(false, argv.browserstack, argv.watch);
+  new KarmaServer(karmaConf, newKarmaCallback(done)).start();
 }
 
 function newKarmaCallback(done) {
@@ -237,16 +224,9 @@ function newKarmaCallback(done) {
   }
 }
 
-function setupE2E(done) {
-  argv.e2e = true;
-  done();
-}
-
 gulp.task('test', gulp.series(clean, test));
 
 const buildDevFunctions = [buildLegacyDev, buildBannerDev, buildVideoDev, buildAmpDev, buildMobileDev, buildNativeRenderLegacyDev, buildNativeDev, buildNativeRenderDev, buildCookieSync, buildCookieSyncWithConsent, buildUidDev, includeStaticVastXmlFile];
-
-gulp.task('e2e-test', gulp.series(clean, setupE2E, gulp.parallel(...buildDevFunctions, watch), test));
 
 function watch(done) {
   const mainWatcher = gulp.watch([
@@ -274,6 +254,14 @@ gulp.task('build', gulp.parallel(buildProdLegacy, buildLegacyNativeRender, build
 gulp.task('test-coverage', (done) => {
   new KarmaServer(karmaConfMaker(true, false, false), newKarmaCallback(done)).start();
 });
+
+function integTests(done) {
+  execSync('npx playwright test', {stdio: 'inherit'});
+  done();
+}
+
+gulp.task('integ-tests', gulp.series(clean, 'build', integTests));
+
 
 gulp.task('view-coverage', (done) => {
   const coveragePort = 1999;
