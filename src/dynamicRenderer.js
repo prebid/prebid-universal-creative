@@ -6,7 +6,8 @@ export function runDynamicRenderer(adId, data, sendMessage, win = window, mkFram
         width: 0,
         height: 0,
         style: 'display: none',
-        srcdoc: `<script>${data.renderer}</script>`
+        srcdoc: `<script>${data.renderer}</script>`,
+        name: '__pb_renderer__'
     });
 
     return new Promise((resolve, reject) => {
