@@ -109,21 +109,45 @@ describe('nativeAssetManager', () => {
     sandbox.restore();
   })
 
-  it('runs renderer, if present', () => {
-    const data = {
-      renderer: 'mock-renderer',
-      native: 'data'
+  Object.entries({
+    'no version': {
+      props: {},
+      shouldRun: false
+    },
+    'version 2': {
+      props: {
+        rendererVersion: 2
+      },
+      shouldRun: true
+    },
+    'version 3': {
+      props: {
+        rendererVersion: 3
+      },
+      shouldRun: true
     }
-    sandbox.stub(dynamic, 'runDynamicRenderer');
-    const sendMessage = sinon.stub().callsFake((msg, reply) => {
-      reply({data: JSON.stringify(Object.assign({adId: '123', message: 'assetResponse'}, data))});
+  }).forEach(([t, {props, shouldRun}]) => {
+    it(`should ${shouldRun ? '' : 'NOT '}run renderer with ${t}`, () => {
+      const data = Object.assign({
+        renderer: 'mock-renderer',
+        native: 'data'
+      }, props)
+      sandbox.stub(dynamic, 'runDynamicRenderer');
+      const sendMessage = sinon.stub().callsFake((msg, reply) => {
+        reply({data: JSON.stringify(Object.assign({adId: '123', message: 'assetResponse'}, data))});
+      })
+      win.pbNativeData = {
+        requestAllAssets: true
+      };
+      const mgr = makeManager({}, () => sendMessage);
+      mgr.loadAssets('123');
+      if (shouldRun) {
+        sinon.assert.calledWith(dynamic.runDynamicRenderer, '123', sinon.match(data));
+      } else {
+        sinon.assert.notCalled(dynamic.runDynamicRenderer);
+      }
+
     })
-    win.pbNativeData = {
-      requestAllAssets: true
-    };
-    const mgr = makeManager({}, () => sendMessage);
-    mgr.loadAssets('123');
-    sinon.assert.calledWith(dynamic.runDynamicRenderer, '123', sinon.match(data));
   })
 
   describe('safe frames enabled', () => {

@@ -309,7 +309,9 @@ export function newNativeAssetManager(win, nativeTag, mkMessenger = prebidMessen
         }
 
         if (data.message === 'assetResponse' && data.adId === adId) {
-          if(data.renderer) {
+          if(data.renderer && parseInt(data.rendererVersion, 10) >= 2) {
+            // only use renderer if it declares version > 2
+            // see https://github.com/prebid/Prebid.js/pull/12655
             runDynamicRenderer(adId, data, sendMessage, win);
             return;
           }
