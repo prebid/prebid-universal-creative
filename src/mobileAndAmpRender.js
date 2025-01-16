@@ -62,26 +62,24 @@ function updateIframe(size) {
  * @param {Number} height height of creative
  */
 function resizeIframe(width, height) {
-  if (isSafeFrame(window)) {
-    const iframeWidth = window.innerWidth;
-    const iframeHeight = window.innerHeight;
-
-    function resize(status) {
-      let newWidth = width - iframeWidth;
-      let newHeight = height - iframeHeight;
-      window.$sf.ext.expand({ r: newWidth, b: newHeight, push: true });
-    }
-
-    if (iframeWidth !== width || iframeHeight !== height) {
+  const iframeWidth = window.innerWidth;
+  const iframeHeight = window.innerHeight;
+  if (iframeWidth !== width || iframeHeight !== height) {
+    if (isSafeFrame(window)) {
+      function resize(status) {
+        let newWidth = width - iframeWidth;
+        let newHeight = height - iframeHeight;
+        window.$sf.ext.expand({r: newWidth, b: newHeight, push: true});
+      }
       window.$sf.ext.register(width, height, resize);
-      // we need to resize the DFP container as well
-      window.parent.postMessage({
-        sentinel: 'amp',
-        type: 'embed-size',
-        width: width,
-        height: height
-      }, '*');
     }
+    // AMP resize request in case the parent is AMP
+    window.parent.postMessage({
+      sentinel: 'amp',
+      type: 'embed-size',
+      width: width,
+      height: height
+    }, '*');
   }
 }
 
