@@ -3,6 +3,7 @@ import {merge} from 'lodash';
 import {newNativeAssetManager} from 'src/nativeAssetManager';
 import {mocks} from 'test/helpers/mocks';
 import * as utils from 'src/utils';
+import * as dynamic from 'src/dynamicRenderer.js';
 import {prebidMessenger} from '../../src/messaging.js';
 
 const ORIGIN = 'https://origin.com'
@@ -90,7 +91,7 @@ function generateRenderer(assets) {
 }
 
 describe('nativeAssetManager', () => {
-  let win;
+  let win, sandbox;
 
   function makeManager(args, mkMessenger = prebidMessenger) {
     return newNativeAssetManager(win, {
@@ -101,7 +102,53 @@ describe('nativeAssetManager', () => {
 
   beforeEach(() => {
     win = merge(mocks.createFakeWindow(), mockDocument.getWindowObject());
+    sandbox = sinon.createSandbox();
   });
+
+  afterEach(() => {
+    sandbox.restore();
+  })
+
+  Object.entries({
+    'no version': {
+      props: {},
+      shouldRun: false
+    },
+    'version 2': {
+      props: {
+        rendererVersion: 2
+      },
+      shouldRun: true
+    },
+    'version 3': {
+      props: {
+        rendererVersion: 3
+      },
+      shouldRun: true
+    }
+  }).forEach(([t, {props, shouldRun}]) => {
+    it(`should ${shouldRun ? '' : 'NOT '}run renderer with ${t}`, () => {
+      const data = Object.assign({
+        renderer: 'mock-renderer',
+        native: 'data'
+      }, props)
+      sandbox.stub(dynamic, 'runDynamicRenderer');
+      const sendMessage = sinon.stub().callsFake((msg, reply) => {
+        reply({data: JSON.stringify(Object.assign({adId: '123', message: 'assetResponse'}, data))});
+      })
+      win.pbNativeData = {
+        requestAllAssets: true
+      };
+      const mgr = makeManager({}, () => sendMessage);
+      mgr.loadAssets('123');
+      if (shouldRun) {
+        sinon.assert.calledWith(dynamic.runDynamicRenderer, '123', sinon.match(data));
+      } else {
+        sinon.assert.notCalled(dynamic.runDynamicRenderer);
+      }
+
+    })
+  })
 
   describe('safe frames enabled', () => {
 
@@ -256,7 +303,7 @@ describe('nativeAssetManager', () => {
       ],null,null);
 
       const nativeAssetManager = makeManager();
-      nativeAssetManager.loadAssets(AD_ID);
+      nativeAssetManager.loadAssets(win.pbNativeData.adId);
 
       expect(win.document.body.innerHTML).to.equal(`<script>
                 let nativeTag = {};
