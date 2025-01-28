@@ -5,6 +5,7 @@ import {mocks} from 'test/helpers/mocks';
 import * as utils from 'src/utils';
 import * as dynamic from 'src/dynamicRenderer.js';
 import {prebidMessenger} from '../../src/messaging.js';
+import {MIN_RENDERER_VERSION} from "src/dynamicRenderer.js";
 
 const ORIGIN = 'https://origin.com'
 const AD_ID = 'abc123';
@@ -109,46 +110,23 @@ describe('nativeAssetManager', () => {
     sandbox.restore();
   })
 
-  Object.entries({
-    'no version': {
-      props: {},
-      shouldRun: false
-    },
-    'version 2': {
-      props: {
-        rendererVersion: 2
-      },
-      shouldRun: true
-    },
-    'version 3': {
-      props: {
-        rendererVersion: 3
-      },
-      shouldRun: true
+  it(`should run dynamic renderer`, () => {
+    const data = {
+      renderer: 'mock-renderer',
+      rendererVersion: MIN_RENDERER_VERSION,
+      native: 'data'
     }
-  }).forEach(([t, {props, shouldRun}]) => {
-    it(`should ${shouldRun ? '' : 'NOT '}run renderer with ${t}`, () => {
-      const data = Object.assign({
-        renderer: 'mock-renderer',
-        native: 'data'
-      }, props)
-      sandbox.stub(dynamic, 'runDynamicRenderer');
-      const sendMessage = sinon.stub().callsFake((msg, reply) => {
-        reply({data: JSON.stringify(Object.assign({adId: '123', message: 'assetResponse'}, data))});
-      })
-      win.pbNativeData = {
-        requestAllAssets: true
-      };
-      const mgr = makeManager({}, () => sendMessage);
-      mgr.loadAssets('123');
-      if (shouldRun) {
-        sinon.assert.calledWith(dynamic.runDynamicRenderer, '123', sinon.match(data));
-      } else {
-        sinon.assert.notCalled(dynamic.runDynamicRenderer);
-      }
-
+    sandbox.stub(dynamic, 'runDynamicRenderer');
+    const sendMessage = sinon.stub().callsFake((msg, reply) => {
+      reply({data: JSON.stringify(Object.assign({adId: '123', message: 'assetResponse'}, data))});
     })
-  })
+    win.pbNativeData = {
+      requestAllAssets: true
+    };
+    const mgr = makeManager({}, () => sendMessage);
+    mgr.loadAssets('123');
+    sinon.assert.calledWith(dynamic.runDynamicRenderer, '123', sinon.match(data));
+  });
 
   describe('safe frames enabled', () => {
 

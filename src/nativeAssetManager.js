@@ -7,7 +7,7 @@ import { addNativeClickTrackers, fireNativeImpressionTrackers } from './nativeOR
 import { sendRequest, loadScript } from './utils';
 import {prebidMessenger} from './messaging.js';
 import { isSafeFrame } from './environment.js';
-import {runDynamicRenderer} from './dynamicRenderer.js';
+import {hasDynamicRenderer, runDynamicRenderer} from './dynamicRenderer.js';
 /*
  * Native asset->key mapping from Prebid.js/src/constants.json
  * https://github.com/prebid/Prebid.js/blob/8635c91942de9df4ec236672c39b19448545a812/src/constants.json#L67
@@ -309,9 +309,7 @@ export function newNativeAssetManager(win, nativeTag, mkMessenger = prebidMessen
         }
 
         if (data.message === 'assetResponse' && data.adId === adId) {
-          if(data.renderer && parseInt(data.rendererVersion, 10) >= 2) {
-            // only use renderer if it declares version > 2
-            // see https://github.com/prebid/Prebid.js/pull/12655
+          if(hasDynamicRenderer(data)) {
             runDynamicRenderer(adId, data, sendMessage, win);
             return;
           }

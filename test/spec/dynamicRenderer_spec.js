@@ -1,6 +1,30 @@
 import {makeIframe} from '../../src/domHelper.js';
-import {runDynamicRenderer} from '../../src/dynamicRenderer.js';
+import {hasDynamicRenderer, MIN_RENDERER_VERSION, runDynamicRenderer} from '../../src/dynamicRenderer.js';
 import {AD_RENDER_FAILED, AD_RENDER_SUCCEEDED, PREBID_EVENT} from '../../src/messaging.js';
+
+describe('hasDynamicRenderer', () => {
+    Object.entries({
+        'neither': {},
+        'renderer, but no version': {
+            renderer: 'mock-renderer'
+        },
+        'renderer, but version is too low': {
+            renderer: 'mock-renderer',
+            rendererVersion: 1
+        },
+    }).forEach(([t, data]) => {
+        it(`returns false with ${t}`, () => {
+            expect(hasDynamicRenderer(data)).to.be.false;
+        })
+    });
+
+    it('returns true when both renderer and version are present', () => {
+        expect(hasDynamicRenderer({
+            renderer: 'mock-renderer',
+            rendererVersion: MIN_RENDERER_VERSION
+        })).to.be.true;
+    })
+})
 
 describe('runDynamicRenderer', () => {
     let sendMessage, frame, render;

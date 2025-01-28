@@ -5,6 +5,7 @@ import * as dynamic from 'src/dynamicRenderer.js';
 import { expect } from 'chai';
 import { mocks } from 'test/helpers/mocks';
 import { merge } from 'lodash';
+import {MIN_RENDERER_VERSION} from "src/dynamicRenderer.js";
 
 function renderingMocks() {
   return {
@@ -120,6 +121,7 @@ describe('renderingManager', function() {
       const data = {
         adId: '123',
         renderer: 'mock-renderer',
+        rendererVersion: MIN_RENDERER_VERSION,
         ad: 'markup'
       };
       mockPrebidResponse(data);

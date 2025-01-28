@@ -1,6 +1,12 @@
 import {makeIframe} from './domHelper.js';
 import {renderEventMessage} from './messaging.js';
 
+export const MIN_RENDERER_VERSION = 3;
+
+export function hasDynamicRenderer(message) {
+    return typeof message.renderer === 'string' && parseInt(message.rendererVersion, 10) >= MIN_RENDERER_VERSION
+}
+
 export function runDynamicRenderer(adId, data, sendMessage, win = window, mkFrame = makeIframe) {
     const renderer = mkFrame(win.document, {
         width: 0,
