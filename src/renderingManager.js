@@ -2,7 +2,7 @@ import { parseUrl, transformAuctionTargetingData } from './utils';
 import { canLocatePrebid } from './environment';
 import { insertElement, getEmptyIframe } from './domHelper';
 import {prebidMessenger, renderEventMessage} from './messaging.js';
-import {runDynamicRenderer} from './dynamicRenderer.js';
+import {hasDynamicRenderer, runDynamicRenderer} from './dynamicRenderer.js';
 
 export function renderBannerOrDisplayAd(doc, dataObject) {
   const targetingData = transformAuctionTargetingData(dataObject);
@@ -66,7 +66,7 @@ export function renderCrossDomain(win, adId, pubAdServerDomain = '', pubUrl) {
       adObject.message === "Prebid Response" &&
       adObject.adId === adId
     ) {
-      if (adObject.renderer) {
+      if (hasDynamicRenderer(adObject)) {
         runDynamicRenderer(adId, adObject, sendMessage, win);
         return;
       }
