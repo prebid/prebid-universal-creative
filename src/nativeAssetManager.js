@@ -383,30 +383,36 @@ export function newNativeAssetManager(win, nativeTag, mkMessenger = prebidMessen
 
   /** This function returns the element that contains the current iframe. */
   function getCurrentFrameContainer(win) {
-    let currentWindow = win;
-    let currentParentWindow;
+    try {
+      let currentWindow = win;
+      let currentParentWindow;
 
-    while (currentWindow !== win.top) {
+      while (currentWindow !== win.top) {
         currentParentWindow = currentWindow.parent;
         if (!currentParentWindow.frames || !currentParentWindow.frames.length) return null;
         for (let idx = 0; idx < currentParentWindow.frames.length; idx++)
-            if (currentParentWindow.frames[idx] === currentWindow) {
-              if (!currentParentWindow.document) return null;
-                for (let frameElement of currentParentWindow.document.getElementsByTagName('iframe')) {
-                    if (!frameElement.contentWindow) return null;
-                    if (frameElement.contentWindow === currentWindow) {
-                        return frameElement.parentElement;
-                    }
-                }
+          if (currentParentWindow.frames[idx] === currentWindow) {
+            if (!currentParentWindow.document) return null;
+            for (let frameElement of currentParentWindow.document.getElementsByTagName('iframe')) {
+              if (!frameElement.contentWindow) return null;
+              if (frameElement.contentWindow === currentWindow) {
+                return frameElement.parentElement;
+              }
             }
+          }
+      }
+    } catch (e) {
+      // parent is cross-frame
     }
-}
+  }
 
   function renderAd(html, bid) {
     // if the current iframe is not a safeframe, try to set the
     // current iframe width to the width of the container. This
     // is to handle the case where the native ad is rendered inside
     // a GAM display ad.
+
+    // NOTE: this may be unnecessary, see https://github.com/prebid/prebid-universal-creative/issues/253.
     if (!isSafeFrame(window)) {
       let iframeContainer = getCurrentFrameContainer(win);
       if (iframeContainer && iframeContainer.children && iframeContainer.children[0]) {
@@ -424,7 +430,11 @@ export function newNativeAssetManager(win, nativeTag, mkMessenger = prebidMessen
     win.document.body.innerHTML += html;
     callback && callback();
     stopListening();
-    const resize = () => requestHeightResize(bid.adId, (document.body.clientHeight || document.body.offsetHeight), document.body.clientWidth);
+    const resize = () => requestHeightResize(
+        bid.adId,
+        (document.body.clientHeight || document.body.offsetHeight),
+        document.body.clientWidth > 1 ? document.body.clientWidth : undefined
+    );
     document.readyState === 'complete' ? resize() : window.onload = resize;
 
     if (typeof window.postRenderAd === 'function') {
