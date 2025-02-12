@@ -55,7 +55,7 @@ jobs:
           command: npx playwright install --with-deps
       - run:
           name: Integ tests
-          command: npx playwright test
+          command: npx playwright test --headed
 workflows:
   version: 2
   commit:
