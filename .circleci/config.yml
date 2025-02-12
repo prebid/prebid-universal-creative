@@ -55,7 +55,10 @@ jobs:
           command: npx playwright install --with-deps
       - run:
           name: Integ tests
-          command: xvfb-run npx playwright test
+          command: npx playwright test
+      - run:
+          name: Webkit headed tests
+          command: xvfb-run npx playwright test --project webkit --workers 1 --headed -g "should fire click trackers"
 workflows:
   version: 2
   commit:
