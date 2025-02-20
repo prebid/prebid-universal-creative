@@ -32,7 +32,11 @@ test.describe('AMP', () => {
                 })
             })
         });
-        await page.route((u) => u.host.startsWith(CACHE_HOST) && u.pathname === CACHE_PATH, (route) => {
+        await page.route((u) => {
+            const host = new URL(u.href).host;
+            const allowedHosts = [CACHE_HOST];
+            return allowedHosts.includes(host) && u.pathname === CACHE_PATH;
+        }, (route) => {
             route.fulfill({
                 contentType: 'application/json',
                 body: JSON.stringify(imp)
