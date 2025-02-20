@@ -3,9 +3,11 @@
  * values in native creative templates.
  */
 
+import { addNativeClickTrackers, fireNativeImpressionTrackers } from './nativeORTBTrackerManager';
 import { sendRequest, loadScript } from './utils';
 import {prebidMessenger} from './messaging.js';
-
+import { isSafeFrame } from './environment.js';
+import {hasDynamicRenderer, runDynamicRenderer} from './dynamicRenderer.js';
 /*
  * Native asset->key mapping from Prebid.js/src/constants.json
  * https://github.com/prebid/Prebid.js/blob/8635c91942de9df4ec236672c39b19448545a812/src/constants.json#L67
@@ -15,6 +17,7 @@ const NATIVE_KEYS = {
   body: 'hb_native_body',
   body2: 'hb_native_body2',
   privacyLink: 'hb_native_privacy',
+  privacyIcon: 'hb_native_privicon',
   sponsoredBy: 'hb_native_brand',
   image: 'hb_native_image',
   icon: 'hb_native_icon',
@@ -57,9 +60,22 @@ const assetTypeMapping = {
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
 
-export function newNativeAssetManager(win, pubUrl) {
-  const sendMessage = prebidMessenger(pubUrl, win);
-  let callback;
+const CLICK_URL_UNESC = `%%CLICK_URL_UNESC%%`;
+
+let clickUrlUnesc = '';
+
+export function newNativeAssetManager(win, nativeTag, mkMessenger = prebidMessenger) {
+
+    // clickUrlUnesc contains the url to track clicks in GAM. we check if it
+    // has been transformed, by GAM, in an URL.
+    // if CLICK_URL_UNESC is the string "%%CLICK_URL_UNESC%%", we're not in GAM.
+    if (nativeTag.clickUrlUnesc && nativeTag.clickUrlUnesc !== CLICK_URL_UNESC) {
+      clickUrlUnesc = nativeTag.clickUrlUnesc;
+    }
+  const {pubUrl} = nativeTag;
+
+  const sendMessage = mkMessenger(pubUrl, win);
+  let callback, errCallback;
   let errorCountEscapeHatch = 0;
   let cancelMessageListener;
 
@@ -131,7 +147,8 @@ export function newNativeAssetManager(win, pubUrl) {
     return {
       assets,
       clicktrackers,
-      'imptrackers' : adMarkup.imptrackers
+      'imptrackers' : adMarkup.imptrackers,
+      'eventtrackers': adMarkup.eventtrackers
     }
   }
 
@@ -148,7 +165,8 @@ export function newNativeAssetManager(win, pubUrl) {
 
           callback && callback({
             clickTrackers: data.clicktrackers,
-            impTrackers: data.imptrackers
+            impTrackers: data.imptrackers,
+            eventtrackers: data.eventtrackers
           });
         } else {
           // TODO Shall we just write the markup in the page
@@ -161,14 +179,14 @@ export function newNativeAssetManager(win, pubUrl) {
   }
 
   function loadMobileAssets(tagData, cb) {
-    const placeholders = scanForPlaceholders();
+    const placeholders = scanDOMForPlaceHolders();
     if (placeholders.length > 0) {
       callback = cb;
       requestAssetsFromCache(tagData);
     }
   }
 
-  function pbNativeDataHasValidType() {
+  function hasPbNativeData() {
     return typeof win.pbNativeData !== 'undefined'
   }
 
@@ -179,43 +197,51 @@ export function newNativeAssetManager(win, pubUrl) {
    * and requestAllAssets flag is set in the tag, postmessage roundtrip
    * to retrieve native assets that have a value on the corresponding bid
    */
-  function loadAssets(adId, cb) {
-    const placeholders = scanForPlaceholders(adId);
+  function loadAssets(adId, cb, onError) {
+    errCallback = onError;
+    const placeholders = scanDOMForPlaceHolders(adId);
 
-    if (pbNativeDataHasValidType() && win.pbNativeData.hasOwnProperty('assetsToReplace')) {
+    if (hasPbNativeData() && win.pbNativeData.hasOwnProperty('assetsToReplace')) {
         win.pbNativeData.assetsToReplace.forEach((asset) => {
           const key = (asset.match(/hb_native_/i)) ? asset : NATIVE_KEYS[asset];
           if (key) {placeholders.push(key);}
         });
     }
 
-    if (pbNativeDataHasValidType() && win.pbNativeData.hasOwnProperty('requestAllAssets') && win.pbNativeData.requestAllAssets) {
+    if (hasPbNativeData() && win.pbNativeData.hasOwnProperty('requestAllAssets') && win.pbNativeData.requestAllAssets) {
       callback = cb;
       cancelMessageListener = requestAllAssets(adId);
     } else if (placeholders.length > 0) {
       callback = cb;
       cancelMessageListener = requestAssets(adId, placeholders);
+    } else {
+      onError && onError(new Error('No assets to load: no placeholders found in template'));
     }
   }
 
+  function placeholderFor(key, adId) {
+    return (adId && !hasPbNativeData()) ? `${key}:${adId}` : ((hasPbNativeData()) ? `##${key}##` : key)
+  }
+
+  function scanForPlaceHolders(adId, ...markupFragments) {
+    return Object.values(NATIVE_KEYS)
+        .reduce((found, key) => {
+          const placeholder = placeholderFor(key, adId);
+          for (const mkup of markupFragments.filter(Boolean)) {
+            if (mkup.indexOf(placeholder) >= 0) {
+              found.push(key);
+              break;
+            }
+          }
+          return found;
+        }, []);
+  }
+
   /*
-   * Searches the DOM for placeholder values sent in by Prebid Native
+   * Searches the DOM for legacy placeholder values sent in by Prebid Native
    */
-  function scanForPlaceholders(adId) {
-    let placeholders = [];
-    const doc = win.document;
-
-    Object.keys(NATIVE_KEYS).forEach(key => {
-      const placeholderKey = NATIVE_KEYS[key];
-      const placeholder = (adId && !pbNativeDataHasValidType()) ? `${placeholderKey}:${adId}` : `${placeholderKey}`;
-      const placeholderIndex = (~doc.body.innerHTML.indexOf(placeholder)) ? doc.body.innerHTML.indexOf(placeholder) : (doc.head.innerHTML && doc.head.innerHTML.indexOf(placeholder));
-
-      if (~placeholderIndex) {
-        placeholders.push(placeholderKey);
-      }
-    });
-
-    return placeholders;
+  function scanDOMForPlaceHolders(adId) {
+    return scanForPlaceHolders(adId, win.document.body.innerHTML, win.document.head.innerHTML);
   }
 
   /*
@@ -230,7 +256,7 @@ export function newNativeAssetManager(win, pubUrl) {
       assets,
     };
 
-    return sendMessage(message, replaceAssets);
+    return sendMessage(message, replaceAssets(adId));
   }
 
   /*
@@ -243,92 +269,213 @@ export function newNativeAssetManager(win, pubUrl) {
       action: 'allAssetRequest',
       adId,
     };
-    return sendMessage(message, replaceAssets);
+    return sendMessage(message, replaceAssets(adId));
   }
 
   /*
    * Sends postmessage to Prebid for native resize
    */
-  function requestHeightResize(adId, height) {
+  function requestHeightResize(adId, height, width) {
     const message = {
       message: 'Prebid Native',
       action: 'resizeNativeHeight',
       adId,
       height,
+      width
     };
     sendMessage(message);
   }
 
-  /*
-   * Postmessage listener for when Prebid responds with requested native assets.
-   */
-  function replaceAssets(event) {
-    var data = {};
 
-    try {
-      data = JSON.parse(event.data);
-    } catch (e) {
-      if (errorCountEscapeHatch++ > 10) {
-        /*
-         * if for some reason Prebid never responds with the native assets,
-         * get rid of this listener because other messages won't stop coming
-         */
-        stopListening();
-      }
-      return;
-    }
+  function replaceAssets(adId) {
+    return function(event) {
+      try {
 
-    if (data.message === 'assetResponse') {
-      const body = win.document.body.innerHTML;
-      const head = win.document.head.innerHTML;
-      const flag = pbNativeDataHasValidType();
+        var data = {};
 
-      if (flag && data.adId !== win.pbNativeData.adId) return;
-
-      if (head) win.document.head.innerHTML = replace(head, data);
-
-      if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (flag && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
-        if (win.renderAd) {
-          const newHtml = (win.renderAd && win.renderAd(data.assets)) || '';
-
-          win.document.body.innerHTML = body + newHtml;
-          callback && callback();
-          stopListening();
-          requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
-        } else if (document.getElementById('pb-native-renderer')) {
-          document.getElementById('pb-native-renderer').addEventListener('load', function() {
-            const newHtml = (win.renderAd && win.renderAd(data.assets)) || '';
-
-            win.document.body.innerHTML = body + newHtml;
-            callback && callback();
+        try {
+          data = JSON.parse(event.data);
+        } catch (e) {
+          if (errorCountEscapeHatch++ > 10) {
+            // TODO: this should be a timeout, not an arbitrary cap on the number of messages received
+            /*
+             * if for some reason Prebid never responds with the native assets,
+             * get rid of this listener because other messages won't stop coming
+             */
             stopListening();
-            requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
-          });
-        } else {
-          loadScript(win, ((flag && win.pbNativeData.hasOwnProperty('rendererUrl') && win.pbNativeData.rendererUrl) || data.rendererUrl), function() {
-            const newHtml = (win.renderAd && win.renderAd(data.assets)) || '';
-
-            win.document.body.innerHTML = body + newHtml;
-            callback && callback();
-            stopListening();
-            requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
-          })
+            throw e;
+          }
+          return;
         }
-      } else if ((data.hasOwnProperty('adTemplate') && data.adTemplate)||(flag && win.pbNativeData.hasOwnProperty('adTemplate'))) {
-        const template =  (flag && win.pbNativeData.hasOwnProperty('adTemplate') && win.pbNativeData.adTemplate) || data.adTemplate;
-        const newHtml = replace(template, data);
-        win.document.body.innerHTML = body + newHtml;
-        callback && callback();
-        stopListening();
-        requestHeightResize(data.adId, (document.body.clientHeight || document.body.offsetHeight));
-      } else {
-        const newHtml = replace(body, data);
 
-        win.document.body.innerHTML = newHtml;
-        callback && callback();
-        stopListening();
+        if (data.message === 'assetResponse' && data.adId === adId) {
+          if(hasDynamicRenderer(data)) {
+            runDynamicRenderer(adId, data, sendMessage, win);
+            return;
+          }
+
+          // add GAM %%CLICK_URL_UNESC%% to the data object to be eventually used in renderers
+          data.clickUrlUnesc = clickUrlUnesc;
+          const body = win.document.body.innerHTML;
+          const head = win.document.head.innerHTML;
+
+          callback = ((cb) => {
+            return () => {
+              fireNativeImpressionTrackers(data.adId, sendMessage);
+              addNativeClickTrackers(data.adId, sendMessage);
+              cb && cb();
+            }
+          })(callback);
+
+          if (head) win.document.head.innerHTML = replace(head, data);
+
+
+          data.assets = data.assets || [];
+          let renderPayload = data.assets;
+          if (data.ortb) {
+            renderPayload.ortb = data.ortb;
+          }
+
+          // if there's a rendererUrl, we need to check whether it's already been loaded.
+          // There are 3 scenarios:
+          //   1) it's already been loaded (window.renderAd is present)
+          //   2) it is currently being loaded (through a script tag with id "pb-native-renderer")
+          //   3) it hasn't been loaded yet
+          //  1 and 2 seem intended to work with logic in nativeRenderManager.js, which (sometimes) loads rendererUrl through a <script id="pb-native-renderer">, but they could conceivably be used in an undocumented way to embed renderer logic directly in the creative.
+          if ((data.hasOwnProperty('rendererUrl') && data.rendererUrl) || (hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl'))) {
+            if (win.renderAd) {
+              const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
+
+              renderAd(newHtml, data);
+            } else if (document.getElementById('pb-native-renderer')) {
+              document.getElementById('pb-native-renderer').addEventListener('load', function () {
+                const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
+
+                renderAd(newHtml, data);
+              });
+            } else {
+              loadScript(win, ((hasPbNativeData() && win.pbNativeData.hasOwnProperty('rendererUrl') && win.pbNativeData.rendererUrl) || data.rendererUrl), function () {
+                const newHtml = (win.renderAd && win.renderAd(renderPayload)) || '';
+
+                renderAd(newHtml, data);
+              });
+            }
+          } else if ((data.hasOwnProperty('adTemplate') && data.adTemplate) || (hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate'))) {
+            const template = (hasPbNativeData() && win.pbNativeData.hasOwnProperty('adTemplate') && win.pbNativeData.adTemplate) || data.adTemplate;
+            const newHtml = replace(template, data);
+
+            renderAd(newHtml, data);
+          } else {
+            const newHtml = replace(body, data);
+
+            win.document.body.innerHTML = newHtml;
+            callback && callback(); // all the other scenarios hit the callback via renderAd()
+            stopListening();
+          }
+        }
+      } catch (e) {
+        errCallback && errCallback(e);
       }
     }
+  }
+
+  /** This function returns the element that contains the current iframe. */
+  function getCurrentFrameContainer(win) {
+    try {
+      let currentWindow = win;
+      let currentParentWindow;
+
+      while (currentWindow !== win.top) {
+        currentParentWindow = currentWindow.parent;
+        if (!currentParentWindow.frames || !currentParentWindow.frames.length) return null;
+        for (let idx = 0; idx < currentParentWindow.frames.length; idx++)
+          if (currentParentWindow.frames[idx] === currentWindow) {
+            if (!currentParentWindow.document) return null;
+            for (let frameElement of currentParentWindow.document.getElementsByTagName('iframe')) {
+              if (!frameElement.contentWindow) return null;
+              if (frameElement.contentWindow === currentWindow) {
+                return frameElement.parentElement;
+              }
+            }
+          }
+      }
+    } catch (e) {
+      // parent is cross-frame
+    }
+  }
+
+  function renderAd(html, bid) {
+    // if the current iframe is not a safeframe, try to set the
+    // current iframe width to the width of the container. This
+    // is to handle the case where the native ad is rendered inside
+    // a GAM display ad.
+
+    // NOTE: this may be unnecessary, see https://github.com/prebid/prebid-universal-creative/issues/253.
+    if (!isSafeFrame(window)) {
+      let iframeContainer = getCurrentFrameContainer(win);
+      if (iframeContainer && iframeContainer.children && iframeContainer.children[0]) {
+        const iframe = iframeContainer.children[0];
+        if (iframe.width === '1' && iframe.height === '1') {
+          let width =  iframeContainer.getBoundingClientRect().width;
+          win.document.body.style.width = `${width}px`;
+        }
+      }
+    }
+
+    //substitute CLICK_URL_UNESC with actual value
+    html = html.replaceAll(CLICK_URL_UNESC, bid.clickUrlUnesc || "");
+
+    win.document.body.innerHTML += html;
+    callback && callback();
+    stopListening();
+    const resize = () => requestHeightResize(
+        bid.adId,
+        (document.body.clientHeight || document.body.offsetHeight),
+        document.body.clientWidth > 1 ? document.body.clientWidth : undefined
+    );
+    document.readyState === 'complete' ? resize() : window.onload = resize;
+
+    if (typeof window.postRenderAd === 'function') {
+      window.postRenderAd(bid);
+    }
+  }
+
+  function replaceORTBAssetsAndLinks(html, ortb) {
+
+    const getAssetValue = (asset) => {
+      if (asset.img) {
+        return asset.img.url;
+      }
+      if (asset.data) {
+        return asset.data.value;
+      }
+      if (asset.title) {
+        return asset.title.text;
+      }
+      if (asset.video) {
+        return asset.video.vasttag;
+      }
+      return ''
+    }
+
+    ortb.assets.forEach(asset => {
+      html = html.replaceAll(`##hb_native_asset_id_${asset.id}##`, getAssetValue(asset));
+      if (asset.link && asset.link.url) {
+        html = html.replaceAll(`##hb_native_asset_link_id_${asset.id}##`, asset.link.url);
+      }
+    });
+
+    html = html.replaceAll(/##hb_native_asset_id_\d+##/gm, '');
+
+    if (ortb.privacy) {
+      html = html.replaceAll("##hb_native_privacy##", ortb.privacy);
+    }
+
+    if (ortb.link) {
+      html = html.replaceAll("##hb_native_linkurl##", ortb.link.url);
+    }
+
+    return html;
   }
 
   /**
@@ -336,12 +483,16 @@ export function newNativeAssetManager(win, pubUrl) {
    * in the given document.
    * If there's no actual value, the placeholder gets replaced by an empty string.
    */
-  function replace(document, { assets, adId }) {
-    let html = document;
+  function replace(html, { assets, ortb, adId }) {
+    if (ortb) {
+      html = replaceORTBAssetsAndLinks(html, ortb);
+    } else if (!Array.isArray(assets)) {
+      return html;
+    }
+    assets = assets || [];
 
-    scanForPlaceholders().forEach(placeholder => {
-      const flag = pbNativeDataHasValidType();
-      const searchString = (adId && !flag) ? `${placeholder}:${adId}` : ((flag) ? '##'+`${placeholder}`+'##' : `${placeholder}`);
+    scanForPlaceHolders(adId, html).forEach(placeholder => {
+      const searchString = placeholderFor(placeholder, adId);
       const searchStringRegex = new RegExp(searchString, 'g');
       const fittingAsset = assets.find(asset => placeholder === NATIVE_KEYS[asset.key]);
       html = html.replace(searchStringRegex, fittingAsset ? fittingAsset.value : '');

@@ -5,7 +5,6 @@
 	"plugins": [
 		"transform-object-assign",
 		"transform-es3-property-literals",
-		"transform-es3-member-expression-literals",
-		"@babel/plugin-transform-modules-commonjs"
+		"transform-es3-member-expression-literals"
 	]
 }

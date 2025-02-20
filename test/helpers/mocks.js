@@ -5,13 +5,16 @@ export const mocks = {
       removeEventListener: function () {},
       document: {
         head: {},
-        body: {}
+        body: {
+          style: {}
+        }
       },
       location: {
         href: href,
       },
       parent: {},
-      top: {}
+      top: {},
+      frames: {},
     };
   }
 }

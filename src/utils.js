@@ -1,4 +1,3 @@
-const postscribe = require('postscribe');
 import * as domHelper from './domHelper';
 
 /**
@@ -29,15 +28,6 @@ export function writeAdUrl(adUrl, width, height) {
   let iframe = domHelper.getEmptyIframe(height, width);
   iframe.src = adUrl;
   document.body.appendChild(iframe);
-}
-
-export function writeAdHtml(markup) {
-  // remove <?xml> and <!doctype> tags
-  // https://github.com/prebid/prebid-universal-creative/issues/134
-  markup = markup.replace(/\<(\?xml|(\!DOCTYPE[^\>\[]+(\[[^\]]+)?))+[^>]+\>/g, '');
-  postscribe(document.body, markup, {
-    error: console.error
-  });
 }
 
 export function sendRequest(url, callback) {
@@ -115,7 +105,7 @@ export function getCreativeComment(bid) {
  * @param {*} bid
  */
 export function getCreativeCommentMarkup(bid) {
-  let creativeComment = exports.getCreativeComment(bid);
+  let creativeComment = getCreativeComment(bid);
   let wrapper = document.createElement('div');
   wrapper.appendChild(creativeComment);
   return wrapper.innerHTML;

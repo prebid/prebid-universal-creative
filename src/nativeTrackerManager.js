@@ -47,7 +47,7 @@ export function newNativeTrackerManager(win) {
 
     for (let i = 0; i < adElements.length; i++) {
       let adId = readAdIdFromSingleElement(adElements[i]);
-      adElements[i].addEventListener('click', function(event) {
+      adElements[i].addEventListener('pointerdown', function(event) {
         listener(event, adId);
       }, true);
     }
@@ -75,7 +75,7 @@ export function newNativeTrackerManager(win) {
     const nativeAssetManager = newNativeAssetManager(window, targetingData.pubUrl);
 
     if (targetingData && targetingData.env === 'mobile-app') {
-      let cb = function({clickTrackers, impTrackers} = {}) {
+      let cb = function({clickTrackers, impTrackers, eventtrackers} = {}) {
         function loadMobileClickTrackers(clickTrackers) {
           (clickTrackers || []).forEach(triggerPixel);
         }
@@ -83,6 +83,18 @@ export function newNativeTrackerManager(win) {
         attachClickListeners(false, boundedLoadMobileClickTrackers);
 
         (impTrackers || []).forEach(triggerPixel);
+
+        // fire impression IMG trackers
+        eventtrackers
+          .filter(tracker => tracker.event === 1 && tracker.method === 1)
+          .map(tracker => tracker.url)
+          .forEach(triggerPixel);
+
+        // fire impression JS trackers
+        eventtrackers
+          .filter(tracker => tracker.event === 1 && tracker.method === 2)
+          .map(tracker => tracker.url)
+          .forEach(trackerUrl => loadScript(document, trackerUrl));
       }
       nativeAssetManager.loadMobileAssets(targetingData, cb);
     } else {
