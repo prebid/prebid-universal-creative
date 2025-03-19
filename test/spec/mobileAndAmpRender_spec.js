@@ -284,6 +284,11 @@ describe("renderingManager", function () {
 });
 
 describe('writeAdHtml', () => {
+
+  afterEach(() => {
+    window.testScriptExecuted = undefined;
+  });
+
   it('removes DOCTYPE from markup', () => {
     const ps = sinon.stub();
     writeAdHtml('<!DOCTYPE html><div>mock-ad</div>', ps);
@@ -294,5 +299,11 @@ describe('writeAdHtml', () => {
     const ps = sinon.stub();
     writeAdHtml('<!doctype html><div>mock-ad</div>', ps);
     sinon.assert.calledWith(ps, '<div>mock-ad</div>')
+  });
+
+  it('should execute script tag inserted into the body', () => {
+    const markup = '<script>window.testScriptExecuted=true;</script>'
+    writeAdHtml(markup);
+    expect(window.testScriptExecuted).to.equal(true);
   });
 })
