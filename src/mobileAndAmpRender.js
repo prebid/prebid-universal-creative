@@ -195,7 +195,7 @@ function setImpressionTracker(burl) {
         break;
       case MobileImpressionTrackerType.OPEN_MEASUREMENT:
         window.prebidImpressionUrlArray = [burl];
-        loadScript(window, "https://cdn.jsdelivr.net/gh/prebid/prebid-mobile-android/scripts/js/om_impression_tracker.js")
+        loadScript(window, "https://cdn.jsdelivr.net/gh/prebid/prebid-mobile-android@master/scripts/js/om_impression_tracker.js")
         break;
     }
   }
