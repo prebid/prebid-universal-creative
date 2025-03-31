@@ -95,6 +95,37 @@ function getCacheEndpoint(cacheHost, cachePath) {
   return `https://${host}${path}`;
 }
 
+/**
+ * Writes HTML content for an advertisement and handles the tracking pixel if provided.
+ *
+ * @param {string} ad - The advertisement HTML content to be written.
+ * @param {string} [burl] - The URL of the tracking pixel to be triggered.
+ */
+function writeHtml(ad, burl) {
+  const triggerBurl = function () {
+    if (burl) {
+      triggerPixel(burl);
+    }
+  };
+  const writeHtmlWithoutMraid = () => {
+    triggerBurl();
+    writeAdHtml(ad);
+  }
+  const writeHtmlWithMraid = () => {
+    let result = registerMRAIDViewableEvent(triggerBurl);
+    if (!result) {
+      triggerBurl(); // Failed to register visibility listener
+    }
+    writeAdHtml(ad);
+  }
+
+  if (!isMobileApp) {
+    writeHtmlWithoutMraid();
+    return;
+  }
+  loadScript(window, 'mraid.js', writeHtmlWithMraid, writeHtmlWithoutMraid);
+}
+
 
 /**
  * Cache request Callback to display creative
@@ -128,28 +159,12 @@ function responseCallback(isMobileApp, hbPb) {
       if (bidObject.nurl) {
         ad += createTrackPixelHtml(decodeURIComponent(bidObject.nurl));
       }
-      if (bidObject.burl) {
-        let triggerBurl = function () { triggerPixel(bidObject.burl); };
-        if (isMobileApp) {
-          let mraidScript = loadScript(window, 'mraid.js',
-            function () { // Success loading MRAID
-              let result = registerMRAIDViewableEvent(triggerBurl);
-              if (!result) {
-                triggerBurl(); // Error registering event
-              }
-            },
-            triggerBurl // Error loading MRAID
-          );
-        } else {
-          triggerBurl(); // Not a mobile app
-        }
-      }
-      writeAdHtml(ad);
+      writeHtml(ad, bidObject.burl);
     } else if (bidObject.nurl) {
       if (isMobileApp) {
         let adhtml = loadScript(window, bidObject.nurl);
         ad += constructMarkup(adhtml.outerHTML, width, height);
-        writeAdHtml(ad);
+        writeHtml(ad);
       } else {
         let nurl = bidObject.nurl;
         let commentElm = getCreativeComment(bidObject);
