@@ -1,7 +1,7 @@
 import { getCreativeCommentMarkup, triggerPixel, createTrackPixelHtml, loadScript, getCreativeComment, writeAdUrl, transformAuctionTargetingData, sendRequest, getUUID } from './utils';
 import { isSafeFrame, isMobileApp } from './environment';
 import { insertElement } from './domHelper';
-import { writeAdHtml } from './adHtmlRender';
+import { writeAdHtml } from './postscribeRender';
 
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
