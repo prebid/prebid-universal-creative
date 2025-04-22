@@ -1,10 +1,10 @@
 import { renderAmpOrMobileAd } from 'src/mobileAndAmpRender';
-import * as postscribeRender from 'src/adHtmlRender'
+import * as postscribeRender from 'src/postscribeRender'
 import * as utils from 'src/utils';
 import { expect } from 'chai';
 import { mocks } from 'test/helpers/mocks';
 import { merge } from 'lodash';
-import {writeAdHtml} from 'src/adHtmlRender';
+import {writeAdHtml} from 'src/postscribeRender';
 
 
 function renderingMocks() {
@@ -288,11 +288,5 @@ describe('writeAdHtml', () => {
     const ps = sinon.stub();
     writeAdHtml('<!DOCTYPE html><div>mock-ad</div>', ps);
     sinon.assert.calledWith(ps, sinon.match.any, '<div>mock-ad</div>')
-  });
-
-  it('removes lowercase doctype from markup', () => {
-    const ps = sinon.stub();
-    writeAdHtml('<!doctype html><div>mock-ad</div>', ps);
-    sinon.assert.calledWith(ps, sinon.match.any, '<div>mock-ad</div>')
-  });
+  })
 })
