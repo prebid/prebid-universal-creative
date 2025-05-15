@@ -1,7 +1,7 @@
 export function writeAdHtml(markup, insertHTML = appendToBody) {
     // remove <?xml> and <!doctype> tags
     // https://github.com/prebid/prebid-universal-creative/issues/134
-    markup = markup.replace(/\<(\?xml|(\!DOCTYPE[^\>\[]+(\[[^\]]+)?))+[^>]+\>/gi, '');
+    markup = markup.replace(/<(?:\?xml|!doctype)[^>]*>/gi, '');
     insertHTML(markup);
 }
 
