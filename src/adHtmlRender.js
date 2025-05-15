@@ -1,10 +1,14 @@
-export function writeAdHtml(markup, insertHTML = document.body.insertAdjacentHTML.bind(document.body)) {
+export function writeAdHtml(markup, insertHTML = appendToBody) {
     // remove <?xml> and <!doctype> tags
     // https://github.com/prebid/prebid-universal-creative/issues/134
     markup = markup.replace(/<(?:\?xml|!doctype)[^>]*>/gi, '');
+    insertHTML(markup);
+}
 
+function appendToBody(html) {
     try {
-        insertHTML('beforeend', markup);
+        const fragment = document.createRange().createContextualFragment(html);
+        document.body.append(fragment);
     } catch (error) {
         console.error(error);
     }
