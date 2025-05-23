@@ -7,6 +7,20 @@ const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
 
 /**
+ * Web views will have rendered and lost console.logs before the web view can be inspected
+ * in Safari/Chrome Dev Tools, so this will hold onto the logs in memory.
+ * After inspecting the web view, simply enter `pucLogs` in the dev tools console to see
+ * what console.logs had already taken place.
+ */
+function log() {
+  window.pucLogs = window.pucLogs || [];
+  window.pucLogs.push({time: new Date(), logs: [...arguments]});
+  if (console && console.log) {
+    console.log.apply(console, arguments);
+  }
+}
+
+/**
  * Render mobile or amp ad
  * @param {string} cacheHost Cache host
  * @param {string} cachePath Cache path
@@ -52,7 +66,7 @@ function updateIframe(size) {
     const sizeArr = size.split('x').map(Number);
     resizeIframe(sizeArr[0], sizeArr[1]);
   } else {
-    console.log('Targeting key hb_size not found to resize creative');
+    log('Targeting key hb_size not found to resize creative');
   }
 }
 
@@ -129,6 +143,7 @@ function responseCallback(isMobileApp, hbPb) {
         ad += createTrackPixelHtml(decodeURIComponent(bidObject.nurl));
       }
       if (bidObject.burl) {
+        log('bid has burl');
         let triggerBurl = function () { triggerPixel(bidObject.burl); };
         if (isMobileApp) {
           let mraidScript = loadScript(window, 'mraid.js',
@@ -143,9 +158,39 @@ function responseCallback(isMobileApp, hbPb) {
         } else {
           triggerBurl(); // Not a mobile app
         }
+
+        // Write the ad html immediately since there is a burl.
+        log('writing ad html immediately');
+        writeAdHtml(ad);
+      } else {
+        log('bid does not have burl');
+        let writeAdHtmlCallback = () => {
+          log('writing ad html from within writeAdHtmlCallback');
+          writeAdHtml(ad);
+        };
+        if (isMobileApp) {
+          log('isMobileApp - checking for mraid.js');
+          let mraidScript = loadScript(window, 'mraid.js',
+            function () { // Success loading MRAID
+              log('mraid.js loaded, registering writeAdHtmlCallback with mraid viewable');
+              let result = registerMRAIDViewableEvent(writeAdHtmlCallback);
+              if (!result) {
+                log('error registering writeAdHtmlCallback with mraid viewable, so writing ad html immediately');
+                writeAdHtml(ad); // Error registering event
+              }
+            },
+            () => {
+              log('error loading mraid.js, so writing ad html immediately');
+              writeAdHtml(ad) // Error loading MRAID
+            }
+          );
+        } else {
+          log('not mobileApp, so writing ad html immediately');
+          writeAdHtml(ad); // Not a mobile app
+        }
       }
-      writeAdHtml(ad);
     } else if (bidObject.nurl) {
+      log('bid did not have adm, but does have nurl');
       if (isMobileApp) {
         let adhtml = loadScript(window, bidObject.nurl);
         ad += constructMarkup(adhtml.outerHTML, width, height);
@@ -171,7 +216,7 @@ function parseResponse(response) {
   try {
     bidObject = JSON.parse(response);
   } catch (error) {
-    console.log(`Error parsing response from cache host: ${error}`);
+    log(`Error parsing response from cache host: ${error}`);
   }
   return bidObject;
 }
