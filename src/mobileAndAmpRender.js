@@ -17,6 +17,7 @@ const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
  */
 export function renderAmpOrMobileAd(dataObject) {
   const targetingData = transformAuctionTargetingData(dataObject);
+  parseMobileImpressionTracker(dataObject);
   let { cacheHost, cachePath, uuid, size, hbPb } = targetingData;
   uuid = uuid || '';
   // For MoPub, creative is stored in localStorage via SDK.
@@ -128,22 +129,7 @@ function responseCallback(isMobileApp, hbPb) {
       if (bidObject.nurl) {
         ad += createTrackPixelHtml(decodeURIComponent(bidObject.nurl));
       }
-      if (bidObject.burl) {
-        let triggerBurl = function () { triggerPixel(bidObject.burl); };
-        if (isMobileApp) {
-          let mraidScript = loadScript(window, 'mraid.js',
-            function () { // Success loading MRAID
-              let result = registerMRAIDViewableEvent(triggerBurl);
-              if (!result) {
-                triggerBurl(); // Error registering event
-              }
-            },
-            triggerBurl // Error loading MRAID
-          );
-        } else {
-          triggerBurl(); // Not a mobile app
-        }
-      }
+      setImpressionTracker(bidObject.burl);
       writeAdHtml(ad);
     } else if (bidObject.nurl) {
       if (isMobileApp) {
@@ -159,7 +145,62 @@ function responseCallback(isMobileApp, hbPb) {
       }
     }
   }
-};
+}
+
+const MobileImpressionTrackerType = Object.freeze({
+  MRAID: 'mraid',
+  OPEN_MEASUREMENT: 'open_measurement',
+});
+
+/**
+ * Parses the provided tag data object and sets the global `window.mobileImpressionTracker`
+ * value based on the parsed data. MRAID is default.
+ *
+ * @param {Object} dataObject - The data object containing the mobile impression tracker.
+ */
+function parseMobileImpressionTracker(dataObject) {
+  window.mobileImpressionTracker = MobileImpressionTrackerType.MRAID;
+
+  const tracker = dataObject.mobileImpressionTracker;
+  if (!tracker) return;
+
+  const keys = Object.keys(MobileImpressionTrackerType);
+  for (const key of keys) {
+    if (MobileImpressionTrackerType[key] === tracker) {
+      window.mobileImpressionTracker = MobileImpressionTrackerType[key];
+      return;
+    }
+  }
+}
+
+function setImpressionTracker(burl) {
+  if (burl) {
+    let triggerBurl = function () {
+      triggerPixel(burl);
+    };
+
+    if (!isMobileApp) {
+      triggerBurl();
+      return;
+    }
+
+    switch (window.mobileImpressionTracker) {
+      case MobileImpressionTrackerType.MRAID:
+        const successCallback = function () {
+          let result = registerMRAIDViewableEvent(triggerBurl);
+          if (!result) {
+            triggerBurl();
+          }
+        };
+        loadScript(window, 'mraid.js', successCallback, triggerBurl);
+        break;
+      case MobileImpressionTrackerType.OPEN_MEASUREMENT:
+        window.prebidImpressionUrlArray = [burl];
+        loadScript(window, "https://cdn.jsdelivr.net/gh/prebid/prebid-mobile-android@master/scripts/js/om_impression_tracker.js")
+        break;
+    }
+  }
+}
 
 /**
  * Parse response
