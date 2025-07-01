@@ -11,8 +11,44 @@ Prebid Universal Creative is a javascript api to render multiple formats. This f
 
 You can find a detailed explanations on the [Prebid Universal Creative](https://docs.prebid.org/overview/prebid-universal-creative.html) and [AdOps - Add Creative](https://docs.prebid.org/adops/setting-up-prebid-with-the-appnexus-ad-server.html#step-3-add-creatives) pages.
 
-> **important:** If you’re using the `Send All Bids` scenario (where every bidder has a separate order), the creative and targeting will be different from the example shown here. See [Send All Bids](https://docs.prebid.org/adops/send-all-vs-top-price.html#send-all-bids) for details.
+### File Selection for Different Platforms
 
+**Generic template:**
+```html
+<script src = "https://cdn.jsdelivr.net/npm/prebid-universal-creative@latest/dist/PUCFILE"></script>
+```
+
+**Replace "PUCFILE" with:**
+- **Prebid.js**: `%%PATTERN:hb_format%%.js` - This dynamically loads the appropriate creative file based on the ad format
+- **Prebid Mobile**: `mobile.js` or `creative.js` - the latter is recommended so that the creative could be reused for both desktop and mobile.
+
+> **Important Note about File Compatibility:**
+> - Both `creative.js` and `mobile.js` work for mobile implementations
+> - `creative.js` is more general and **will work for both desktop and mobile**
+> - `banner.js`, `native.js`, `video.js` - contain **only desktop creative rendering code** and do not support mobile
+
+**Example for Prebid Mobile:**
+```html
+<script src = "https://cdn.jsdelivr.net/npm/prebid-universal-creative@latest/dist/creative.js"></script>
+<script>
+  var ucTagData = {};
+  ucTagData.adServerDomain = "";
+  ucTagData.pubUrl = "%%PATTERN:url%%";
+  ucTagData.targetingMap = %%PATTERN:TARGETINGMAP%%;
+  ucTagData.hbPb = "%%PATTERN:hb_pb%%";
+  ucTagData.hbFormat = "%%PATTERN:hb_format%%";
+  ucTagData.adId = "%%PATTERN:hb_adid%%";
+  ucTagData.requestAllAssets = true;
+
+  try {
+    ucTag.renderAd(document, ucTagData);
+  } catch (e) {
+    console.log(e);
+  }
+</script>
+```
+
+**Example for Prebid.js (Desktop/Web):**
 ```html
 <script src = "https://cdn.jsdelivr.net/npm/prebid-universal-creative@latest/dist/%%PATTERN:hb_format%%.js"></script>
 <script>
@@ -35,17 +71,49 @@ You can find a detailed explanations on the [Prebid Universal Creative](https://
 </script>
 ```
 
-Creative created like described above will work for all formats:
+Creative created like described above will work for the following formats:
 - amp
 - banner
-- mobile
 - native
 - video (outstream video)
 
-Which means that the same creative code can be reused on all formats.  
-Universal creative library is loaded with `%%PATTERN:hb_format%%.js` path. Which means for each `hb_format` targeting key-value, separate `.js` library will be loaded.
+Universal creative library is loaded with `%%PATTERN:hb_format%%.js` path. For each `hb_format` targeting key-value, separate `.js` library will be loaded.  Which means that the same creative code can be reused for any format, however unfortunately not on mobile, because `mobile` is not one of the values that `hb_format` keyword could take.
 
-> Note: Some build tools make explicit use of Node features which have been introduced in version *8.9.0*. Please make sure you're using the correct Node version (>8.9.0) before you proceed to create your own build using the commands listed below.
+> **important:** If you’re using the `Send All Bids` scenario (where every bidder has a separate order), the creative and targeting will be different from the example shown here. See [Send All Bids](https://docs.prebid.org/adops/send-all-vs-top-price.html#send-all-bids) for details and an example below.
+
+### Send All Bids Configuration
+
+For the "Send All Bids" scenario, use this template:
+
+```html
+<script src = "https://cdn.jsdelivr.net/npm/prebid-universal-creative@latest/dist/PUCFILE"></script>
+<script>
+  var ucTagData = {};
+  ucTagData.adServerDomain = "";
+  ucTagData.pubUrl = "%%PATTERN:url%%";
+  ucTagData.adId = "%%PATTERN:hb_adid_BIDDERCODE%%";
+  ucTagData.cacheHost = "%%PATTERN:hb_cache_host_BIDDERCODE%%";
+  ucTagData.cachePath = "%%PATTERN:hb_cache_path_BIDDERCODE%%";
+  ucTagData.uuid = "%%PATTERN:hb_cache_id_BIDDERCODE%%";
+  ucTagData.mediaType = "%%PATTERN:hb_format_BIDDERCODE%%";
+  ucTagData.env = "%%PATTERN:hb_env%%";
+  ucTagData.size = "%%PATTERN:hb_size_BIDDERCODE%%";
+  ucTagData.hbPb = "%%PATTERN:hb_pb_BIDDERCODE%%";
+  // mobileResize needed for mobile GAM only
+  ucTagData.mobileResize = "hb_size:%%PATTERN:hb_size_BIDDERCODE%%";
+  // these next two are only needed for native creatives but are ok for banner
+  ucTagData.requestAllAssets = true;
+  ucTagData.clickUrlUnesc = "%%CLICK_URL_UNESC%%";
+
+  try {
+    ucTag.renderAd(document, ucTagData);
+  } catch (e) {
+    console.log(e);
+  }
+</script>
+```
+
+Replace "PUCFILE" as described above. Note the use of `BIDDERCODE` suffix in the targeting patterns, this implies that each bidder has separate line items with bidder-specific keyword targeting.
 
 ## Install
 
@@ -126,4 +194,3 @@ This project is in its infancy, and many things can be improved.
 Report bugs, request features, and suggest improvements [on Github](https://github.com/prebid/prebid-universal-creative/issues).
 
 Or better yet, [open a pull request](https://github.com/prebid/prebid-universal-creative/compare) with the changes you'd like to see.
-
