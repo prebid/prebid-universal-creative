@@ -1,4 +1,7 @@
 import {parseUrl} from './utils.js';
+export const PREBID_EVENT = 'Prebid Event';
+export const AD_RENDER_SUCCEEDED = 'adRenderSucceeded';
+export const AD_RENDER_FAILED = 'adRenderFailed';
 
 export function prebidMessenger(publisherURL, win = window) {
     const prebidDomain = (() => {
@@ -9,6 +12,16 @@ export function prebidMessenger(publisherURL, win = window) {
         return parsedUrl.protocol + '://' + parsedUrl.host;
     })();
 
+    function isPrebidWindow(win) {
+        return win && win.frames && win.frames.__pb_locator__;
+    }
+
+    let target = win.parent;
+    try {
+        while (target != null && target !== win.top && !isPrebidWindow(target)) target = target.parent;
+        if (!isPrebidWindow(target)) target = win.parent;
+    } catch (e) {}
+
     return function sendMessage(message, onResponse) {
         if (prebidDomain == null) {
             throw new Error('Missing pubUrl')
@@ -16,13 +29,13 @@ export function prebidMessenger(publisherURL, win = window) {
         message = JSON.stringify(message);
         let messagePort;
         if (onResponse == null) {
-            win.parent.postMessage(message, prebidDomain);
+            target.postMessage(message, prebidDomain);
         } else {
             const channel = new MessageChannel();
             messagePort = channel.port1;
             messagePort.onmessage = onResponse;
             win.addEventListener('message', windowListener);
-            win.parent.postMessage(message, prebidDomain, [channel.port2]);
+            target.postMessage(message, prebidDomain, [channel.port2]);
         }
 
         return function stopListening() {
@@ -40,4 +53,12 @@ export function prebidMessenger(publisherURL, win = window) {
         }
 
     }
+}
+
+export function renderEventMessage(adId, errorInfo) {
+    return Object.assign({
+        adId,
+        message: PREBID_EVENT,
+        event: errorInfo ? AD_RENDER_FAILED : AD_RENDER_SUCCEEDED,
+    }, errorInfo ? {info: errorInfo} : null)
 }

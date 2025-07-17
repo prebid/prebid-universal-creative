@@ -1,7 +1,8 @@
 import { parseUrl, transformAuctionTargetingData } from './utils';
 import { canLocatePrebid } from './environment';
 import { insertElement, getEmptyIframe } from './domHelper';
-import {prebidMessenger} from './messaging.js';
+import {prebidMessenger, renderEventMessage} from './messaging.js';
+import {hasDynamicRenderer, runDynamicRenderer} from './dynamicRenderer.js';
 import {Freestar} from "./freestar";
 
 export function renderBannerOrDisplayAd(doc, dataObject) {
@@ -26,8 +27,8 @@ export function renderLegacy(doc, adId) {
     w = w.parent;
     if (w.$$PREBID_GLOBAL$$) {
       try {
-        found = true;
         w.$$PREBID_GLOBAL$$.renderAd(doc, adId);
+        found = true;
         break;
       } catch (e) {
         continue;
@@ -50,6 +51,7 @@ export function renderCrossDomain(win, adId, pubAdServerDomain = '', pubUrl) {
   let adServerDomain = pubAdServerDomain || win.location.hostname;
   let fullAdServerDomain = windowLocation.protocol + '//' + adServerDomain;
   const sendMessage = prebidMessenger(pubUrl, win);
+  const signalRenderResult = (errorInfo) => sendMessage(renderEventMessage(adId, errorInfo));
 
   function renderAd(ev) {
     let key = ev.message ? "message" : "data";
@@ -65,6 +67,10 @@ export function renderCrossDomain(win, adId, pubAdServerDomain = '', pubUrl) {
       adObject.message === "Prebid Response" &&
       adObject.adId === adId
     ) {
+      if (hasDynamicRenderer(adObject)) {
+        runDynamicRenderer(adId, adObject, sendMessage, win);
+        return;
+      }
       try {
         let body = win.document.body;
         let ad = adObject.ad;
@@ -73,7 +79,7 @@ export function renderCrossDomain(win, adId, pubAdServerDomain = '', pubUrl) {
         let height = adObject.height;
 
         if (adObject.mediaType === "video") {
-          signalRenderResult(false, {
+          signalRenderResult({
             reason: "preventWritingOnMainDocument",
             message: `Cannot render video ad ${adId}`,
           });
@@ -84,7 +90,7 @@ export function renderCrossDomain(win, adId, pubAdServerDomain = '', pubUrl) {
           iframe.contentDocument.open();
           iframe.contentDocument.write(ad);
           iframe.contentDocument.close();
-          signalRenderResult(true);
+          signalRenderResult();
         } else if (url) {
           const iframe = getEmptyIframe(height, width);
           iframe.style.display = "inline";
@@ -92,9 +98,9 @@ export function renderCrossDomain(win, adId, pubAdServerDomain = '', pubUrl) {
           iframe.src = url;
 
           insertElement(iframe, document, "body");
-          signalRenderResult(true);
+          signalRenderResult();
         } else {
-          signalRenderResult(false, {
+          signalRenderResult({
             reason: "noAd",
             message: `No ad for ${adId}`,
           });
@@ -103,21 +109,9 @@ export function renderCrossDomain(win, adId, pubAdServerDomain = '', pubUrl) {
           );
         }
       } catch (e) {
-        signalRenderResult(false, { reason: "exception", message: e.message });
+        signalRenderResult({ reason: "exception", message: e.message });
         console.log(`Error in rendering ad`, e);
       }
-    }
-
-    function signalRenderResult(success, { reason, message } = {}) {
-      const payload = {
-        message: "Prebid Event",
-        adId,
-        event: success ? "adRenderSucceeded" : "adRenderFailed",
-      };
-      if (!success) {
-        payload.info = { reason, message };
-      }
-      sendMessage(payload);
     }
   }
 

@@ -30,12 +30,6 @@ export function writeAdUrl(adUrl, width, height) {
   document.body.appendChild(iframe);
 }
 
-export function writeAdHtml(markup) {
-  postscribe(document.body, markup, {
-    error: console.error
-  });
-}
-
 export function sendRequest(url, callback) {
   function reqListener() {
     callback(oReq.responseText);
@@ -128,23 +122,7 @@ export function transformAuctionTargetingData(tagData) {
     hb_format: 'mediaType',
     hb_env: 'env',
     hb_size: 'size',
-    hb_pb: 'hbPb',
-    fs_adid: 'fsAdId',
-    fs_cache_host: 'fsCacheHost',
-    fs_cache_path: 'fsCachePath',
-    fs_cache_id: 'fsUuid',
-    fs_format: 'fsMediaType',
-    fs_env: 'fsEnv',
-    fs_size: 'fsSize',
-    fs_pb: 'fsPb',
-    t13_adid: 't13AdId',
-    t13_cache_host: 't13CacheHost',
-    t13_cache_path: 't13CachePath',
-    t13_cache_id: 't13Uuid',
-    t13_format: 't13MediaType',
-    t13_env: 't13Env',
-    t13_size: 't13Size',
-    t13_pb: 't13Pb'
+    hb_pb: 'hbPb'
   };
 
   /**

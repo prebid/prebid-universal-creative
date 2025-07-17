@@ -21,6 +21,8 @@ const BIDDER_ARGS = sanitizeBidders(parseQueryParam('bidders', window.location.s
 const IS_AMP = sanitizeSource(parseQueryParam('source', window.location.search));
 const maxSyncCountParam = parseQueryParam('max_sync_count', window.location.search);
 const MAX_SYNC_COUNT = sanitizeSyncCount(parseInt((maxSyncCountParam) ? maxSyncCountParam : 10, 10));
+const coopSyncParam = parseQueryParam('coop_sync', window.location.search);
+const COOP_SYNC = !coopSyncParam || coopSyncParam === 'true' || !!parseInt(coopSyncParam);
 const GDPR = sanitizeGdpr(parseInt(parseQueryParam('gdpr', window.location.search), 10));
 const GDPR_CONSENT = sanitizeGdprConsent(parseQueryParam('gdpr_consent', window.location.search));
 
@@ -255,6 +257,7 @@ function sanitizeBidders(value) {
 function getStringifiedData(endPointArgs) {
   var data = (endPointArgs && typeof endPointArgs === 'object') ? endPointArgs : {}
   data['limit'] = MAX_SYNC_COUNT;
+  data['coopSync'] = COOP_SYNC;
 
   if(GDPR) data.gdpr = GDPR;
   if(GDPR_CONSENT) data.gdpr_consent = GDPR_CONSENT;

@@ -188,51 +188,58 @@ describe("renderingManager", function () {
   });
 
   describe("amp creative", function () {
+    let sandbox;
     let writeHtmlSpy;
     let sendRequestSpy;
     let triggerPixelSpy;
     let mockWin;
+    let ucTagData;
+    let response;
 
-    before(function () {
-      writeHtmlSpy = sinon.spy(postscribeRender, "writeAdHtml");
-      sendRequestSpy = sinon.spy(utils, "sendRequest");
-      triggerPixelSpy = sinon.spy(utils, "triggerPixel");
-      mockWin = merge(
-        mocks.createFakeWindow("http://example.com"),
-        renderingMocks().getWindowObject()
-      );
-    });
-
-    afterEach(function () {
-      writeHtmlSpy.resetHistory();
-      sendRequestSpy.resetHistory();
-      triggerPixelSpy.resetHistory();
-    });
-
-    after(function () {
-      writeHtmlSpy.restore();
-      sendRequestSpy.restore();
-      triggerPixelSpy.restore();
-    });
-
-    it("should render amp creative", function () {
-      let ucTagData = {
+    beforeEach(function () {
+      sandbox = sinon.sandbox.create();
+      writeHtmlSpy = sandbox.spy(postscribeRender, "writeAdHtml");
+      sendRequestSpy = sandbox.spy(utils, "sendRequest");
+      triggerPixelSpy = sandbox.spy(utils, "triggerPixel");
+      ucTagData = {
         cacheHost: "example.com",
         cachePath: "/path",
         uuid: "123",
         size: "300x250",
-        hbPb: "10.00",
       };
-
-      renderAmpOrMobileAd(ucTagData);
-
-      let response = {
+      response = {
         width: 300,
         height: 250,
         crid: 123,
         adm: "ad-markup${AUCTION_PRICE}",
         wurl: "https://test.prebidcache.wurl",
       };
+    });
+
+
+
+    afterEach(function () {
+      sandbox.restore();
+    });
+
+    it('should send embed-resize message', () => {
+      sandbox.spy(window.parent, 'postMessage');
+      ucTagData.size = '400x500'
+      renderAmpOrMobileAd(ucTagData);
+      requests[0].respond(200, {}, JSON.stringify(response));
+      sinon.assert.calledWith(window.parent.postMessage, {
+        sentinel: "amp",
+        type: "embed-size",
+        width: 400,
+        height: 500,
+      });
+    })
+
+    it("should render amp creative", function () {
+      ucTagData.hbPb = "10.00";
+      renderAmpOrMobileAd(ucTagData);
+
+
       requests[0].respond(200, {}, JSON.stringify(response));
       expect(writeHtmlSpy.args[0][0]).to.equal(
         "<!--Creative 123 served by Prebid.js Header Bidding-->ad-markup10.00"
@@ -246,24 +253,8 @@ describe("renderingManager", function () {
     });
 
     it("should replace AUCTION_PRICE with response.price over hbPb", function () {
-      let ucTagData = {
-        cacheHost: "example.com",
-        cachePath: "/path",
-        uuid: "123",
-        size: "300x250",
-        hbPb: "10.00",
-      };
-
       renderAmpOrMobileAd(ucTagData);
-
-      let response = {
-        width: 300,
-        height: 250,
-        crid: 123,
-        price: 12.5,
-        adm: "ad-markup${AUCTION_PRICE}",
-        wurl: "https://test.prebidcache.wurl",
-      };
+      response.price = 12.5;
       requests[0].respond(200, {}, JSON.stringify(response));
       expect(writeHtmlSpy.args[0][0]).to.equal(
         "<!--Creative 123 served by Prebid.js Header Bidding-->ad-markup12.5"
@@ -277,22 +268,7 @@ describe("renderingManager", function () {
     });
 
     it("should replace AUCTION_PRICE with with empty value when neither price nor hbPb exist", function () {
-      let ucTagData = {
-        cacheHost: "example.com",
-        cachePath: "/path",
-        uuid: "123",
-        size: "300x250",
-      };
-
       renderAmpOrMobileAd(ucTagData);
-
-      let response = {
-        width: 300,
-        height: 250,
-        crid: 123,
-        adm: "ad-markup${AUCTION_PRICE}",
-        wurl: "https://test.prebidcache.wurl",
-      };
       requests[0].respond(200, {}, JSON.stringify(response));
       expect(writeHtmlSpy.args[0][0]).to.equal(
         "<!--Creative 123 served by Prebid.js Header Bidding-->ad-markup"
@@ -308,9 +284,26 @@ describe("renderingManager", function () {
 });
 
 describe('writeAdHtml', () => {
+
+  afterEach(() => {
+    window.testScriptExecuted = undefined;
+  });
+
   it('removes DOCTYPE from markup', () => {
     const ps = sinon.stub();
     writeAdHtml('<!DOCTYPE html><div>mock-ad</div>', ps);
     sinon.assert.calledWith(ps, sinon.match.any, '<div>mock-ad</div>')
-  })
+  });
+
+  it('removes lowercase doctype from markup', () => {
+    const ps = sinon.stub();
+    writeAdHtml('<!doctype html><div>mock-ad</div>', ps);
+    sinon.assert.calledWith(ps, sinon.match.any, '<div>mock-ad</div>')
+  });
+
+  it('should execute script tag inserted into the body', () => {
+    const markup = '<script>window.testScriptExecuted=true;</script>'
+    writeAdHtml(markup);
+    expect(window.testScriptExecuted).to.equal(true);
+  });
 })

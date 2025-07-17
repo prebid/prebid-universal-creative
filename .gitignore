@@ -1,6 +1,5 @@
-# Built files
+/playwright-report/
 node_modules/
-build
+/build
 coverage
 dist/
-.idea/

@@ -3,7 +3,9 @@ import {merge} from 'lodash';
 import {newNativeAssetManager} from 'src/nativeAssetManager';
 import {mocks} from 'test/helpers/mocks';
 import * as utils from 'src/utils';
+import * as dynamic from 'src/dynamicRenderer.js';
 import {prebidMessenger} from '../../src/messaging.js';
+import {MIN_RENDERER_VERSION} from "src/dynamicRenderer.js";
 
 const ORIGIN = 'https://origin.com'
 const AD_ID = 'abc123';
@@ -90,7 +92,7 @@ function generateRenderer(assets) {
 }
 
 describe('nativeAssetManager', () => {
-  let win;
+  let win, sandbox;
 
   function makeManager(args, mkMessenger = prebidMessenger) {
     return newNativeAssetManager(win, {
@@ -101,6 +103,29 @@ describe('nativeAssetManager', () => {
 
   beforeEach(() => {
     win = merge(mocks.createFakeWindow(), mockDocument.getWindowObject());
+    sandbox = sinon.createSandbox();
+  });
+
+  afterEach(() => {
+    sandbox.restore();
+  })
+
+  it(`should run dynamic renderer`, () => {
+    const data = {
+      renderer: 'mock-renderer',
+      rendererVersion: MIN_RENDERER_VERSION,
+      native: 'data'
+    }
+    sandbox.stub(dynamic, 'runDynamicRenderer');
+    const sendMessage = sinon.stub().callsFake((msg, reply) => {
+      reply({data: JSON.stringify(Object.assign({adId: '123', message: 'assetResponse'}, data))});
+    })
+    win.pbNativeData = {
+      requestAllAssets: true
+    };
+    const mgr = makeManager({}, () => sendMessage);
+    mgr.loadAssets('123');
+    sinon.assert.calledWith(dynamic.runDynamicRenderer, '123', sinon.match(data));
   });
 
   describe('safe frames enabled', () => {
@@ -256,7 +281,7 @@ describe('nativeAssetManager', () => {
       ],null,null);
 
       const nativeAssetManager = makeManager();
-      nativeAssetManager.loadAssets(AD_ID);
+      nativeAssetManager.loadAssets(win.pbNativeData.adId);
 
       expect(win.document.body.innerHTML).to.equal(`<script>
                 let nativeTag = {};
@@ -558,8 +583,9 @@ describe('nativeAssetManager', () => {
       }
     })
 
-    it('should set the iframe to the width of the container', () => {
-      const html = `<script>
+    describe('body width resizing', () => {
+      beforeEach(() => {
+        const html = `<script>
                   let nativeTag = {};
                 nativeTag.adTemplate = "<div class=\"sponsored-post\">\r\n  <div class=\"thumbnail\"><\/div>\r\n  <div class=\"content\">\r\n  <h1>\r\n    <a href=\"##hb_native_linkurl##\" target=\"_blank\" class=\"pb-click\">##hb_native_title##<\/a>\r\n   <\/h1>\r\n    <p>##hb_native_body##<\/p>\r\n    \t<div class=\"attribution\">\r\n                   \t<img class=\"pb-icon\" src=\"##hb_native_image##\" alt=\"icon\" height=\"150\" width=\"50\">\r\n \t\r\n           \t<\/div>\r\n\t<\/div>\r\n<\/div>";
                 nativeTag.pubUrl = "https://www.url.com";
@@ -567,27 +593,51 @@ describe('nativeAssetManager', () => {
                 nativeTag.requestAllAssets = true;
                 window.pbNativeTag.renderNativeAd(nativeTag);
         </script>`;
-      win.pbNativeData = {
-        pubUrl : 'https://www.url.com',
-        adId : AD_ID,
-        adTemplate : '<div class=\"sponsored-post\">\r\n  <div class=\"thumbnail\"><\/div>\r\n  <div class=\"content\">\r\n  <h1>\r\n    <a href=\"##hb_native_linkurl##\" target=\"_blank\" class=\"pb-click\">##hb_native_title##<\/a>\r\n   <\/h1>\r\n    <p>##hb_native_body##<\/p>\r\n    \t<div class=\"attribution\">\r\n                   \t<img class=\"pb-icon\" src=\"##hb_native_image##\" alt=\"icon\" height=\"150\" width=\"50\">\r\n \t\r\n           \t<\/div>\r\n\t<\/div>\r\n<\/div>'
-      };
+        win.pbNativeData = {
+          pubUrl : 'https://www.url.com',
+          adId : AD_ID,
+          adTemplate : '<div class=\"sponsored-post\">\r\n  <div class=\"thumbnail\"><\/div>\r\n  <div class=\"content\">\r\n  <h1>\r\n    <a href=\"##hb_native_linkurl##\" target=\"_blank\" class=\"pb-click\">##hb_native_title##<\/a>\r\n   <\/h1>\r\n    <p>##hb_native_body##<\/p>\r\n    \t<div class=\"attribution\">\r\n                   \t<img class=\"pb-icon\" src=\"##hb_native_image##\" alt=\"icon\" height=\"150\" width=\"50\">\r\n \t\r\n           \t<\/div>\r\n\t<\/div>\r\n<\/div>'
+        };
 
-      win.document.body.innerHTML = html;
-      win.addEventListener = createResponder([
-        { key: 'body', value: 'Body content' },
-        { key: 'title', value: 'new value' },
-        { key: 'clickUrl', value: 'http://www.example.com' },
-        { key: 'image', value: 'http://www.image.com/picture.jpg' },
-      ]);
+        win.document.body.innerHTML = html;
+        win.addEventListener = createResponder([
+          { key: 'body', value: 'Body content' },
+          { key: 'title', value: 'new value' },
+          { key: 'clickUrl', value: 'http://www.example.com' },
+          { key: 'image', value: 'http://www.image.com/picture.jpg' },
+        ]);
+      });
 
-      const nativeAssetManager = makeManager();
-      nativeAssetManager.loadAssets(AD_ID);
+      it('should not choke when parent window is not available',() => {
+        win.parent.frames = [win];
+        Object.defineProperty(win.parent, 'document', {
+          get() {
+            throw new Error('unvailable');
+          }
+        })
+        const nativeAssetManager = makeManager();
+        nativeAssetManager.loadAssets(AD_ID);
+        expect(win.document.body.innerHTML).to.include(`<a href="http://www.example.com" target="_blank" class="pb-click">new value</a>`);
+      });
 
-      expect(win.document.body.innerHTML).to.include(`<a href="http://www.example.com" target="_blank" class="pb-click">new value</a>`);
-      expect(win.document.body.innerHTML).to.include(`<img class="pb-icon" src="http://www.image.com/picture.jpg" alt="icon" height="150" width="50">`);
-      expect(win.document.body.innerHTML).to.include(`<p>Body content</p>`);
-      expect(win.document.body.style.width).to.equal('600px');
+      it('should not request width resize if width is 1', () => {
+        sandbox.stub(document.body, 'clientWidth').get(() => 1);
+        const nativeAssetManager = makeManager();
+        nativeAssetManager.loadAssets(AD_ID);
+        const resizeRequest = win.parent.postMessage.args
+            .map(([msg]) => JSON.parse(msg))
+            .find((msg) => msg.action === 'resizeNativeHeight')
+        expect(resizeRequest.width).to.not.exist;
+      })
+
+      it('should set the iframe to the width of the container', () => {
+        const nativeAssetManager = makeManager();
+        nativeAssetManager.loadAssets(AD_ID);
+        expect(win.document.body.innerHTML).to.include(`<a href="http://www.example.com" target="_blank" class="pb-click">new value</a>`);
+        expect(win.document.body.innerHTML).to.include(`<img class="pb-icon" src="http://www.image.com/picture.jpg" alt="icon" height="150" width="50">`);
+        expect(win.document.body.innerHTML).to.include(`<p>Body content</p>`);
+        expect(win.document.body.style.width).to.equal('600px');
+      });
     });
   });
 

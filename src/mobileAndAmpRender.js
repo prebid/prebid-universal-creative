@@ -2,7 +2,7 @@ import { getCreativeCommentMarkup, triggerPixel, createTrackPixelHtml, loadScrip
 import { isSafeFrame, isMobileApp } from './environment';
 import { insertElement } from './domHelper';
 import { writeAdHtml } from './postscribeRender';
-import {appBidTrack, Freestar} from "./freestar";
+import {Freestar} from "./freestar";
 
 const DEFAULT_CACHE_HOST = 'prebid.adnxs.com';
 const DEFAULT_CACHE_PATH = '/pbc/v1/cache';
@@ -31,7 +31,7 @@ export function renderAmpOrMobileAd(dataObject) {
     let adUrl = `${getCacheEndpoint(cacheHost, cachePath)}?uuid=${uuid}`;
     //register creative right away to not miss initial geom-update
     updateIframe(size);
-    sendRequest(adUrl, responseCallback(isMobileApp(env), hbPb, uuid));
+    sendRequest(adUrl, responseCallback(isMobileApp(targetingData.env), hbPb));
   }
 }
 
@@ -64,26 +64,24 @@ function updateIframe(size) {
  * @param {Number} height height of creative
  */
 function resizeIframe(width, height) {
-  if (isSafeFrame(window)) {
-    const iframeWidth = window.innerWidth;
-    const iframeHeight = window.innerHeight;
-
-    function resize(status) {
-      let newWidth = width - iframeWidth;
-      let newHeight = height - iframeHeight;
-      window.$sf.ext.expand({ r: newWidth, b: newHeight, push: true });
-    }
-
-    if (iframeWidth !== width || iframeHeight !== height) {
+  const iframeWidth = window.innerWidth;
+  const iframeHeight = window.innerHeight;
+  if (iframeWidth !== width || iframeHeight !== height) {
+    if (isSafeFrame(window)) {
+      function resize(status) {
+        let newWidth = width - iframeWidth;
+        let newHeight = height - iframeHeight;
+        window.$sf.ext.expand({r: newWidth, b: newHeight, push: true});
+      }
       window.$sf.ext.register(width, height, resize);
-      // we need to resize the DFP container as well
-      window.parent.postMessage({
-        sentinel: 'amp',
-        type: 'embed-size',
-        width: width,
-        height: height
-      }, '*');
     }
+    // AMP resize request in case the parent is AMP
+    window.parent.postMessage({
+      sentinel: 'amp',
+      type: 'embed-size',
+      width: width,
+      height: height
+    }, '*');
   }
 }
 
@@ -104,15 +102,13 @@ function getCacheEndpoint(cacheHost, cachePath) {
  * Cache request Callback to display creative
  * @param {Bool} isMobileApp
  * @param {string} hbPb final price of the winning bid
- * @param {string} uuid
  * @returns {function} a callback function that parses response
  */
-function responseCallback(isMobileApp, hbPb, uuid) {
+function responseCallback(isMobileApp, hbPb) {
   return function (response) {
     let bidObject = parseResponse(response);
     let auctionPrice = bidObject.price || hbPb;
     let ad = getCreativeCommentMarkup(bidObject);
-    appBidTrack(uuid);
     let width = (bidObject.width) ? bidObject.width : bidObject.w;
     let height = (bidObject.height) ? bidObject.height : bidObject.h;
 
