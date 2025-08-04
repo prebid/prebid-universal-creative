@@ -285,7 +285,7 @@ function getStringifiedData(endPointArgs) {
         }
     };
     if(BIDDER_ARGS) data.bidders = BIDDER_ARGS;
-    data['account'] = ACCOUNT;
+    if(ACCOUNT) data.account = ACCOUNT;
 
     data = attachConsent(data);
 
