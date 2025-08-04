@@ -268,7 +268,7 @@ function getStringifiedData(endPointArgs) {
     }
   };
   if(BIDDER_ARGS) data.bidders = BIDDER_ARGS;
-  if (ACCOUNT) data.account = ACCOUNT;
+  if(ACCOUNT) data.account = ACCOUNT;
 
   return JSON.stringify(data);
 }
