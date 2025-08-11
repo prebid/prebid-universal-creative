@@ -24,6 +24,7 @@ const coopSyncParam = parseQueryParam('coop_sync', window.location.search);
 const COOP_SYNC = !coopSyncParam || coopSyncParam === 'true' || !!parseInt(coopSyncParam);
 const TIMEOUT = sanitizeTimeout(parseInt(parseQueryParam('timeout', window.location.search), 10));
 const DEFAULT_GDPR_SCOPE = sanitizeScope(parseInt(parseQueryParam('defaultGdprScope', window.location.search), 10));
+const ACCOUNT = parseQueryParam('account', window.location.search);
 
 let consent = {};
 let syncRan = false;
@@ -284,6 +285,7 @@ function getStringifiedData(endPointArgs) {
         }
     };
     if(BIDDER_ARGS) data.bidders = BIDDER_ARGS;
+    if(ACCOUNT) data.account = ACCOUNT;
 
     data = attachConsent(data);
 
