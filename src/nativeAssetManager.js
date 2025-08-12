@@ -430,7 +430,7 @@ export function newNativeAssetManager(win, nativeTag, mkMessenger = prebidMessen
     stopListening();
     const resize = () => requestHeightResize(
         bid.adId,
-        (document.body.clientHeight || document.body.offsetHeight),
+        (document.body.clientHeight || document.body.offsetHeight || document.documentElement.scrollHeight),
         document.body.clientWidth > 1 ? document.body.clientWidth : undefined
     );
     document.readyState === 'complete' ? resize() : window.onload = resize;
