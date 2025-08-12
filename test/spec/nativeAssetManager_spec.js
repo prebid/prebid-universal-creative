@@ -620,14 +620,26 @@ describe('nativeAssetManager', () => {
         expect(win.document.body.innerHTML).to.include(`<a href="http://www.example.com" target="_blank" class="pb-click">new value</a>`);
       });
 
+      function getResizeRequest() {
+        return win.parent.postMessage.args
+          .map(([msg]) => JSON.parse(msg))
+          .find((msg) => msg.action === 'resizeNativeHeight')
+      }
+
       it('should not request width resize if width is 1', () => {
         sandbox.stub(document.body, 'clientWidth').get(() => 1);
         const nativeAssetManager = makeManager();
         nativeAssetManager.loadAssets(AD_ID);
-        const resizeRequest = win.parent.postMessage.args
-            .map(([msg]) => JSON.parse(msg))
-            .find((msg) => msg.action === 'resizeNativeHeight')
-        expect(resizeRequest.width).to.not.exist;
+        expect(getResizeRequest().width).to.not.exist;
+      });
+
+      it('should use scrollHeight if offsetHeight & clientHeight are 0', () => {
+        sandbox.stub(document.body, 'clientHeight').get(() => 0);
+        sandbox.stub(document.body, 'offsetHeight').get(() => 0);
+        sandbox.stub(document.documentElement, 'scrollHeight').get(() => 123);
+        const nativeAssetManager = makeManager();
+        nativeAssetManager.loadAssets(AD_ID);
+        expect(getResizeRequest().height).to.eql(123);
       })
 
       it('should set the iframe to the width of the container', () => {
