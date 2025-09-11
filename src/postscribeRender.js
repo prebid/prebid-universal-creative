@@ -5,13 +5,16 @@ export function writeAdHtml(markup, ps = postscribe) {
     // https://github.com/prebid/prebid-universal-creative/issues/134
     markup = markup.replace(/\<(\?xml|(\!DOCTYPE[^\>\[]+(\[[^\]]+)?))+[^>]+\>/gi, '');
 
+    let finalMarkup;
+
     try {
-        markup = normalizeMarkup(markup);
+        finalMarkup = normalizeMarkup(markup);
     } catch (error) {
         console.error("Error normalizing markup:", error.message);
+        finalMarkup = markup;
     }
 
-    ps(document.body, markup, {
+    ps(document.body, finalMarkup, {
         error: console.error
     });
 }
@@ -24,8 +27,9 @@ export function writeAdHtml(markup, ps = postscribe) {
  * HTML attributes are not correctly escaped.
  */
  function normalizeMarkup(markup) {
-    const startMarker = '<div id="PUC_START"></div>';
-    const endMarker = '<div id="PUC_END"></div>';
+    const timestamp = Date.now();
+    const startMarker = `<div id="PUC_START_${timestamp}"></div>`;
+    const endMarker = `<div id="PUC_END_${timestamp}"></div>`;
 
     const wrapped = `${startMarker}${markup}${endMarker}`;
 
@@ -38,6 +42,8 @@ export function writeAdHtml(markup, ps = postscribe) {
     if (startIndex === -1 || endIndex === -1) {
         throw new Error("PUC markers not found in serialized output");
     }
+
+    console.log('Testing:' + serialized);
 
     const snippet = serialized.substring(startIndex + startMarker.length, endIndex);
     return snippet.trim();
