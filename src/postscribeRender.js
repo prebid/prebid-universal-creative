@@ -26,25 +26,42 @@ export function writeAdHtml(markup, ps = postscribe) {
  * This function is specifically aimed at addressing an issue with `postscribe` where double quotes inside single-quoted
  * HTML attributes are not correctly escaped.
  */
- function normalizeMarkup(markup) {
+function normalizeMarkup(markup) {
     const timestamp = Date.now();
     const startMarker = `<div id="PUC_START_${timestamp}"></div>`;
     const endMarker = `<div id="PUC_END_${timestamp}"></div>`;
+    const doc = new DOMParser().parseFromString(`${startMarker}${markup}${endMarker}`, "text/html");
 
-    const wrapped = `${startMarker}${markup}${endMarker}`;
+    const textMap = new Map();
+    let textId = 0;
 
-    const doc = new DOMParser().parseFromString(wrapped, "text/html");
-    const serialized = new XMLSerializer().serializeToString(doc);
+    const replaceTextNodes = (node) => {
+        if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+            const id = `__TEXT_${textId++}__`;
+            textMap.set(id, node.textContent);
+            const span = doc.createElement("span");
+            span.dataset.textId = id;
+            node.parentNode.replaceChild(span, node);
+        } else {
+            [...node.childNodes].forEach(replaceTextNodes);
+        }
+    };
 
-    const startIndex = serialized.indexOf(startMarker);
-    const endIndex = serialized.indexOf(endMarker, startIndex);
-
-    if (startIndex === -1 || endIndex === -1) {
-        throw new Error("PUC markers not found in serialized output");
+    let current = doc.querySelector(`#PUC_START_${timestamp}`).nextSibling;
+    const end = doc.querySelector(`#PUC_END_${timestamp}`);
+    while (current && current !== end) {
+        replaceTextNodes(current);
+        current = current.nextSibling;
     }
 
-    console.log('Testing:' + serialized);
+    const serialized = new XMLSerializer().serializeToString(doc);
+    const snippet = serialized
+        .split(startMarker)[1]
+        .split(endMarker)[0]
+        .replace(
+            /<span data-text-id="(__TEXT_\d+__)"[^>]*><\/span>/g,
+            (_, id) => textMap.get(id) || ""
+        );
 
-    const snippet = serialized.substring(startIndex + startMarker.length, endIndex);
     return snippet.trim();
 }
