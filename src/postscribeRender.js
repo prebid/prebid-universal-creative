@@ -28,8 +28,10 @@ export function writeAdHtml(markup, ps = postscribe) {
  */
 function normalizeMarkup(markup) {
     const timestamp = Date.now();
-    const startMarker = `<div id="PUC_START_${timestamp}"></div>`;
-    const endMarker = `<div id="PUC_END_${timestamp}"></div>`;
+    const startMarkerId = `PUC_START_${timestamp}`;
+    const endMarkerId = `PUC_END_${timestamp}`;
+    const startMarker = `<div id="${startMarkerId}"></div>`;
+    const endMarker = `<div id="${endMarkerId}"></div>`;
     const doc = new DOMParser().parseFromString(`${startMarker}${markup}${endMarker}`, "text/html");
 
     const textMap = new Map();
@@ -37,7 +39,7 @@ function normalizeMarkup(markup) {
 
     const replaceTextNodes = (node) => {
         if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
-            const id = `__TEXT_${textId++}__`;
+            const id = `PUC_NODE_TEXT_${textId++}_${timestamp}`;
             textMap.set(id, node.textContent);
             const span = doc.createElement("span");
             span.dataset.textId = id;
@@ -47,8 +49,8 @@ function normalizeMarkup(markup) {
         }
     };
 
-    let current = doc.querySelector(`#PUC_START_${timestamp}`).nextSibling;
-    const end = doc.querySelector(`#PUC_END_${timestamp}`);
+    let current = doc.querySelector(`#${startMarkerId}`).nextSibling;
+    const end = doc.querySelector(`#${endMarkerId}`);
     while (current && current !== end) {
         replaceTextNodes(current);
         current = current.nextSibling;
@@ -59,7 +61,7 @@ function normalizeMarkup(markup) {
         .split(startMarker)[1]
         .split(endMarker)[0]
         .replace(
-            /<span data-text-id="(__TEXT_\d+__)"[^>]*><\/span>/g,
+            /<span data-text-id="(PUC_NODE_TEXT_\d+_\d+)"[^>]*><\/span>/g,
             (_, id) => textMap.get(id) || ""
         );
 
