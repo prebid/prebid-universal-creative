@@ -3,6 +3,17 @@ import * as utils from 'src/utils';
 
 describe('utils', function () {
   describe('transformAuctionTargetingData', function () {
+        it('should map hb_prebid_global to prebidGlobal', function () {
+          let ucTagData = {
+            targetingMap: {
+              hb_prebid_global: ['myPbjs']
+            }
+          };
+          let auctionData = utils.transformAuctionTargetingData(ucTagData);
+          expect(auctionData).to.deep.equal({
+            prebidGlobal: 'myPbjs'
+          });
+        });
     it('should transform non dfp arguments', function () {
       let ucTagData = {
         cacheHost: 'example.com',

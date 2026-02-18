@@ -122,7 +122,8 @@ export function transformAuctionTargetingData(tagData) {
     hb_format: 'mediaType',
     hb_env: 'env',
     hb_size: 'size',
-    hb_pb: 'hbPb'
+    hb_pb: 'hbPb',
+    hb_prebid_global: 'prebidGlobal'  // Support custom Prebid.js global variable name
   };
 
   /**
