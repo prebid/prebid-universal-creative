@@ -14,6 +14,20 @@ const envMocks = {
 }
 
 describe('environment module', function() {
+  it('should detect Prebid with custom globalName', function() {
+    // Create a window chain similar to the default test but with custom global
+    let localWindow = {
+      parent: {
+        parent: {
+          myCustomPbjs: {
+            fakeFn: () => {}
+          }
+        }
+      }
+    };
+    const mockWin = merge(mocks.createFakeWindow('http://appnexus.com'), envMocks.getWindowObject(), localWindow);
+    expect(env.canLocatePrebid(mockWin, 'myCustomPbjs')).to.equal(true);
+  });
   
   it('should return env object with proper public api', function() {
     expect(env.isMobileApp).to.exist;

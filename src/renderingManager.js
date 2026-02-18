@@ -6,11 +6,13 @@ import {hasDynamicRenderer, runDynamicRenderer} from './dynamicRenderer.js';
 
 export function renderBannerOrDisplayAd(doc, dataObject) {
   const targetingData = transformAuctionTargetingData(dataObject);
+  // Use custom global name if provided via targeting, otherwise use default
+  const globalName = targetingData.prebidGlobal || '$$PREBID_GLOBAL$$';
 
-  if (!canLocatePrebid(window)) {
+  if (!canLocatePrebid(window, globalName)) {
     renderCrossDomain(window, targetingData.adId, targetingData.adServerDomain, targetingData.pubUrl);
   } else {
-    renderLegacy(doc, targetingData.adId);
+    renderLegacy(doc, targetingData.adId, globalName);
   }
 }
 
@@ -18,15 +20,16 @@ export function renderBannerOrDisplayAd(doc, dataObject) {
  * Calls prebid.js renderAd function to render ad
  * @param {Object} doc Document
  * @param {string} adId Id of creative to render
+ * @param {string} globalName Name of the prebid global variable (default: $$PREBID_GLOBAL$$)
  */
-export function renderLegacy(doc, adId) {
+export function renderLegacy(doc, adId, globalName = '$$PREBID_GLOBAL$$') {
   let found = false;
   let w = window;
   for (let i = 0; i < 10; i++) {
     w = w.parent;
-    if (w.$$PREBID_GLOBAL$$) {
+    if (w[globalName]) {
       try {
-        w.$$PREBID_GLOBAL$$.renderAd(doc, adId);
+        w[globalName].renderAd(doc, adId);
         found = true;
         break;
       } catch (e) {
@@ -35,7 +38,7 @@ export function renderLegacy(doc, adId) {
     }
   }
   if (!found) {
-    console.error("Unable to locate $$PREBID_GLOBAL$$.renderAd function!");
+    console.error(`Unable to locate ${globalName}.renderAd function!`);
   }
 }
 

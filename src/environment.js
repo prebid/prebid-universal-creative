@@ -55,15 +55,18 @@ export function canInspectWindow(win) {
 /**
  * Returns true if we can find the prebid global object (eg pbjs) as we
  * climb the accessible windows.  Return false if it's not found.
+ * @param {Window} win Window object
+ * @param {string} globalName Optional custom global variable name (default: $$PREBID_GLOBAL$$)
  * @returns {boolean}
  */
-export function canLocatePrebid(win) {
+export function canLocatePrebid(win, globalName = '$$PREBID_GLOBAL$$') {
+
   let result = false;
   let currentWindow = win;
 
   while (!result) {
     try {
-      if (currentWindow.$$PREBID_GLOBAL$$) {
+      if (currentWindow[globalName]) {
         result = true;
         break;
       }

@@ -221,6 +221,23 @@ describe('renderingManager', function() {
   });
 
   describe('legacy creative', function() {
+        it('should use custom prebidGlobal if provided', function() {
+          const mockWin = merge(mocks.createFakeWindow('http://example.com'), renderingMocks().getWindowObject());
+          let ucTagData = {
+            adId: '123',
+            prebidGlobal: 'myPbjsGlobal'
+          };
+          // Add custom global to parent
+          mockWin.parent.myPbjsGlobal = { renderAd: sinon.spy() };
+          window.parent = mockWin;
+          // Patch canLocatePrebid to return true for custom global
+          const renderingManager = require('src/renderingManager');
+          const origCanLocatePrebid = require('src/environment').canLocatePrebid;
+          require('src/environment').canLocatePrebid = () => true;
+          renderingManager.renderLegacy(mockWin.document, ucTagData.adId, ucTagData.prebidGlobal);
+          expect(mockWin.parent.myPbjsGlobal.renderAd.callCount).to.equal(1);
+          require('src/environment').canLocatePrebid = origCanLocatePrebid;
+        });
     it('should render legacy creative', function() {
       const mockWin = merge(mocks.createFakeWindow('http://example.com'), renderingMocks().getWindowObject());
       let ucTagData = {
