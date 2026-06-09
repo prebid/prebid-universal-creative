@@ -40,7 +40,6 @@
         "gulp-connect": "^5.7.0",
         "gulp-eslint": "^4.0.2",
         "gulp-header": "^2.0.1",
-        "gulp-inject": "^5.0.2",
         "gulp-rename": "^1.2.2",
         "gulp-replace": "^0.6.1",
         "gulp-uglify": "^3.0.0",
@@ -71,7 +70,7 @@
     },
     "dependencies": {
         "babel-plugin-transform-object-assign": "^6.22.0",
-        "postscribe": "^2.0.8",
-        "gulp-cli": "^3.0.0"
+        "gulp-cli": "^3.0.0",
+        "postscribe": "^2.0.8"
     }
 }
