@@ -1,9 +1,9 @@
 var creative = require('./package.json');
-var StringReplacePlugin = require('string-replace-webpack-plugin');
 var path = require('path');
-const ShakePlugin = require('webpack-common-shake').Plugin;
 
 module.exports = {
+  mode: 'none',
+  target: ['web', 'es5'],
   devtool: 'source-map',
   resolve: {
     modules: [
@@ -12,6 +12,9 @@ module.exports = {
     ],
   },
   output: {
+  },
+  optimization: {
+    usedExports: true
   },
   module: {
     rules: [
@@ -30,18 +33,13 @@ module.exports = {
       {
         test: /\.js$/,
         include: /(src|test|testpages)/,
-        loader: StringReplacePlugin.replace({
-          replacements: [
-            {
-              pattern: /\$\$PREBID_GLOBAL\$\$/g,
-              replacement: function (match, p1, offset, string) {
-                return creative.globalVarName;
-              }
-            }
-          ]
-        })
+        loader: 'string-replace-loader',
+        options: {
+          search: '$$PREBID_GLOBAL$$',
+          replace: creative.globalVarName,
+          flags: 'g'
+        }
       }
     ]
-  },
-  plugins: [new ShakePlugin()],
+  }
 };

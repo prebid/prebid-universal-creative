@@ -48,15 +48,16 @@ function newWebpackConfig(codeCoverage) {
   webpackConfig.devtool = 'inline-source-map';
 
   if (codeCoverage) {
-    webpackConfig.module.rules.push({
-      test: /\.js$/,
-      enforce: 'post',
-      use: {
-        loader: 'istanbul-instrumenter-loader',
-        options: { esModules: true }
-      },
-      exclude: /(node_modules)|(test)|(resources)|(template)|(testpages)/
+    const babelRule = webpackConfig.module.rules.find(rule => {
+      const loaders = Array.isArray(rule.use) ? rule.use : [rule.use];
+      return loaders.some(loader => loader && loader.loader === 'babel-loader');
     });
+    const babelLoader = babelRule.use.find(loader => loader.loader === 'babel-loader');
+    babelLoader.options.plugins = (babelLoader.options.plugins || []).concat([
+      ['istanbul', {
+        exclude: ['test/**/*.js', 'resources/**/*.js', 'template/**/*.js', 'testpages/**/*.js']
+      }]
+    ]);
   }
   return webpackConfig;
 }
@@ -88,7 +89,7 @@ module.exports = function(codeCoverage, browserstack, watchMode) {
     ],
     webpack: webpackConfig,
     webpackMiddleware: {
-      logLevel: 'error'
+      stats: 'errors-only'
     },
 
     // frameworks to use
