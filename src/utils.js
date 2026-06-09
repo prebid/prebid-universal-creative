@@ -1,9 +1,9 @@
 import * as domHelper from './domHelper';
 
 /**
- * Inserts an image pixel with the specified `url` for cookie sync
+ * Inserts an image pixel with the specified `url`
  * @param {string} url URL string of the image pixel to load
- * @param  {function} [done] an optional exit callback, used when this usersync pixel is added during an async process
+ * @param  {function} [done] an optional exit callback, used when this pixel is added during an async process
  */
 export function triggerPixel(url, done) {
   const img = new Image();

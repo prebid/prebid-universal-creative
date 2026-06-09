@@ -11,7 +11,6 @@ const uglify = require('gulp-uglify');
 const gulpClean = require('gulp-clean');
 const webpackStream = require('webpack-stream');
 const webpackConfig = require('./webpack.conf');
-const inject = require('gulp-inject');
 const rename = require('gulp-rename');
 const KarmaServer = require('karma').Server;
 const karmaConfMaker = require('./karma.conf.maker');
@@ -73,44 +72,6 @@ function buildNativeRenderDev() {
 
 function buildNativeRenderLegacyDev() {
   return buildDev({ inputFile: 'src/legacyNativeRender.js', outputFile: 'native-render.js' });
-}
-
-function buildCookieSync() {
-  let cloned = _.cloneDeep(webpackConfig);
-  delete cloned.devtool;
-
-  let target = gulp.src('resources/load-cookie.html');
-  let sources = gulp.src(['src/cookieSync.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(uglify());
-
-  return target.pipe(inject(sources, {
-    starttag: '// cookie-sync start',
-    endtag: '// end',
-    transform: function (filePath, file) {
-      return file.contents.toString('utf8')
-    }
-  }))
-    .pipe(gulp.dest('dist'));
-}
-
-function buildCookieSyncWithConsent() {
-  let cloned = _.cloneDeep(webpackConfig);
-  delete cloned.devtool;
-
-  let target = gulp.src('resources/load-cookie-with-consent.html');
-  let sources = gulp.src(['src/cookieSyncWithConsent.js'])
-    .pipe(webpackStream(cloned))
-    .pipe(uglify());
-
-  return target.pipe(inject(sources, {
-    starttag: '// cookie-sync start',
-    endtag: '// end',
-    transform: function (filePath, file) {
-      return file.contents.toString('utf8')
-    }
-  }))
-    .pipe(gulp.dest('dist'));
 }
 
 function buildUidDev() {
@@ -226,7 +187,7 @@ function newKarmaCallback(done) {
 
 gulp.task('test', gulp.series(clean, test));
 
-const buildDevFunctions = [buildLegacyDev, buildBannerDev, buildVideoDev, buildAmpDev, buildMobileDev, buildNativeRenderLegacyDev, buildNativeDev, buildNativeRenderDev, buildCookieSync, buildCookieSyncWithConsent, buildUidDev, includeStaticVastXmlFile];
+const buildDevFunctions = [buildLegacyDev, buildBannerDev, buildVideoDev, buildAmpDev, buildMobileDev, buildNativeRenderLegacyDev, buildNativeDev, buildNativeRenderDev, buildUidDev, includeStaticVastXmlFile];
 
 function watch(done) {
   const mainWatcher = gulp.watch([
@@ -249,7 +210,7 @@ gulp.task('serve', gulp.series(clean, gulp.parallel(...buildDevFunctions, watch,
 
 gulp.task('build-dev', gulp.parallel(...buildDevFunctions));
 
-gulp.task('build', gulp.parallel(buildProdLegacy, buildLegacyNativeRender, buildBanner, buildVideo, buildCookieSync, buildCookieSyncWithConsent, buildNative, buildNativeRender, buildUid, buildAmp, buildMobile, includeStaticVastXmlFile));
+gulp.task('build', gulp.parallel(buildProdLegacy, buildLegacyNativeRender, buildBanner, buildVideo, buildNative, buildNativeRender, buildUid, buildAmp, buildMobile, includeStaticVastXmlFile));
 
 gulp.task('test-coverage', (done) => {
   new KarmaServer(karmaConfMaker(true, false, false), newKarmaCallback(done)).start();
