@@ -560,7 +560,7 @@ describe('nativeAssetManager', () => {
       // cta was not in the response so it should default to an empty string
       expect(win.document.body.innerHTML).to.include('<h1></h1>');
       expect(cb.getCall(0).args[0]).to.haveOwnProperty('eventtrackers');
-    })
+    });
   })
 
   describe('safe frame disabled', () => {
