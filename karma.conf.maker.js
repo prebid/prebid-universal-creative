@@ -4,6 +4,16 @@ const karmaConstants = require('karma').constants;
 const path = require('path');
 
 function setBrowsers(karmaConf, browserstack) {
+  if (typeof process.getuid === 'function' && process.getuid() === 0) {
+    karmaConf.customLaunchers = Object.assign({}, karmaConf.customLaunchers, {
+      ChromeHeadlessNoSandbox: {
+        base: 'ChromeHeadless',
+        flags: ['--no-sandbox']
+      }
+    });
+    karmaConf.browsers = ['ChromeHeadlessNoSandbox'];
+  }
+
   if (browserstack) {
     karmaConf.browserStack = {
       username: process.env.BROWSERSTACK_USERNAME,

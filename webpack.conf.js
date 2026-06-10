@@ -25,7 +25,7 @@ module.exports = {
           {
             loader: 'babel-loader',
             options: {
-              presets: ['@babel/preset-env']
+              presets: [['@babel/preset-env', { modules: 'commonjs' }]]
             }
           }
         ]
@@ -35,9 +35,8 @@ module.exports = {
         include: /(src|test|testpages)/,
         loader: 'string-replace-loader',
         options: {
-          search: '$$PREBID_GLOBAL$$',
-          replace: creative.globalVarName,
-          flags: 'g'
+          search: /\$\$PREBID_GLOBAL\$\$/g,
+          replace: creative.globalVarName
         }
       }
     ]
