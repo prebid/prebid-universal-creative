@@ -222,9 +222,10 @@ describe("renderingManager", function () {
       sandbox.restore();
     });
 
-    it('should send embed-resize message', () => {
+    it('should send AMP embed-size message without SafeFrame', () => {
+      expect(window.$sf).to.not.exist;
       sandbox.spy(window.parent, 'postMessage');
-      ucTagData.size = '400x500'
+      ucTagData.size = '400x500';
       renderAmpOrMobileAd(ucTagData);
       requests[0].respond(200, {}, JSON.stringify(response));
       sinon.assert.calledWith(window.parent.postMessage, {
