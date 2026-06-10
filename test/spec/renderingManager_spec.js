@@ -126,7 +126,7 @@ describe('renderingManager', function() {
       };
       mockPrebidResponse(data);
       sinon.assert.calledWith(dynamic.runDynamicRenderer, data.adId, sinon.match(data))
-    })
+    });
 
     it("should render cross domain creative", function () {
       mockPrebidResponse({
