@@ -522,7 +522,7 @@ describe('nativeAssetManager', () => {
       let cb = sinon.spy();
       let targetingData = {
         uuid: '123'
-      }
+      };
 
       sinon.stub(utils, 'sendRequest').callsFake(function(arg1, cb) {
         let response = JSON.stringify({
