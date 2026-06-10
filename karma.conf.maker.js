@@ -56,6 +56,7 @@ function setReporters(karmaConf, codeCoverage, browserstack) {
 function newWebpackConfig(codeCoverage) {
   const webpackConfig = _.cloneDeep(webpackConf);
   webpackConfig.devtool = 'inline-source-map';
+  delete webpackConfig.optimization;
 
   if (codeCoverage) {
     const babelRule = webpackConfig.module.rules.find(rule => {
@@ -104,7 +105,7 @@ module.exports = function(codeCoverage, browserstack, watchMode) {
 
     // frameworks to use
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-    frameworks: ['mocha', 'chai', 'sinon'],
+    frameworks: ['mocha', 'chai', 'sinon', 'webpack'],
 
     // list of files / patterns to load in the browser
     files: files,

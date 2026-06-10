@@ -13,7 +13,9 @@ const webpackStream = require('webpack-stream');
 const webpackConfig = require('./webpack.conf');
 const inject = require('gulp-inject');
 const rename = require('gulp-rename');
-const KarmaServer = require('karma').Server;
+const karma = require('karma');
+const KarmaServer = karma.Server;
+const karmaConfig = karma.config;
 const karmaConfMaker = require('./karma.conf.maker');
 const execa = require('execa');
 const path = require('path');
@@ -204,8 +206,12 @@ function includeStaticVastXmlFile() {
 // If --browserstack is given, it will run the full suite of currently supported browsers.
 
 function test(done) {
-  let karmaConf = karmaConfMaker(false, argv.browserstack, argv.watch);
-  new KarmaServer(karmaConf, newKarmaCallback(done)).start();
+  const karmaConf = karmaConfMaker(false, argv.browserstack, argv.watch);
+  karmaConfig.parseConfig(null, karmaConf, { promiseConfig: true, throwErrors: true })
+    .then((parsedKarmaConf) => {
+      new KarmaServer(parsedKarmaConf, newKarmaCallback(done)).start();
+    })
+    .catch(done);
 }
 
 function newKarmaCallback(done) {
