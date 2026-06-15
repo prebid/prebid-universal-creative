@@ -243,6 +243,18 @@ describe('writeAdHtml', () => {
     sinon.assert.calledWith(ps, sinon.match.any, '<div>mock-ad</div>')
   });
 
+  it('removes XML declarations from markup', () => {
+    const ps = sinon.stub();
+    writeAdHtml('<?xml version="1.0" encoding="UTF-8"?><div>mock-ad</div>', ps);
+    sinon.assert.calledWith(ps, sinon.match.any, '<div>mock-ad</div>')
+  });
+
+  it('removes doctype declarations with internal subsets from markup', () => {
+    const ps = sinon.stub();
+    writeAdHtml('<!DOCTYPE html [<!ENTITY nbsp "&#160;">]><div>mock-ad</div>', ps);
+    sinon.assert.calledWith(ps, sinon.match.any, '<div>mock-ad</div>')
+  });
+
   it('should execute script tag inserted into the body', () => {
     const markup = '<script>window.testScriptExecuted=true;</script>'
     writeAdHtml(markup);
