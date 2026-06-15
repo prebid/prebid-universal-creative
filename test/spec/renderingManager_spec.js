@@ -56,22 +56,6 @@ function createMockIframe() {
 }
 
 describe('renderingManager', function() {
-  let xhr;
-  let requests;
-
-  before(function() {
-    xhr = sinon.useFakeXMLHttpRequest();
-    xhr.onCreate = (request) => requests.push(request);
-  });
-
-  beforeEach(function() {
-    requests = [];
-  });
-
-  after(function(){
-    xhr.restore();
-  });
-
   describe('cross domain creative', function() {
     const ORIGIN = 'http://example.com';
     let sandbox;
