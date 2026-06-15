@@ -193,11 +193,6 @@ function buildUid() {
     .pipe(gulp.dest('dist'));
 }
 
-function includeStaticVastXmlFile() {
-  let target = gulp.src('static/prebid-mobile-rewarded-vast.xml');
-  return target.pipe(gulp.dest('dist'));
-}
-
 // Run the unit tests.
 //
 // By default, this runs in headless chrome.
