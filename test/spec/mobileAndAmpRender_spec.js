@@ -2,91 +2,29 @@ import { renderAmpOrMobileAd } from 'src/mobileAndAmpRender';
 import * as postscribeRender from 'src/postscribeRender'
 import * as utils from 'src/utils';
 import { expect } from 'chai';
-import { mocks } from 'test/helpers/mocks';
-import { merge } from 'lodash';
 import {writeAdHtml} from 'src/postscribeRender';
 
 
-function renderingMocks() {
-  return {
-    messages: [],
-    getWindowObject: function () {
-      return {
-        document: {
-          body: {
-            appendChild: sinon.spy(),
-          },
-          createComment: () => true,
-        },
-        parent: {
-          postMessage: sinon.spy(),
-          $$PREBID_GLOBAL$$: {
-            renderAd: sinon.spy(),
-          },
-        },
-        postMessage: (message, domain) => {
-          this.messages[0](message);
-        },
-        top: null,
-        $sf: {
-          ext: {
-            register: sinon.spy(),
-            expand: sinon.spy(),
-          },
-        },
-        addEventListener: (type, listener, capture) => {
-          this.messages.push(listener);
-        },
-        innerWidth: 300,
-        innerHeight: 250,
-      };
-    },
-  };
-}
-
 describe("renderingManager", function () {
-  let xhr;
-  let requests;
-
-  before(function () {
-    xhr = sinon.useFakeXMLHttpRequest();
-    xhr.onCreate = (request) => requests.push(request);
-  });
-
-  beforeEach(function () {
-    requests = [];
-  });
-
-  after(function () {
-    xhr.restore();
-  });
-
   describe("mobile creative", function () {
+    let sandbox;
     let writeHtmlSpy;
-    let sendRequestSpy;
+    let sendRequestStub;
     let triggerPixelSpy;
-    let mockWin;
+    let requestCallbacks;
 
-    before(function () {
-      writeHtmlSpy = sinon.spy(postscribeRender, "writeAdHtml");
-      sendRequestSpy = sinon.spy(utils, "sendRequest");
-      triggerPixelSpy = sinon.spy(utils, "triggerPixel");
-      mockWin = merge(
-        mocks.createFakeWindow("http://example.com"),
-        renderingMocks().getWindowObject()
-      );
+    beforeEach(function () {
+      sandbox = sinon.createSandbox();
+      requestCallbacks = [];
+      writeHtmlSpy = sandbox.spy(postscribeRender, "writeAdHtml");
+      sendRequestStub = sandbox.stub(utils, "sendRequest").callsFake((url, callback) => {
+        requestCallbacks.push(callback);
+      });
+      triggerPixelSpy = sandbox.spy(utils, "triggerPixel");
     });
 
     afterEach(function () {
-      writeHtmlSpy.resetHistory();
-      sendRequestSpy.resetHistory();
-      triggerPixelSpy.resetHistory();
-    });
-
-    after(function () {
-      writeHtmlSpy.restore();
-      sendRequestSpy.restore();
-      triggerPixelSpy.restore();
+      sandbox.restore();
     });
 
     it("should render mobile app creative", function () {
@@ -106,9 +44,9 @@ describe("renderingManager", function () {
         adm: "ad-markup",
         wurl: "https://test.prebidcache.wurl",
       };
-      requests[0].respond(200, {}, JSON.stringify(response));
+      requestCallbacks[0](JSON.stringify(response));
       expect(writeHtmlSpy.callCount).to.equal(1);
-      expect(sendRequestSpy.args[0][0]).to.equal(
+      expect(sendRequestStub.args[0][0]).to.equal(
         "https://example.com/path?uuid=123"
       );
     });
@@ -129,9 +67,9 @@ describe("renderingManager", function () {
         crid: 123,
         adm: "ad-markup",
       };
-      requests[0].respond(200, {}, JSON.stringify(response));
+      requestCallbacks[0](JSON.stringify(response));
       expect(writeHtmlSpy.callCount).to.equal(1);
-      expect(sendRequestSpy.args[0][0]).to.equal(
+      expect(sendRequestStub.args[0][0]).to.equal(
         "https://example.com/path?uuid=123"
       );
     });
@@ -149,9 +87,9 @@ describe("renderingManager", function () {
         crid: 123,
         adm: "ad-markup",
       };
-      requests[0].respond(200, {}, JSON.stringify(response));
+      requestCallbacks[0](JSON.stringify(response));
       expect(writeHtmlSpy.callCount).to.equal(1);
-      expect(sendRequestSpy.args[0][0]).to.equal(
+      expect(sendRequestStub.args[0][0]).to.equal(
         "https://prebid.adnxs.com/pbc/v1/cache?uuid=123"
       );
     });
@@ -178,7 +116,7 @@ describe("renderingManager", function () {
   //       crid: 123,
   //       adm: '<script src="notExistingScript.js"></script>'
   //     };
-  //     requests[0].respond(200, {}, JSON.stringify(response));
+  //     requestCallbacks[0](JSON.stringify(response));
 
   //     setTimeout(() => {
   //       expect(consoleErrorSpy.callCount).to.equal(1);
@@ -195,11 +133,15 @@ describe("renderingManager", function () {
     let mockWin;
     let ucTagData;
     let response;
+    let requestCallbacks;
 
     beforeEach(function () {
-      sandbox = sinon.sandbox.create();
+      sandbox = sinon.createSandbox();
+      requestCallbacks = [];
       writeHtmlSpy = sandbox.spy(postscribeRender, "writeAdHtml");
-      sendRequestSpy = sandbox.spy(utils, "sendRequest");
+      sendRequestSpy = sandbox.stub(utils, "sendRequest").callsFake((url, callback) => {
+        requestCallbacks.push(callback);
+      });
       triggerPixelSpy = sandbox.spy(utils, "triggerPixel");
       ucTagData = {
         cacheHost: "example.com",
@@ -226,7 +168,7 @@ describe("renderingManager", function () {
       sandbox.spy(window.parent, 'postMessage');
       ucTagData.size = '400x500'
       renderAmpOrMobileAd(ucTagData);
-      requests[0].respond(200, {}, JSON.stringify(response));
+      requestCallbacks[0](JSON.stringify(response));
       sinon.assert.calledWith(window.parent.postMessage, {
         sentinel: "amp",
         type: "embed-size",
@@ -240,7 +182,7 @@ describe("renderingManager", function () {
       renderAmpOrMobileAd(ucTagData);
 
 
-      requests[0].respond(200, {}, JSON.stringify(response));
+      requestCallbacks[0](JSON.stringify(response));
       expect(writeHtmlSpy.args[0][0]).to.equal(
         "<!--Creative 123 served by Prebid.js Header Bidding-->ad-markup10.00"
       );
@@ -255,7 +197,7 @@ describe("renderingManager", function () {
     it("should replace AUCTION_PRICE with response.price over hbPb", function () {
       renderAmpOrMobileAd(ucTagData);
       response.price = 12.5;
-      requests[0].respond(200, {}, JSON.stringify(response));
+      requestCallbacks[0](JSON.stringify(response));
       expect(writeHtmlSpy.args[0][0]).to.equal(
         "<!--Creative 123 served by Prebid.js Header Bidding-->ad-markup12.5"
       );
@@ -269,7 +211,7 @@ describe("renderingManager", function () {
 
     it("should replace AUCTION_PRICE with with empty value when neither price nor hbPb exist", function () {
       renderAmpOrMobileAd(ucTagData);
-      requests[0].respond(200, {}, JSON.stringify(response));
+      requestCallbacks[0](JSON.stringify(response));
       expect(writeHtmlSpy.args[0][0]).to.equal(
         "<!--Creative 123 served by Prebid.js Header Bidding-->ad-markup"
       );

@@ -61,7 +61,7 @@
         "lodash": "^4.17.14",
         "mocha": "^10.2.0",
         "opn": "^6.0.0",
-        "sinon": "^6.3.4",
+        "sinon": "^22.0.0",
         "string-replace-loader": "^3.3.0",
         "webdriverio": "^9.10.0",
         "webpack": "^5.107.2",
