@@ -128,6 +128,7 @@ describe("renderingManager", function () {
     let sandbox;
     let writeHtmlSpy;
     let sendRequestSpy;
+    let triggerPixelSpy;
     let ucTagData;
     let response;
     let requestCallbacks;
@@ -139,7 +140,7 @@ describe("renderingManager", function () {
       sendRequestSpy = sandbox.stub(utils, "sendRequest").callsFake((url, callback) => {
         requestCallbacks.push(callback);
       });
-      sandbox.spy(utils, "triggerPixel");
+      triggerPixelSpy = sandbox.spy(utils, "triggerPixel");
       ucTagData = {
         cacheHost: "example.com",
         cachePath: "/path",
