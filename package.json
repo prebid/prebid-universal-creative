@@ -59,7 +59,7 @@
         "karma-spec-reporter": "^0.0.31",
         "karma-webpack": "^5.0.1",
         "lodash": "^4.17.14",
-        "mocha": "^10.2.0",
+        "mocha": "^11.7.6",
         "opn": "^6.0.0",
         "sinon": "^22.0.0",
         "string-replace-loader": "^3.3.0",
