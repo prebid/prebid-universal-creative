@@ -24,7 +24,7 @@ function renderingMocks() {
           renderAd: sinon.spy()
         }
       },
-      postMessage: (message, domain) => {
+      postMessage: (message) => {
         this.messages[0](message);
       },
       top: null,
@@ -34,7 +34,7 @@ function renderingMocks() {
           expand: sinon.spy()
         }
       },
-      addEventListener: (type, listener, capture) => {
+      addEventListener: (type, listener) => {
         this.messages.push(listener);
       },
       innerWidth: 300,
@@ -61,18 +61,16 @@ describe('renderingManager', function() {
     let sandbox;
     let parseStub;
     let iframeStub;
-    let triggerPixelSpy;
     let mockWin;
     let ucTagData;
     let mockIframe;
-    let eventSource;
 
     beforeEach(function(){
       sandbox = sinon.createSandbox();
       mockIframe = createMockIframe();
       parseStub = sandbox.stub(utils, 'parseUrl');
       iframeStub = sandbox.stub(domHelper, 'getEmptyIframe').returns(mockIframe);
-      triggerPixelSpy = sandbox.stub(utils, 'triggerPixel');
+      sandbox.stub(utils, 'triggerPixel');
       parseStub.returns({
         protocol: 'http',
         host: 'example.com'
@@ -83,8 +81,6 @@ describe('renderingManager', function() {
         adServerDomain: 'mypub.com',
         pubUrl: ORIGIN,
       };
-      eventSource = null;
-
       renderCrossDomain(mockWin, ucTagData.adId, ucTagData.adServerDomain, ucTagData.pubUrl);
 
     });

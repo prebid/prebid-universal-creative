@@ -17,8 +17,6 @@ const karma = require('karma');
 const KarmaServer = karma.Server;
 const karmaConfig = karma.config;
 const karmaConfMaker = require('./karma.conf.maker');
-const execa = require('execa');
-const path = require('path');
 const {execSync} = require('child_process');
 
 const dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);

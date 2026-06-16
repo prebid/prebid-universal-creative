@@ -43,7 +43,7 @@ const mockDocument = {
 };
 
 // creates mock postmessage response from prebid's native.js:getAssetMessage
-function createResponder(assets,url,template, clickUrlUnesc = '') {
+function createResponder(assets,url,template) {
   return function(type, listener) {
     if (type !== 'message') { return; }
 
