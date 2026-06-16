@@ -39,7 +39,7 @@
         "gulp": "^5.0.0",
         "gulp-clean": "^0.4.0",
         "gulp-connect": "^5.7.0",
-        "gulp-eslint-new": "^2.6.2",
+        "gulp-eslint": "^6.0.0",
         "gulp-header": "^2.0.1",
         "gulp-inject": "^5.0.2",
         "gulp-rename": "^1.2.2",
