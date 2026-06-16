@@ -13,12 +13,11 @@ const webpackStream = require('webpack-stream');
 const webpackConfig = require('./webpack.conf');
 const inject = require('gulp-inject');
 const rename = require('gulp-rename');
+const eslint = require('gulp-eslint');
 const karma = require('karma');
 const KarmaServer = karma.Server;
 const karmaConfig = karma.config;
 const karmaConfMaker = require('./karma.conf.maker');
-const execa = require('execa');
-const path = require('path');
 const {execSync} = require('child_process');
 
 const dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
@@ -225,7 +224,31 @@ function newKarmaCallback(done) {
   }
 }
 
-gulp.task('test', gulp.series(clean, test));
+function lint() {
+  return gulp.src([
+    'src/**/*.js',
+    'test/**/*.js',
+    'gulpfile.js',
+    'webpack.conf.js',
+    'karma.conf.maker.js'
+  ])
+    .pipe(eslint({
+      envs: ['browser', 'node', 'es6', 'mocha'],
+      parserOptions: {
+        ecmaVersion: 2020,
+        sourceType: 'module'
+      },
+      rules: {
+        'no-unused-vars': 'error'
+      }
+    }))
+    .pipe(eslint.format())
+    .pipe(eslint.failAfterError());
+}
+
+gulp.task('lint', lint);
+
+gulp.task('test', gulp.series(clean, lint, test));
 
 const buildDevFunctions = [buildLegacyDev, buildBannerDev, buildVideoDev, buildAmpDev, buildMobileDev, buildNativeRenderLegacyDev, buildNativeDev, buildNativeRenderDev, buildCookieSync, buildCookieSyncWithConsent, buildUidDev, includeStaticVastXmlFile];
 

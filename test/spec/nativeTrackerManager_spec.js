@@ -27,11 +27,6 @@ describe('nativeTrackerManager', function () {
       pubUrl: 'http://example.com'
     };
 
-    let tagDataAlt = {
-      pubUrl: 'http://example.com',
-      adId: 'ad123',
-      assetsToReplace: ['image','hb_native_linkurl','body','title'],
-    };
 
     beforeEach(function () {
       mockWin = merge(mocks.createFakeWindow(tagData.pubUrl), renderingMocks.getWindowObject());
@@ -49,7 +44,7 @@ describe('nativeTrackerManager', function () {
             value: 'ad123'
           }
         },
-        addEventListener: (type, listener, capture) => {
+        addEventListener: () => {
         },
       }];
 
@@ -74,7 +69,7 @@ describe('nativeTrackerManager', function () {
             value: 'ad123'
           }
         },
-        addEventListener: ((type, listener, capture) => {
+        addEventListener: ((type, listener) => {
           listener({
           })
         })
@@ -97,7 +92,7 @@ describe('nativeTrackerManager', function () {
 
     it('should verify 2 warning messages (one for impression, one for click) was executed', function() {
       mockWin.document.getElementsByClassName = () => [{
-        addEventListener: ((type, listener, capture) => {
+        addEventListener: ((type, listener) => {
           listener({
           })
         })

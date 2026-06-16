@@ -10,7 +10,6 @@ describe("renderingManager", function () {
     let sandbox;
     let writeHtmlSpy;
     let sendRequestStub;
-    let triggerPixelSpy;
     let requestCallbacks;
 
     beforeEach(function () {
@@ -20,7 +19,7 @@ describe("renderingManager", function () {
       sendRequestStub = sandbox.stub(utils, "sendRequest").callsFake((url, callback) => {
         requestCallbacks.push(callback);
       });
-      triggerPixelSpy = sandbox.spy(utils, "triggerPixel");
+      sandbox.spy(utils, "triggerPixel");
     });
 
     afterEach(function () {
@@ -130,7 +129,6 @@ describe("renderingManager", function () {
     let writeHtmlSpy;
     let sendRequestSpy;
     let triggerPixelSpy;
-    let mockWin;
     let ucTagData;
     let response;
     let requestCallbacks;
