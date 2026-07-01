@@ -71,6 +71,7 @@ describe("renderingManager", function () {
       expect(sendRequestStub.args[0][0]).to.equal(
         "https://example.com/path?uuid=123"
       );
+      expect(utils.triggerPixel.called).to.equal(false);
     });
 
     it("should render mobile app creative using default cacheHost and cachePath", function () {
