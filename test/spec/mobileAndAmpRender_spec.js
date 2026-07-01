@@ -243,7 +243,9 @@ describe('writeAdHtml', () => {
 
   it('should execute script tag inserted into the body', () => {
     const markup = '<script>window.testScriptExecuted=true;</script>'
-    writeAdHtml(markup);
+    const ps = sinon.stub();
+    writeAdHtml(markup, ps);
+    sinon.assert.calledWith(ps, sinon.match.any, markup);
     expect(window.testScriptExecuted).to.equal(true);
   });
 
