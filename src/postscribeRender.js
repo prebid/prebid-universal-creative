@@ -6,6 +6,7 @@ export function writeAdHtml(markup, ps = postscribe) {
     markup = markup
         .replace(/<\?xml\b[^>]*(?:\?>|>)/gi, '')
         .replace(/<!doctype\b[^>\[]*(?:\[[^\]]*\][^>]*)?>/gi, '');
+
     let finalMarkup;
 
     try {
