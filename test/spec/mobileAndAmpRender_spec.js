@@ -2,7 +2,7 @@ import { renderAmpOrMobileAd } from 'src/mobileAndAmpRender';
 import * as postscribeRender from 'src/postscribeRender'
 import * as utils from 'src/utils';
 import { expect } from 'chai';
-import {writeAdHtml} from 'src/postscribeRender';
+import { writeAdHtml } from 'src/postscribeRender';
 
 
 describe("renderingManager", function () {
@@ -245,5 +245,40 @@ describe('writeAdHtml', () => {
     const markup = '<script>window.testScriptExecuted=true;</script>'
     writeAdHtml(markup);
     expect(window.testScriptExecuted).to.equal(true);
+  });
+
+  it('should handle single quotes with inner double quotes', () => {
+    const input = `<img title='uh "oh" > this should all be inside the title attribute'>`;
+    console.log('Input: ', input);
+
+    writeAdHtml(input);
+
+    const img = document.querySelector('img:last-of-type');
+    if (img) {
+      console.log('Output:', img.outerHTML);
+      console.log('Title: ', img.getAttribute('title'));
+
+      const expected = 'uh "oh" > this should all be inside the title attribute';
+      expect(img.getAttribute('title')).to.equal(expected);
+    }
+  });
+
+  it('should handle JSON in data attributes with single quotes', () => {
+    const input = `<div data-json='{"key": "value"}'>Test</div>`;
+    console.log('Input: ', input);
+
+    writeAdHtml(input);
+
+    const div = document.querySelector('div[data-json]:last-of-type');
+    if (div) {
+      console.log('Output:', div.outerHTML);
+      console.log('Data:  ', div.getAttribute('data-json'));
+
+      const dataJson = div.getAttribute('data-json');
+      expect(dataJson).to.equal('{"key": "value"}');
+
+      const parsed = JSON.parse(dataJson);
+      expect(parsed.key).to.equal('value');
+    }
   });
 })
