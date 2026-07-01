@@ -207,7 +207,7 @@ describe("renderingManager", function () {
       );
     });
 
-    it("should replace AUCTION_PRICE with with empty value when neither price nor hbPb exist", function () {
+    it("should replace AUCTION_PRICE with empty value when neither price nor hbPb exist", function () {
       renderAmpOrMobileAd(ucTagData);
       requestCallbacks[0](JSON.stringify(response));
       expect(writeHtmlSpy.args[0][0]).to.equal(
