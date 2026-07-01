@@ -11,6 +11,7 @@ describe("renderingManager", function () {
     let writeHtmlSpy;
     let sendRequestStub;
     let requestCallbacks;
+    let triggerPixelSpy;
 
     beforeEach(function () {
       sandbox = sinon.createSandbox();
@@ -19,7 +20,7 @@ describe("renderingManager", function () {
       sendRequestStub = sandbox.stub(utils, "sendRequest").callsFake((url, callback) => {
         requestCallbacks.push(callback);
       });
-      sandbox.spy(utils, "triggerPixel");
+      triggerPixelSpy = sandbox.spy(utils, "triggerPixel");
     });
 
     afterEach(function () {
@@ -45,6 +46,8 @@ describe("renderingManager", function () {
       };
       requestCallbacks[0](JSON.stringify(response));
       expect(writeHtmlSpy.callCount).to.equal(1);
+      expect(triggerPixelSpy.callCount).to.equal(1);
+      expect(triggerPixelSpy.args[0][0]).to.equal("https://test.prebidcache.wurl");
       expect(sendRequestStub.args[0][0]).to.equal(
         "https://example.com/path?uuid=123"
       );
@@ -71,6 +74,7 @@ describe("renderingManager", function () {
       expect(sendRequestStub.args[0][0]).to.equal(
         "https://example.com/path?uuid=123"
       );
+      expect(utils.triggerPixel.called).to.equal(false);
     });
 
     it("should render mobile app creative using default cacheHost and cachePath", function () {
@@ -207,7 +211,7 @@ describe("renderingManager", function () {
       );
     });
 
-    it("should replace AUCTION_PRICE with with empty value when neither price nor hbPb exist", function () {
+    it("should replace AUCTION_PRICE with empty value when neither price nor hbPb exist", function () {
       renderAmpOrMobileAd(ucTagData);
       requestCallbacks[0](JSON.stringify(response));
       expect(writeHtmlSpy.args[0][0]).to.equal(
@@ -243,7 +247,9 @@ describe('writeAdHtml', () => {
 
   it('should execute script tag inserted into the body', () => {
     const markup = '<script>window.testScriptExecuted=true;</script>'
-    writeAdHtml(markup);
+    const ps = sinon.stub();
+    writeAdHtml(markup, ps);
+    sinon.assert.calledWith(ps, sinon.match.any, markup);
     expect(window.testScriptExecuted).to.equal(true);
   });
 
