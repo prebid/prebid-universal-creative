@@ -255,7 +255,7 @@ describe('writeAdHtml', () => {
 
     const img = document.querySelector('img:last-of-type');
     if (img) {
-      console.log('Output:', img.outerHTML);
+      console.log('Output: ', img.outerHTML);
       console.log('Title: ', img.getAttribute('title'));
 
       const expected = 'uh "oh" > this should all be inside the title attribute';
