@@ -253,7 +253,7 @@ describe('writeAdHtml', () => {
     sinon.assert.calledWith(ps, sinon.match.any, '<div>mock-ad</div>')
   });
 
-  it('removes doctype declarations with internal subsets from markup', () => {
+  it('removes doctype declarations with internal subsets from markup for postscribe compatibility (see postscribe issue 358)', () => {
     const ps = sinon.stub();
     writeAdHtml('<!DOCTYPE html [<!ENTITY nbsp "&#160;">]><div>mock-ad</div>', ps);
     sinon.assert.calledWith(ps, sinon.match.any, '<div>mock-ad</div>')
