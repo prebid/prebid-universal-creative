@@ -14,11 +14,11 @@ describe('test firing native trackers', function () {
 
     getElementsByClassName = sinon.stub(document, 'getElementsByClassName').callsFake(() => {
       return [{
-        addEventListener: (event, callback, capture) => {
+        addEventListener: (event, callback) => {
           // immediately call the callback to test the click
           callback({
             target: {
-              getAttribute: (name) => {
+              getAttribute: () => {
                 return 1;
               }
             }

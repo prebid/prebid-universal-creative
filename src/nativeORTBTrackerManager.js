@@ -1,5 +1,3 @@
-import { loadScript, triggerPixel } from "./utils";
-
 const AD_ANCHOR_CLASS_NAME = 'pb-click';
 const ASSET_ID_ELEMENT_ATTRIBUTE = 'hb_native_asset_id';
 

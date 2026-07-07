@@ -4,6 +4,16 @@ const karmaConstants = require('karma').constants;
 const path = require('path');
 
 function setBrowsers(karmaConf, browserstack) {
+  if (typeof process.getuid === 'function' && process.getuid() === 0) {
+    karmaConf.customLaunchers = Object.assign({}, karmaConf.customLaunchers, {
+      ChromeHeadlessNoSandbox: {
+        base: 'ChromeHeadless',
+        flags: ['--no-sandbox']
+      }
+    });
+    karmaConf.browsers = ['ChromeHeadlessNoSandbox'];
+  }
+
   if (browserstack) {
     karmaConf.browserStack = {
       username: process.env.BROWSERSTACK_USERNAME,
@@ -46,17 +56,19 @@ function setReporters(karmaConf, codeCoverage, browserstack) {
 function newWebpackConfig(codeCoverage) {
   const webpackConfig = _.cloneDeep(webpackConf);
   webpackConfig.devtool = 'inline-source-map';
+  delete webpackConfig.optimization;
 
   if (codeCoverage) {
-    webpackConfig.module.rules.push({
-      test: /\.js$/,
-      enforce: 'post',
-      use: {
-        loader: 'istanbul-instrumenter-loader',
-        options: { esModules: true }
-      },
-      exclude: /(node_modules)|(test)|(resources)|(template)|(testpages)/
+    const babelRule = webpackConfig.module.rules.find(rule => {
+      const loaders = Array.isArray(rule.use) ? rule.use : [rule.use];
+      return loaders.some(loader => loader && loader.loader === 'babel-loader');
     });
+    const babelLoader = babelRule.use.find(loader => loader.loader === 'babel-loader');
+    babelLoader.options.plugins = (babelLoader.options.plugins || []).concat([
+      ['istanbul', {
+        exclude: ['test/**/*.js', 'resources/**/*.js', 'template/**/*.js', 'testpages/**/*.js']
+      }]
+    ]);
   }
   return webpackConfig;
 }
@@ -88,12 +100,12 @@ module.exports = function(codeCoverage, browserstack, watchMode) {
     ],
     webpack: webpackConfig,
     webpackMiddleware: {
-      logLevel: 'error'
+      stats: 'errors-only'
     },
 
     // frameworks to use
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-    frameworks: ['mocha', 'chai', 'sinon'],
+    frameworks: ['mocha', 'chai', 'sinon', 'webpack'],
 
     // list of files / patterns to load in the browser
     files: files,

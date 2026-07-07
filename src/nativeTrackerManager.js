@@ -1,7 +1,7 @@
 /*
  * Script to handle firing impression and click trackers from native teamplates
  */
-import { parseUrl, triggerPixel, transformAuctionTargetingData } from './utils';
+import { triggerPixel, transformAuctionTargetingData } from './utils';
 import { newNativeAssetManager } from './nativeAssetManager';
 import {prebidMessenger} from './messaging.js';
 

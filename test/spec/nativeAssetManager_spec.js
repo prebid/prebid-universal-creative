@@ -43,7 +43,7 @@ const mockDocument = {
 };
 
 // creates mock postmessage response from prebid's native.js:getAssetMessage
-function createResponder(assets,url,template, clickUrlUnesc = '') {
+function createResponder(assets,url,template) {
   return function(type, listener) {
     if (type !== 'message') { return; }
 
@@ -443,7 +443,7 @@ describe('nativeAssetManager', () => {
       expect(win.document.body.innerHTML).to.not.include(`##hb_native_asset_id_4##`);
 
       // test that we are replacing ALL asset occurrences
-      expect(([...win.document.body.innerHTML.match(/new value/g)] || []).length, "expected 2 occurrences of \"new value\"").to.equal(2);
+      expect((win.document.body.innerHTML.match(/new value/g) || []).length, "expected 2 occurrences of \"new value\"").to.equal(2);
     });
 
     it('no placeholders found but requests all assets flag set - adTemplate', () => {
@@ -522,7 +522,7 @@ describe('nativeAssetManager', () => {
       let cb = sinon.spy();
       let targetingData = {
         uuid: '123'
-      }
+      };
 
       sinon.stub(utils, 'sendRequest').callsFake(function(arg1, cb) {
         let response = JSON.stringify({
@@ -560,7 +560,7 @@ describe('nativeAssetManager', () => {
       // cta was not in the response so it should default to an empty string
       expect(win.document.body.innerHTML).to.include('<h1></h1>');
       expect(cb.getCall(0).args[0]).to.haveOwnProperty('eventtrackers');
-    })
+    });
   })
 
   describe('safe frame disabled', () => {

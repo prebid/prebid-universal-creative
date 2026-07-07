@@ -24,7 +24,7 @@ function renderingMocks() {
           renderAd: sinon.spy()
         }
       },
-      postMessage: (message, domain) => {
+      postMessage: (message) => {
         this.messages[0](message);
       },
       top: null,
@@ -34,7 +34,7 @@ function renderingMocks() {
           expand: sinon.spy()
         }
       },
-      addEventListener: (type, listener, capture) => {
+      addEventListener: (type, listener) => {
         this.messages.push(listener);
       },
       innerWidth: 300,
@@ -56,39 +56,21 @@ function createMockIframe() {
 }
 
 describe('renderingManager', function() {
-  let xhr;
-  let requests;
-
-  before(function() {
-    xhr = sinon.useFakeXMLHttpRequest();
-    xhr.onCreate = (request) => requests.push(request);
-  });
-
-  beforeEach(function() {
-    requests = [];
-  });
-
-  after(function(){
-    xhr.restore();
-  });
-
   describe('cross domain creative', function() {
     const ORIGIN = 'http://example.com';
     let sandbox;
     let parseStub;
     let iframeStub;
-    let triggerPixelSpy;
     let mockWin;
     let ucTagData;
     let mockIframe;
-    let eventSource;
 
     beforeEach(function(){
       sandbox = sinon.createSandbox();
       mockIframe = createMockIframe();
       parseStub = sandbox.stub(utils, 'parseUrl');
       iframeStub = sandbox.stub(domHelper, 'getEmptyIframe').returns(mockIframe);
-      triggerPixelSpy = sandbox.stub(utils, 'triggerPixel');
+      sandbox.stub(utils, 'triggerPixel');
       parseStub.returns({
         protocol: 'http',
         host: 'example.com'
@@ -99,8 +81,6 @@ describe('renderingManager', function() {
         adServerDomain: 'mypub.com',
         pubUrl: ORIGIN,
       };
-      eventSource = null;
-
       renderCrossDomain(mockWin, ucTagData.adId, ucTagData.adServerDomain, ucTagData.pubUrl);
 
     });
@@ -126,7 +106,7 @@ describe('renderingManager', function() {
       };
       mockPrebidResponse(data);
       sinon.assert.calledWith(dynamic.runDynamicRenderer, data.adId, sinon.match(data))
-    })
+    });
 
     it("should render cross domain creative", function () {
       mockPrebidResponse({

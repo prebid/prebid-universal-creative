@@ -12,10 +12,11 @@ const gulpClean = require('gulp-clean');
 const webpackStream = require('webpack-stream');
 const webpackConfig = require('./webpack.conf');
 const rename = require('gulp-rename');
-const KarmaServer = require('karma').Server;
+const eslint = require('gulp-eslint');
+const karma = require('karma');
+const KarmaServer = karma.Server;
+const karmaConfig = karma.config;
 const karmaConfMaker = require('./karma.conf.maker');
-const execa = require('execa');
-const path = require('path');
 const {execSync} = require('child_process');
 
 const dateString = 'Updated : ' + (new Date()).toISOString().substring(0, 10);
@@ -152,11 +153,6 @@ function buildUid() {
     .pipe(gulp.dest('dist'));
 }
 
-function includeStaticVastXmlFile() {
-  let target = gulp.src('static/prebid-mobile-rewarded-vast.xml');
-  return target.pipe(gulp.dest('dist'));
-}
-
 // Run the unit tests.
 //
 // By default, this runs in headless chrome.
@@ -165,8 +161,12 @@ function includeStaticVastXmlFile() {
 // If --browserstack is given, it will run the full suite of currently supported browsers.
 
 function test(done) {
-  let karmaConf = karmaConfMaker(false, argv.browserstack, argv.watch);
-  new KarmaServer(karmaConf, newKarmaCallback(done)).start();
+  const karmaConf = karmaConfMaker(false, argv.browserstack, argv.watch);
+  karmaConfig.parseConfig(null, karmaConf, { promiseConfig: true, throwErrors: true })
+    .then((parsedKarmaConf) => {
+      new KarmaServer(parsedKarmaConf, newKarmaCallback(done)).start();
+    })
+    .catch(done);
 }
 
 function newKarmaCallback(done) {
@@ -185,7 +185,31 @@ function newKarmaCallback(done) {
   }
 }
 
-gulp.task('test', gulp.series(clean, test));
+function lint() {
+  return gulp.src([
+    'src/**/*.js',
+    'test/**/*.js',
+    'gulpfile.js',
+    'webpack.conf.js',
+    'karma.conf.maker.js'
+  ])
+    .pipe(eslint({
+      envs: ['browser', 'node', 'es6', 'mocha'],
+      parserOptions: {
+        ecmaVersion: 2020,
+        sourceType: 'module'
+      },
+      rules: {
+        'no-unused-vars': 'error'
+      }
+    }))
+    .pipe(eslint.format())
+    .pipe(eslint.failAfterError());
+}
+
+gulp.task('lint', lint);
+
+gulp.task('test', gulp.series(clean, lint, test));
 
 const buildDevFunctions = [buildLegacyDev, buildBannerDev, buildVideoDev, buildAmpDev, buildMobileDev, buildNativeRenderLegacyDev, buildNativeDev, buildNativeRenderDev, buildUidDev, includeStaticVastXmlFile];
 

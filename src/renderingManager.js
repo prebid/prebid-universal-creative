@@ -1,4 +1,4 @@
-import { parseUrl, transformAuctionTargetingData } from './utils';
+import { transformAuctionTargetingData } from './utils';
 import { canLocatePrebid } from './environment';
 import { insertElement, getEmptyIframe } from './domHelper';
 import {prebidMessenger, renderEventMessage} from './messaging.js';

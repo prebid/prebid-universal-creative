@@ -66,7 +66,7 @@ function resizeIframe(width, height) {
   const iframeHeight = window.innerHeight;
   if (iframeWidth !== width || iframeHeight !== height) {
     if (isSafeFrame(window)) {
-      function resize(status) {
+      function resize() {
         let newWidth = width - iframeWidth;
         let newHeight = height - iframeHeight;
         window.$sf.ext.expand({r: newWidth, b: newHeight, push: true});
@@ -131,7 +131,7 @@ function responseCallback(isMobileApp, hbPb) {
       if (bidObject.burl) {
         let triggerBurl = function () { triggerPixel(bidObject.burl); };
         if (isMobileApp) {
-          let mraidScript = loadScript(window, 'mraid.js',
+          loadScript(window, 'mraid.js',
             function () { // Success loading MRAID
               let result = registerMRAIDViewableEvent(triggerBurl);
               if (!result) {
