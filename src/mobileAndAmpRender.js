@@ -185,8 +185,10 @@ function parseResponse(response) {
  */
 function constructMarkup(ad, width, height) {
   let id = getUUID();
+  const safeWidth = parseInt(width, 10) || 0;
+  const safeHeight = parseInt(height, 10) || 0;
   return `<div id="${id}" style="border-style: none; position: absolute; width:100%; height:100%;">
-      <div id="${id}_inner" style="margin: 0 auto; width:${width}px; height:${height}px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">${ad}</div>
+      <div id="${id}_inner" style="margin: 0 auto; width:${safeWidth}px; height:${safeHeight}px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">${ad}</div>
       </div>`;
 }
 
