@@ -62,7 +62,7 @@
         "opn": "^6.0.0",
         "sinon": "^22.0.0",
         "string-replace-loader": "^3.3.0",
-        "webdriverio": "^9.10.0",
+        "webdriverio": "^10.2.0",
         "webpack": "^5.107.2",
         "webpack-stream": "^7.0.0",
         "yargs": "^11.0.0"
