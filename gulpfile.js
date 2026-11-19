@@ -75,10 +75,6 @@ function buildNativeRenderLegacyDev() {
   return buildDev({ inputFile: 'src/legacyNativeRender.js', outputFile: 'native-render.js' });
 }
 
-function buildUidDev() {
-  return buildDev({ inputFile: 'src/ssp-userids/uid.js', outputFile: 'uid.js' });
-}
-
 function buildProdLegacy() {
   let cloned = _.cloneDeep(webpackConfig);
   delete cloned.devtool;
@@ -141,18 +137,6 @@ function buildLegacyNativeRender() {
   return buildProd({ inputFile: 'src/legacyNativeRender.js', outputFile: 'native-render.js' });
 }
 
-function buildUid() {
-  var cloned = _.cloneDeep(webpackConfig);
-  delete cloned.devtool;
-  cloned.output.filename = 'uid.js';
-
-  return gulp.src(['src/ssp-userids/uid.js'])
-  .pipe(webpackStream(cloned))
-    .pipe(uglify())
-    .pipe(header('/* v<%= creative.version %>\n' + dateString + ' */\n', { creative: creative }))
-    .pipe(gulp.dest('dist'));
-}
-
 // Run the unit tests.
 //
 // By default, this runs in headless chrome.
@@ -211,7 +195,7 @@ gulp.task('lint', lint);
 
 gulp.task('test', gulp.series(clean, lint, test));
 
-const buildDevFunctions = [buildLegacyDev, buildBannerDev, buildVideoDev, buildAmpDev, buildMobileDev, buildNativeRenderLegacyDev, buildNativeDev, buildNativeRenderDev, buildUidDev, includeStaticVastXmlFile];
+const buildDevFunctions = [buildLegacyDev, buildBannerDev, buildVideoDev, buildAmpDev, buildMobileDev, buildNativeRenderLegacyDev, buildNativeDev, buildNativeRenderDev, includeStaticVastXmlFile];
 
 function watch(done) {
   const mainWatcher = gulp.watch([
@@ -234,7 +218,7 @@ gulp.task('serve', gulp.series(clean, gulp.parallel(...buildDevFunctions, watch,
 
 gulp.task('build-dev', gulp.parallel(...buildDevFunctions));
 
-gulp.task('build', gulp.parallel(buildProdLegacy, buildLegacyNativeRender, buildBanner, buildVideo, buildNative, buildNativeRender, buildUid, buildAmp, buildMobile, includeStaticVastXmlFile));
+gulp.task('build', gulp.parallel(buildProdLegacy, buildLegacyNativeRender, buildBanner, buildVideo, buildNative, buildNativeRender, buildAmp, buildMobile, includeStaticVastXmlFile));
 
 gulp.task('test-coverage', (done) => {
   new KarmaServer(karmaConfMaker(true, false, false), newKarmaCallback(done)).start();
